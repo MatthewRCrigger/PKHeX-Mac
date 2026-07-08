@@ -1,0 +1,4 @@
+module CPKHeXNative {
+    header "pkhex_native.h"
+    export *
+}

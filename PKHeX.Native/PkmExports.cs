@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
+using PKHeX.Native.Sprites;
 
 namespace PKHeX.Native;
 
@@ -146,5 +147,24 @@ public static class PkmExports
         if (HandleTable.Get<PKM>(handle) is not { } pk)
             return;
         pk.Nickname = new string(new ReadOnlySpan<char>(name, length));
+    }
+
+    /// <summary>
+    /// Writes the base sprite file name (without extension, e.g. "b_25-1s") for this PKM's
+    /// current species/form/gender/shininess into <paramref name="outBuffer"/> (length in chars).
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_sprite_file_name")]
+    public static unsafe int PkmGetSpriteFileName(long handle, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+
+        var formarg = pk is IFormArgument f ? f.FormArgument : 0;
+        var name = SpriteFileName.GetSpriteFileName(pk.Species, pk.Form, pk.Gender, formarg, pk.Context, pk.IsShiny);
+        if (outBuffer is null || outBufferLength < name.Length)
+            return name.Length;
+        name.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
+        return name.Length;
     }
 }

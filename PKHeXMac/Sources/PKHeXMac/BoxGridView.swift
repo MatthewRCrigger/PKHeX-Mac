@@ -5,7 +5,7 @@ struct BoxGridView: View {
     @EnvironmentObject private var store: SaveStore
     let saveFile: SaveFile
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 6)
+    private let columns = [GridItem(.adaptive(minimum: 64, maximum: 84), spacing: 8, alignment: .top)]
 
     var body: some View {
         ScrollView {
@@ -19,7 +19,9 @@ struct BoxGridView: View {
                 }
             }
             .padding(12)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(.background)
         .navigationTitle(store.selectedLocation.title)
     }

@@ -9,13 +9,12 @@ struct ContentView: View {
             if let saveFile = store.saveFile {
                 NavigationSplitView {
                     BoxSidebar(saveFile: saveFile)
+                } content: {
+                    BoxGridView(saveFile: saveFile)
+                        .navigationSplitViewColumnWidth(min: 360, ideal: 460)
                 } detail: {
-                    HSplitView {
-                        BoxGridView(saveFile: saveFile)
-                            .frame(minWidth: 420)
-                        DetailPanel(saveFile: saveFile)
-                            .frame(minWidth: 280, idealWidth: 320)
-                    }
+                    DetailPanel(saveFile: saveFile)
+                        .navigationSplitViewColumnWidth(min: 280, ideal: 320)
                 }
             } else {
                 EmptyStateView()

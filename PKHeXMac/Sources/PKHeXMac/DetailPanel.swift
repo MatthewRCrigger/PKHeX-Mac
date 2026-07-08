@@ -6,8 +6,8 @@ struct DetailPanel: View {
     let saveFile: SaveFile
 
     private var pkm: PKM? {
-        guard let slot = store.selectedSlot else { return nil }
-        return store.selectedLocation.slot(slot, in: saveFile)
+        guard case .slots(let location) = store.selectedSidebarItem, let slot = store.selectedSlot else { return nil }
+        return location.slot(slot, in: saveFile)
     }
 
     var body: some View {

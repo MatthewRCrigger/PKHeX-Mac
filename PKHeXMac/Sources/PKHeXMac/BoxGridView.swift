@@ -7,12 +7,17 @@ struct BoxGridView: View {
 
     private let columns = [GridItem(.adaptive(minimum: 64, maximum: 84), spacing: 8, alignment: .top)]
 
+    private var location: SlotLocation {
+        guard case .slots(let location) = store.selectedSidebarItem else { return .party }
+        return location
+    }
+
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(0..<store.selectedLocation.slotCount(in: saveFile), id: \.self) { slot in
+                ForEach(0..<location.slotCount(in: saveFile), id: \.self) { slot in
                     SlotTile(
-                        pkm: store.selectedLocation.slot(slot, in: saveFile),
+                        pkm: location.slot(slot, in: saveFile),
                         isSelected: store.selectedSlot == slot
                     )
                     .onTapGesture { store.selectedSlot = slot }
@@ -23,7 +28,7 @@ struct BoxGridView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(.background)
-        .navigationTitle(store.selectedLocation.title)
+        .navigationTitle(location.title)
     }
 }
 

@@ -61,9 +61,46 @@ int32_t pkhex_pkm_get_sprite_file_name(int64_t handle, uint16_t *out_buffer, int
 int32_t pkhex_species_get_name(uint16_t species, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_move_get_name(uint16_t move, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_nature_get_name(uint8_t nature, uint16_t *out_buffer, int32_t out_buffer_length);
+int32_t pkhex_item_get_name(uint16_t item, uint16_t *out_buffer, int32_t out_buffer_length);
 
 /* --- Legality --- */
 int32_t pkhex_pkm_is_legal(int64_t handle);
 int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length, uint8_t verbose);
+
+/* --- Trainer info --- */
+int32_t pkhex_save_get_ot_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
+void pkhex_save_set_ot_name(int64_t handle, const uint16_t *name, int32_t length);
+
+uint16_t pkhex_save_get_tid(int64_t handle);
+void pkhex_save_set_tid(int64_t handle, uint16_t tid);
+
+uint16_t pkhex_save_get_sid(int64_t handle);
+void pkhex_save_set_sid(int64_t handle, uint16_t sid);
+
+/* 0 = male, 1 = female */
+uint8_t pkhex_save_get_trainer_gender(int64_t handle);
+void pkhex_save_set_trainer_gender(int64_t handle, uint8_t gender);
+
+uint32_t pkhex_save_get_money(int64_t handle);
+void pkhex_save_set_money(int64_t handle, uint32_t money);
+int32_t pkhex_save_get_max_money(int64_t handle);
+
+int32_t pkhex_save_get_played_hours(int64_t handle);
+int32_t pkhex_save_get_played_minutes(int64_t handle);
+
+/* --- Bag --- */
+/* Bag handles are separate from the save handle: load a snapshot, edit its item slots, then
+ * commit back into the save (which still needs pkhex_save_write to persist to disk). */
+int64_t pkhex_bag_load(int64_t save_handle);
+void pkhex_bag_close(int64_t handle);
+int32_t pkhex_bag_commit(int64_t bag_handle, int64_t save_handle);
+
+int32_t pkhex_bag_get_pouch_count(int64_t handle);
+int32_t pkhex_bag_get_pouch_type(int64_t handle, int32_t pouch_index);
+int32_t pkhex_bag_get_pouch_slot_count(int64_t handle, int32_t pouch_index);
+
+int32_t pkhex_bag_get_item_index(int64_t handle, int32_t pouch_index, int32_t slot);
+int32_t pkhex_bag_get_item_count(int64_t handle, int32_t pouch_index, int32_t slot);
+int32_t pkhex_bag_set_item(int64_t handle, int32_t pouch_index, int32_t slot, int32_t item_index, int32_t count);
 
 #endif /* PKHEX_NATIVE_H */

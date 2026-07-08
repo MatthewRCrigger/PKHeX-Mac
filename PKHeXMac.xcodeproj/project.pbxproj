@@ -11,12 +11,16 @@
 		2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042BD126A70CAEFE24C3C7B8 /* ContentView.swift */; };
 		290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; };
 		334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */; };
+		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
+		54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965F0E77C9A38612EA7511CD /* TrainerView.swift */; };
 		9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1A5A4853A160F141612244 /* BoxGridView.swift */; };
+		9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
 		A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B6B6253C86C4BAF5C1807365 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */; };
 		CA384DA96B3DDD068799649C /* PKM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07CFAF47DCE7B0F0292C0AF /* PKM.swift */; };
 		D571EAD167B7AD2DF080BF15 /* PKHeX.Native.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; };
 		DBC4D8FEAF495B1CF08D1EBB /* PKHeX.Native.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; };
+		E02408354DB8D13A790C60D4 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA318ED5D175D4BD77340DB /* BagView.swift */; };
 		E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */; };
 		F5F31A4171692448212B8AA6 /* SaveFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE0AA02E3445D8A02271413 /* SaveFile.swift */; };
 		FCFD46DF8E9630781A721393 /* PKHeX.Native.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -52,10 +56,14 @@
 		1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKHeXMacApp.swift; sourceTree = "<group>"; };
 		4A1A5A4853A160F141612244 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
+		505571693819F220BFD40FE7 /* NativeString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeString.swift; sourceTree = "<group>"; };
 		51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Native.dylib; path = "PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib"; sourceTree = "<group>"; };
+		5EA318ED5D175D4BD77340DB /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
 		5EE0AA02E3445D8A02271413 /* SaveFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveFile.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
+		965F0E77C9A38612EA7511CD /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
+		A831CF5D7FB2CAA3B64CB162 /* Bag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
 		D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPanel.swift; sourceTree = "<group>"; };
 		E07CFAF47DCE7B0F0292C0AF /* PKM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKM.swift; sourceTree = "<group>"; };
 		FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -85,6 +93,8 @@
 		3D6F64218870FA07977FB061 /* PKHeXCore */ = {
 			isa = PBXGroup;
 			children = (
+				A831CF5D7FB2CAA3B64CB162 /* Bag.swift */,
+				505571693819F220BFD40FE7 /* NativeString.swift */,
 				E07CFAF47DCE7B0F0292C0AF /* PKM.swift */,
 				5EE0AA02E3445D8A02271413 /* SaveFile.swift */,
 			);
@@ -123,11 +133,13 @@
 		DC8CC27581F25EF459530A8C /* PKHeXMac */ = {
 			isa = PBXGroup;
 			children = (
+				5EA318ED5D175D4BD77340DB /* BagView.swift */,
 				4A1A5A4853A160F141612244 /* BoxGridView.swift */,
 				042BD126A70CAEFE24C3C7B8 /* ContentView.swift */,
 				D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */,
 				2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */,
 				8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */,
+				965F0E77C9A38612EA7511CD /* TrainerView.swift */,
 			);
 			name = PKHeXMac;
 			path = PKHeXMac/Sources/PKHeXMac;
@@ -253,11 +265,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E02408354DB8D13A790C60D4 /* BagView.swift in Sources */,
 				9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */,
 				2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */,
 				11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */,
 				E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */,
 				334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */,
+				54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +279,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5461EC4E0E39C78924417872 /* Bag.swift in Sources */,
+				9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */,
 				CA384DA96B3DDD068799649C /* PKM.swift in Sources */,
 				F5F31A4171692448212B8AA6 /* SaveFile.swift in Sources */,
 			);

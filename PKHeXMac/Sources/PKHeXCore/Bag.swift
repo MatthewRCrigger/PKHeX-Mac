@@ -1,0 +1,81 @@
+import CPKHeXNative
+
+/// Kind of items a pouch holds. Raw values match PKHeX.Core's InventoryType enum.
+public enum PouchType: Int32 {
+    case none = 0
+    case items, keyItems, tmhms, medicine, berries, balls, battleItems, mailItems
+    case pcItems, freeSpace, zCrystals, candy, treasure, ingredients, megaStones
+
+    public var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .items: return "Items"
+        case .keyItems: return "Key Items"
+        case .tmhms: return "TMs/HMs"
+        case .medicine: return "Medicine"
+        case .berries: return "Berries"
+        case .balls: return "Poké Balls"
+        case .battleItems: return "Battle Items"
+        case .mailItems: return "Mail"
+        case .pcItems: return "PC Items"
+        case .freeSpace: return "Free Space"
+        case .zCrystals: return "Z-Crystals"
+        case .candy: return "Candy"
+        case .treasure: return "Treasure"
+        case .ingredients: return "Ingredients"
+        case .megaStones: return "Mega Stones"
+        }
+    }
+}
+
+/// One pouch (pocket) within a Bag, e.g. "Medicine" or "Poké Balls".
+public struct Pouch {
+    let bagHandle: Int64
+    public let index: Int
+    public let type: PouchType
+    public let slotCount: Int
+
+    public func itemIndex(_ slot: Int) -> Int {
+        Int(pkhex_bag_get_item_index(bagHandle, Int32(index), Int32(slot)))
+    }
+
+    public func itemCount(_ slot: Int) -> Int {
+        Int(pkhex_bag_get_item_count(bagHandle, Int32(index), Int32(slot)))
+    }
+
+    /// Sets the item and quantity for a slot. Pass itemIndex 0 to clear the slot.
+    public func setItem(_ slot: Int, itemIndex: Int, count: Int) {
+        _ = pkhex_bag_set_item(bagHandle, Int32(index), Int32(slot), Int32(itemIndex), Int32(count))
+    }
+}
+
+/// A snapshot of a save's inventory. Edits are made on this object and must be committed back
+/// into the save with `commit(to:)`.
+public final class Bag {
+    let handle: Int64
+
+    public let pouches: [Pouch]
+
+    init(handle: Int64) {
+        self.handle = handle
+        let count = Int(pkhex_bag_get_pouch_count(handle))
+        self.pouches = (0..<count).map { i in
+            Pouch(
+                bagHandle: handle,
+                index: i,
+                type: PouchType(rawValue: pkhex_bag_get_pouch_type(handle, Int32(i))) ?? .none,
+                slotCount: Int(pkhex_bag_get_pouch_slot_count(handle, Int32(i)))
+            )
+        }
+    }
+
+    deinit {
+        pkhex_bag_close(handle)
+    }
+
+    /// Writes this snapshot's item contents back into the save. Call `SaveFile.write()`
+    /// afterward to persist the save to disk.
+    public func commit(to saveFile: SaveFile) {
+        _ = pkhex_bag_commit(handle, saveFile.handle)
+    }
+}

@@ -2,6 +2,8 @@ import AppKit
 import PKHeXCore
 import SwiftUI
 
+/// A slot grid the box/party views can browse — as opposed to whole-page sidebar destinations
+/// like Trainer or Bag, which have no slot grid at all.
 enum SlotLocation: Hashable {
     case party
     case box(Int)
@@ -28,10 +30,17 @@ enum SlotLocation: Hashable {
     }
 }
 
+/// Everything selectable in the sidebar.
+enum SidebarSelection: Hashable {
+    case trainer
+    case bag
+    case slots(SlotLocation)
+}
+
 @MainActor
 final class SaveStore: ObservableObject {
     @Published private(set) var saveFile: SaveFile?
-    @Published var selectedLocation: SlotLocation = .party
+    @Published var selectedSidebarItem: SidebarSelection = .trainer
     @Published var selectedSlot: Int?
     @Published var errorMessage: String?
     private var loadedURL: URL?
@@ -51,7 +60,7 @@ final class SaveStore: ObservableObject {
             let newSaveFile = try SaveFile(data: data)
             saveFile = newSaveFile
             loadedURL = url
-            selectedLocation = newSaveFile.partyCount > 0 ? .party : .box(0)
+            selectedSidebarItem = .trainer
             selectedSlot = nil
         } catch {
             errorMessage = "Couldn't open that file as a Pokémon save: \(error)"

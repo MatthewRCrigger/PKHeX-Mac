@@ -10,11 +10,22 @@ struct ContentView: View {
                 NavigationSplitView {
                     BoxSidebar(saveFile: saveFile)
                 } content: {
-                    BoxGridView(saveFile: saveFile)
-                        .navigationSplitViewColumnWidth(min: 360, ideal: 460)
+                    switch store.selectedSidebarItem {
+                    case .trainer:
+                        TrainerView(saveFile: saveFile)
+                    case .bag:
+                        BagView(saveFile: saveFile)
+                    case .slots:
+                        BoxGridView(saveFile: saveFile)
+                    }
                 } detail: {
-                    DetailPanel(saveFile: saveFile)
-                        .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                    switch store.selectedSidebarItem {
+                    case .trainer, .bag:
+                        EmptyView()
+                    case .slots:
+                        DetailPanel(saveFile: saveFile)
+                            .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                    }
                 }
             } else {
                 EmptyStateView()
@@ -54,17 +65,23 @@ private struct BoxSidebar: View {
     let saveFile: SaveFile
 
     var body: some View {
-        List(selection: $store.selectedLocation) {
-            Label("Party (\(saveFile.partyCount))", systemImage: "person.3")
-                .tag(SlotLocation.party)
-            ForEach(0..<saveFile.boxCount, id: \.self) { box in
-                Text("Box \(box + 1)")
-                    .tag(SlotLocation.box(box))
+        List(selection: $store.selectedSidebarItem) {
+            Label("Trainer", systemImage: "person.crop.circle")
+                .tag(SidebarSelection.trainer)
+            Label("Bag", systemImage: "bag")
+                .tag(SidebarSelection.bag)
+            Section {
+                Label("Party (\(saveFile.partyCount))", systemImage: "person.3")
+                    .tag(SidebarSelection.slots(.party))
+                ForEach(0..<saveFile.boxCount, id: \.self) { box in
+                    Text("Box \(box + 1)")
+                        .tag(SidebarSelection.slots(.box(box)))
+                }
             }
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 140, ideal: 160)
-        .onChange(of: store.selectedLocation) { _, _ in store.selectedSlot = nil }
+        .onChange(of: store.selectedSidebarItem) { _, _ in store.selectedSlot = nil }
     }
 }
 

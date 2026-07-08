@@ -15,6 +15,37 @@ public final class SaveFile {
     public let generation: UInt8
     public var partyCount: Int { Int(pkhex_save_get_party_count(handle)) }
 
+    public var otName: String {
+        get { readNativeString { pkhex_save_get_ot_name(handle, $0, $1) } }
+        set { writeNativeString(newValue) { pkhex_save_set_ot_name(handle, $0, $1) } }
+    }
+
+    public var tid: UInt16 {
+        get { pkhex_save_get_tid(handle) }
+        set { pkhex_save_set_tid(handle, newValue) }
+    }
+
+    public var sid: UInt16 {
+        get { pkhex_save_get_sid(handle) }
+        set { pkhex_save_set_sid(handle, newValue) }
+    }
+
+    /// 0 = male, 1 = female.
+    public var trainerGender: UInt8 {
+        get { pkhex_save_get_trainer_gender(handle) }
+        set { pkhex_save_set_trainer_gender(handle, newValue) }
+    }
+
+    public var money: UInt32 {
+        get { pkhex_save_get_money(handle) }
+        set { pkhex_save_set_money(handle, newValue) }
+    }
+
+    public var maxMoney: Int { Int(pkhex_save_get_max_money(handle)) }
+
+    public var playedHours: Int { Int(pkhex_save_get_played_hours(handle)) }
+    public var playedMinutes: Int { Int(pkhex_save_get_played_minutes(handle)) }
+
     public init(data: Data) throws {
         let handle: Int64 = data.withUnsafeBytes { rawBuffer in
             let base = rawBuffer.bindMemory(to: UInt8.self).baseAddress
@@ -50,6 +81,14 @@ public final class SaveFile {
 
     public func setPartySlot(_ pkm: PKM, index: Int) {
         _ = pkhex_save_set_party_slot(handle, pkm.handle, Int32(index))
+    }
+
+    /// Loads a fresh snapshot of the bag. Edit its pouches, then call `bag.commit(to: self)` to
+    /// write the changes back before calling `write()`.
+    public func loadBag() -> Bag? {
+        let bagHandle = pkhex_bag_load(handle)
+        guard bagHandle != 0 else { return nil }
+        return Bag(handle: bagHandle)
     }
 
     /// Serializes the save (with checksums fixed up) back to bytes ready to write to disk.

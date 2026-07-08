@@ -2,10 +2,36 @@ import AppKit
 import PKHeXCore
 import SwiftUI
 
+enum SlotLocation: Hashable {
+    case party
+    case box(Int)
+
+    func slotCount(in saveFile: SaveFile) -> Int {
+        switch self {
+        case .party: return 6
+        case .box: return saveFile.boxSlotCount
+        }
+    }
+
+    func slot(_ index: Int, in saveFile: SaveFile) -> PKM? {
+        switch self {
+        case .party: return saveFile.partySlot(index)
+        case .box(let box): return saveFile.slot(box: box, slot: index)
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .party: return "Party"
+        case .box(let box): return "Box \(box + 1)"
+        }
+    }
+}
+
 @MainActor
 final class SaveStore: ObservableObject {
     @Published private(set) var saveFile: SaveFile?
-    @Published var selectedBox = 0
+    @Published var selectedLocation: SlotLocation = .party
     @Published var selectedSlot: Int?
     @Published var errorMessage: String?
     private var loadedURL: URL?
@@ -22,9 +48,10 @@ final class SaveStore: ObservableObject {
     func load(from url: URL) {
         do {
             let data = try Data(contentsOf: url)
-            saveFile = try SaveFile(data: data)
+            let newSaveFile = try SaveFile(data: data)
+            saveFile = newSaveFile
             loadedURL = url
-            selectedBox = 0
+            selectedLocation = newSaveFile.partyCount > 0 ? .party : .box(0)
             selectedSlot = nil
         } catch {
             errorMessage = "Couldn't open that file as a Pokémon save: \(error)"

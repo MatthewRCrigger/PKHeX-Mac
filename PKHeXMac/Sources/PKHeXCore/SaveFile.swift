@@ -13,6 +13,7 @@ public final class SaveFile {
     public let boxCount: Int
     public let boxSlotCount: Int
     public let generation: UInt8
+    public var partyCount: Int { Int(pkhex_save_get_party_count(handle)) }
 
     public init(data: Data) throws {
         let handle: Int64 = data.withUnsafeBytes { rawBuffer in
@@ -39,6 +40,16 @@ public final class SaveFile {
 
     public func setSlot(_ pkm: PKM, box: Int, slot: Int) {
         _ = pkhex_save_set_slot(handle, pkm.handle, Int32(box), Int32(slot))
+    }
+
+    public func partySlot(_ index: Int) -> PKM? {
+        let pkmHandle = pkhex_save_get_party_slot(handle, Int32(index))
+        guard pkmHandle != 0 else { return nil }
+        return PKM(handle: pkmHandle)
+    }
+
+    public func setPartySlot(_ pkm: PKM, index: Int) {
+        _ = pkhex_save_set_party_slot(handle, pkm.handle, Int32(index))
     }
 
     /// Serializes the save (with checksums fixed up) back to bytes ready to write to disk.

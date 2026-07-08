@@ -18,6 +18,10 @@ uint8_t pkhex_save_get_generation(int64_t handle);
 int64_t pkhex_save_get_slot(int64_t handle, int32_t box, int32_t slot);
 int32_t pkhex_save_set_slot(int64_t save_handle, int64_t pkm_handle, int32_t box, int32_t slot);
 
+int32_t pkhex_save_get_party_count(int64_t handle);
+int64_t pkhex_save_get_party_slot(int64_t handle, int32_t index);
+int32_t pkhex_save_set_party_slot(int64_t save_handle, int64_t pkm_handle, int32_t index);
+
 /* --- PKM lifecycle & fields --- */
 void pkhex_pkm_close(int64_t handle);
 

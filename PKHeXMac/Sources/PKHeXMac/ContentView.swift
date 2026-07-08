@@ -55,12 +55,17 @@ private struct BoxSidebar: View {
     let saveFile: SaveFile
 
     var body: some View {
-        List(0..<saveFile.boxCount, id: \.self, selection: $store.selectedBox) { box in
-            Text("Box \(box + 1)")
-                .tag(box)
+        List(selection: $store.selectedLocation) {
+            Label("Party (\(saveFile.partyCount))", systemImage: "person.3")
+                .tag(SlotLocation.party)
+            ForEach(0..<saveFile.boxCount, id: \.self) { box in
+                Text("Box \(box + 1)")
+                    .tag(SlotLocation.box(box))
+            }
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 140, ideal: 160)
+        .onChange(of: store.selectedLocation) { _, _ in store.selectedSlot = nil }
     }
 }
 

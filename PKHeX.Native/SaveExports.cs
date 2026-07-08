@@ -82,4 +82,40 @@ public static class SaveExports
         sav.SetBoxSlotAtIndex(pk, box, slot);
         return 0;
     }
+
+    /// <summary>
+    /// Number of Pokemon currently in the party (0-6).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_party_count")]
+    public static int SaveGetPartyCount(long handle) => HandleTable.Get<SaveFile>(handle)?.PartyCount ?? -1;
+
+    /// <summary>
+    /// Returns a handle to the PKM at the given party index (0-5), or 0 if the slot is empty
+    /// or out of range. The returned PKM handle must be released with pkm_close.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_party_slot")]
+    public static long SaveGetPartySlot(long handle, int index)
+    {
+        var sav = HandleTable.Get<SaveFile>(handle);
+        if (sav is null || index < 0 || index >= sav.PartyCount)
+            return 0;
+
+        var pk = sav.GetPartySlotAtIndex(index);
+        return pk.Species == 0 ? 0 : HandleTable.Add(pk);
+    }
+
+    /// <summary>
+    /// Writes a (possibly modified) PKM back into the given party index (0-5).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_set_party_slot")]
+    public static int SaveSetPartySlot(long saveHandle, long pkmHandle, int index)
+    {
+        var sav = HandleTable.Get<SaveFile>(saveHandle);
+        var pk = HandleTable.Get<PKM>(pkmHandle);
+        if (sav is null || pk is null || index < 0 || index >= sav.PartyCount)
+            return -1;
+
+        sav.SetPartySlotAtIndex(pk, index);
+        return 0;
+    }
 }

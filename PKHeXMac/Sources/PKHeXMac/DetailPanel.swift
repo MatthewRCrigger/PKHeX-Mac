@@ -7,7 +7,7 @@ struct DetailPanel: View {
 
     private var pkm: PKM? {
         guard let slot = store.selectedSlot else { return nil }
-        return saveFile.slot(box: store.selectedBox, slot: slot)
+        return store.selectedLocation.slot(slot, in: saveFile)
     }
 
     var body: some View {

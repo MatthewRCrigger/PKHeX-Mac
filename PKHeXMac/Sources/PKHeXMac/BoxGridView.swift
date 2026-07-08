@@ -10,9 +10,9 @@ struct BoxGridView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(0..<saveFile.boxSlotCount, id: \.self) { slot in
+                ForEach(0..<store.selectedLocation.slotCount(in: saveFile), id: \.self) { slot in
                     SlotTile(
-                        pkm: saveFile.slot(box: store.selectedBox, slot: slot),
+                        pkm: store.selectedLocation.slot(slot, in: saveFile),
                         isSelected: store.selectedSlot == slot
                     )
                     .onTapGesture { store.selectedSlot = slot }
@@ -21,8 +21,7 @@ struct BoxGridView: View {
             .padding(12)
         }
         .background(.background)
-        .navigationTitle("Box \(store.selectedBox + 1)")
-        .onChange(of: store.selectedBox) { _, _ in store.selectedSlot = nil }
+        .navigationTitle(store.selectedLocation.title)
     }
 }
 

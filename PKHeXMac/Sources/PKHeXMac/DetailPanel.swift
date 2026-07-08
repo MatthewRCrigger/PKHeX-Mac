@@ -21,6 +21,7 @@ struct DetailPanel: View {
                         movesSection(for: pkm)
                     }
                     .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
                 Text("Select a Pokémon")
@@ -37,9 +38,9 @@ struct DetailPanel: View {
             SpriteImage(fileName: pkm.spriteFileName)
                 .frame(width: 68, height: 56)
             VStack(alignment: .leading) {
-                Text("Species #\(pkm.species)")
+                Text(pkm.speciesName)
                     .font(.title3.weight(.semibold))
-                Text("Level \(pkm.level)")
+                Text("Level \(pkm.level) · \(pkm.natureName)")
                     .foregroundStyle(.secondary)
             }
         }
@@ -72,7 +73,16 @@ struct DetailPanel: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Moves").font(.headline)
             ForEach(0..<4, id: \.self) { index in
-                Text(pkm.move(index) == 0 ? "—" : "Move #\(pkm.move(index))")
+                let move = pkm.move(index)
+                HStack {
+                    Text(move == 0 ? "—" : PokemonNames.move(move))
+                        .frame(width: 140, alignment: .leading)
+                    if move != 0 {
+                        Text("PP \(pkm.movePP(index))/\(pkm.movePPMax(index))")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .font(.system(.body, design: .monospaced))
             }
         }
     }

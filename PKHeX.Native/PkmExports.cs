@@ -162,9 +162,80 @@ public static class PkmExports
 
         var formarg = pk is IFormArgument f ? f.FormArgument : 0;
         var name = SpriteFileName.GetSpriteFileName(pk.Species, pk.Form, pk.Gender, formarg, pk.Context, pk.IsShiny);
-        if (outBuffer is null || outBufferLength < name.Length)
-            return name.Length;
-        name.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
-        return name.Length;
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of a species ID into <paramref name="outBuffer"/>.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_species_get_name")]
+    public static unsafe int SpeciesGetName(ushort species, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.specieslist;
+        var name = species < list.Length ? list[species] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of a move ID into <paramref name="outBuffer"/>.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_move_get_name")]
+    public static unsafe int MoveGetName(ushort move, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.movelist;
+        var name = move < list.Length ? list[move] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of a Nature value into <paramref name="outBuffer"/>.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_nature_get_name")]
+    public static unsafe int NatureGetName(byte nature, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.natures;
+        var name = nature < list.Length ? list[nature] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Current PP remaining in the given move slot (0-3).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move_pp")]
+    public static int PkmGetMovePP(long handle, int index)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        return index switch { 0 => pk.Move1_PP, 1 => pk.Move2_PP, 2 => pk.Move3_PP, 3 => pk.Move4_PP, _ => -1 };
+    }
+
+    /// <summary>
+    /// Maximum PP (accounting for PP Ups) for the move currently in the given slot (0-3).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move_pp_max")]
+    public static int PkmGetMovePPMax(long handle, int index)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        var (move, ppUps) = index switch
+        {
+            0 => (pk.Move1, pk.Move1_PPUps),
+            1 => (pk.Move2, pk.Move2_PPUps),
+            2 => (pk.Move3, pk.Move3_PPUps),
+            3 => (pk.Move4, pk.Move4_PPUps),
+            _ => ((ushort)0, 0),
+        };
+        return move == 0 ? 0 : pk.GetMovePP(move, ppUps);
+    }
+
+    private static unsafe int WriteString(string value, char* outBuffer, int outBufferLength)
+    {
+        if (outBuffer is null || outBufferLength < value.Length)
+            return value.Length;
+        value.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
+        return value.Length;
     }
 }

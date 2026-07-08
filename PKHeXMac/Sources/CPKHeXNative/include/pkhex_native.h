@@ -48,11 +48,19 @@ void pkhex_pkm_set_iv(int64_t handle, int32_t stat, int32_t value);
 int32_t pkhex_pkm_get_ev(int64_t handle, int32_t stat);
 void pkhex_pkm_set_ev(int64_t handle, int32_t stat, int32_t value);
 
+int32_t pkhex_pkm_get_move_pp(int64_t handle, int32_t index);
+int32_t pkhex_pkm_get_move_pp_max(int64_t handle, int32_t index);
+
 /* UTF-16 code units; call once with NULL buffer to size, again to fill. */
 int32_t pkhex_pkm_get_nickname(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 void pkhex_pkm_set_nickname(int64_t handle, const uint16_t *name, int32_t length);
 
 int32_t pkhex_pkm_get_sprite_file_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
+
+/* --- Name lookups (current display language; UTF-16, size-then-fill like above) --- */
+int32_t pkhex_species_get_name(uint16_t species, uint16_t *out_buffer, int32_t out_buffer_length);
+int32_t pkhex_move_get_name(uint16_t move, uint16_t *out_buffer, int32_t out_buffer_length);
+int32_t pkhex_nature_get_name(uint8_t nature, uint16_t *out_buffer, int32_t out_buffer_length);
 
 /* --- Legality --- */
 int32_t pkhex_pkm_is_legal(int64_t handle);

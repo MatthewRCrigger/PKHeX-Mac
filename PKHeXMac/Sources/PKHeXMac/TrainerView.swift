@@ -18,7 +18,7 @@ struct TrainerView: View {
                 ) { newValue in
                     saveFile.otName = newValue
                     store.markDirty()
-                    refreshToken += 1
+                    refreshForm()
                 }
                 Picker("Gender", selection: $genderIndex) {
                     Text("Male").tag(0)
@@ -35,7 +35,7 @@ struct TrainerView: View {
                 ) { newValue in
                     saveFile.tid = UInt16(newValue)
                     store.markDirty()
-                    refreshToken += 1
+                    refreshForm()
                 }
                 EditableNumberField(
                     label: "Secret ID",
@@ -44,7 +44,7 @@ struct TrainerView: View {
                 ) { newValue in
                     saveFile.sid = UInt16(newValue)
                     store.markDirty()
-                    refreshToken += 1
+                    refreshForm()
                 }
             }
             Section("Progress") {
@@ -55,7 +55,7 @@ struct TrainerView: View {
                 ) { newValue in
                     saveFile.money = UInt32(newValue)
                     store.markDirty()
-                    refreshToken += 1
+                    refreshForm()
                 }
                 LabeledContent("Played Time", value: "\(saveFile.playedHours)h \(saveFile.playedMinutes)m")
                 LabeledContent("Generation", value: "Gen \(saveFile.generation)")
@@ -66,5 +66,15 @@ struct TrainerView: View {
         .frame(maxWidth: 480)
         .navigationTitle("Trainer")
         .onAppear { genderIndex = Int(saveFile.trainerGender) }
+    }
+
+    /// Remounts the form (via `refreshToken`) so edited fields pick up the new value from
+    /// `saveFile`. Deferred to the next runloop turn so it doesn't race AppKit's focus/click
+    /// teardown of the text field that's still committing — doing it synchronously inside that
+    /// callback can wedge the field's `NSTextView` mid-mouseDown and hang the app.
+    private func refreshForm() {
+        DispatchQueue.main.async {
+            refreshToken += 1
+        }
     }
 }

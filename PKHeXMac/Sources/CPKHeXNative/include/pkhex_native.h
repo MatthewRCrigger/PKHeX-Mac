@@ -101,9 +101,19 @@ int32_t pkhex_bag_commit(int64_t bag_handle, int64_t save_handle);
 int32_t pkhex_bag_get_pouch_count(int64_t handle);
 int32_t pkhex_bag_get_pouch_type(int64_t handle, int32_t pouch_index);
 int32_t pkhex_bag_get_pouch_slot_count(int64_t handle, int32_t pouch_index);
+/* 1 if this pouch has fewer slots than legal items (Gen 1-3 style free-form bag), 0 otherwise. */
+int32_t pkhex_bag_get_pouch_is_cramped(int64_t handle, int32_t pouch_index);
+
+/* The set of item IDs legal for a pouch, for building an "add item" picker. */
+int32_t pkhex_bag_get_pouch_legal_item_count(int64_t handle, int32_t pouch_index);
+int32_t pkhex_bag_get_pouch_legal_item(int64_t handle, int32_t pouch_index, int32_t item_list_index);
 
 int32_t pkhex_bag_get_item_index(int64_t handle, int32_t pouch_index, int32_t slot);
 int32_t pkhex_bag_get_item_count(int64_t handle, int32_t pouch_index, int32_t slot);
 int32_t pkhex_bag_set_item(int64_t handle, int32_t pouch_index, int32_t slot, int32_t item_index, int32_t count);
+
+/* Finds the first empty slot in the pouch and assigns it to item_index/count. Returns the slot
+ * index used, or -1 if the pouch is full. */
+int32_t pkhex_bag_add_item(int64_t handle, int32_t pouch_index, int32_t item_index, int32_t count);
 
 #endif /* PKHEX_NATIVE_H */

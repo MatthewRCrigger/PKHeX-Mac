@@ -35,6 +35,18 @@ public struct Pouch {
     public let type: PouchType
     public let slotCount: Int
 
+    /// True if this pouch has fewer slots than legal items (Gen 1-3's small free-form bags),
+    /// meaning a slot must be freed/found rather than every item always having its own slot.
+    public var isCramped: Bool {
+        pkhex_bag_get_pouch_is_cramped(bagHandle, Int32(index)) == 1
+    }
+
+    /// Item IDs legal to carry in this pouch, for building an "add item" picker.
+    public var legalItems: [Int] {
+        let count = Int(pkhex_bag_get_pouch_legal_item_count(bagHandle, Int32(index)))
+        return (0..<count).map { Int(pkhex_bag_get_pouch_legal_item(bagHandle, Int32(index), Int32($0))) }
+    }
+
     public func itemIndex(_ slot: Int) -> Int {
         Int(pkhex_bag_get_item_index(bagHandle, Int32(index), Int32(slot)))
     }
@@ -46,6 +58,14 @@ public struct Pouch {
     /// Sets the item and quantity for a slot. Pass itemIndex 0 to clear the slot.
     public func setItem(_ slot: Int, itemIndex: Int, count: Int) {
         _ = pkhex_bag_set_item(bagHandle, Int32(index), Int32(slot), Int32(itemIndex), Int32(count))
+    }
+
+    /// Finds the first empty slot and assigns it to the given item/count. Returns the slot index
+    /// used, or nil if the pouch is full.
+    @discardableResult
+    public func addItem(itemIndex: Int, count: Int) -> Int? {
+        let slot = pkhex_bag_add_item(bagHandle, Int32(index), Int32(itemIndex), Int32(count))
+        return slot >= 0 ? Int(slot) : nil
     }
 }
 

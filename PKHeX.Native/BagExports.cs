@@ -61,6 +61,71 @@ public static class BagExports
         return bag.Pouches[pouchIndex].Items.Length;
     }
 
+    /// <summary>
+    /// True if this pouch has fewer slots than legal item IDs (e.g. Gen 1-3's small free-form
+    /// bags), meaning slots must be assigned to whichever items the player is carrying rather
+    /// than having one dedicated slot per possible item.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_get_pouch_is_cramped")]
+    public static int BagGetPouchIsCramped(long handle, int pouchIndex)
+    {
+        var bag = HandleTable.Get<PlayerBag>(handle);
+        if (bag is null || pouchIndex < 0 || pouchIndex >= bag.Pouches.Count)
+            return -1;
+        return bag.Pouches[pouchIndex].IsCramped ? 1 : 0;
+    }
+
+    /// <summary>
+    /// Number of item IDs that are legal to carry in this pouch.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_get_pouch_legal_item_count")]
+    public static int BagGetPouchLegalItemCount(long handle, int pouchIndex)
+    {
+        var bag = HandleTable.Get<PlayerBag>(handle);
+        if (bag is null || pouchIndex < 0 || pouchIndex >= bag.Pouches.Count)
+            return -1;
+        return bag.Pouches[pouchIndex].GetAllItems().Length;
+    }
+
+    /// <summary>
+    /// The item ID at the given index into this pouch's legal-item list (see
+    /// pkhex_bag_get_pouch_legal_item_count).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_get_pouch_legal_item")]
+    public static int BagGetPouchLegalItem(long handle, int pouchIndex, int itemListIndex)
+    {
+        var bag = HandleTable.Get<PlayerBag>(handle);
+        if (bag is null || pouchIndex < 0 || pouchIndex >= bag.Pouches.Count)
+            return -1;
+        var items = bag.Pouches[pouchIndex].GetAllItems();
+        if (itemListIndex < 0 || itemListIndex >= items.Length)
+            return -1;
+        return items[itemListIndex];
+    }
+
+    /// <summary>
+    /// Finds the first empty slot in the pouch and sets it to the given item/count. Returns the
+    /// slot index used, or -1 if the pouch is full or the pouch/item is invalid.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_add_item")]
+    public static int BagAddItem(long handle, int pouchIndex, int itemIndex, int count)
+    {
+        var bag = HandleTable.Get<PlayerBag>(handle);
+        if (bag is null || pouchIndex < 0 || pouchIndex >= bag.Pouches.Count || itemIndex == 0)
+            return -1;
+        var pouch = bag.Pouches[pouchIndex];
+        var items = pouch.Items;
+        for (var slot = 0; slot < items.Length; slot++)
+        {
+            if (items[slot].Index != 0)
+                continue;
+            items[slot].Index = itemIndex;
+            items[slot].Count = count;
+            return slot;
+        }
+        return -1;
+    }
+
     [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_get_item_index")]
     public static int BagGetItemIndex(long handle, int pouchIndex, int slot)
     {

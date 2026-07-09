@@ -54,6 +54,23 @@ public final class PKM {
         (0..<4).map { move($0) }
     }
 
+    /// Move IDs this Pokemon can currently legally learn (level-up, egg, TM/tutor, and moves from
+    /// its recorded encounter/relearn set), for building a move picker. Does not include move ID 0
+    /// ("None"); add that yourself as a placeholder for clearing a slot. Falls back to every move
+    /// up to `maxMoveID` if legality analysis found no legal moves (e.g. malformed data).
+    public var legalMoves: [UInt16] {
+        let count = Int(pkhex_pkm_get_legal_move_count(handle))
+        guard count > 0 else {
+            return maxMoveID > 0 ? Array(1...maxMoveID) : []
+        }
+        return (0..<count).map { pkhex_pkm_get_legal_move(handle, Int32($0)) }
+    }
+
+    /// Highest move ID valid for this Pokemon's format.
+    public var maxMoveID: UInt16 {
+        pkhex_pkm_get_max_move_id(handle)
+    }
+
     public func iv(_ stat: Stat) -> Int32 {
         pkhex_pkm_get_iv(handle, stat.rawValue)
     }

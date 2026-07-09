@@ -62,17 +62,22 @@ public static class PkmExports
         return index switch { 0 => pk.Move1, 1 => pk.Move2, 2 => pk.Move3, 3 => pk.Move4, _ => 0 };
     }
 
+    /// <summary>
+    /// Sets the move in the given slot (0-3) and resets its PP to full (PP Ups cleared), matching
+    /// how PKHeX's own editors behave when a move is changed. Pass move 0 to clear the slot.
+    /// </summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_move")]
     public static void PkmSetMove(long handle, int index, ushort move)
     {
         if (HandleTable.Get<PKM>(handle) is not { } pk)
             return;
+        var pp = move == 0 ? 0 : pk.GetMovePP(move, 0);
         switch (index)
         {
-            case 0: pk.Move1 = move; break;
-            case 1: pk.Move2 = move; break;
-            case 2: pk.Move3 = move; break;
-            case 3: pk.Move4 = move; break;
+            case 0: pk.Move1 = move; pk.Move1_PPUps = 0; pk.Move1_PP = pp; break;
+            case 1: pk.Move2 = move; pk.Move2_PPUps = 0; pk.Move2_PP = pp; break;
+            case 2: pk.Move3 = move; pk.Move3_PPUps = 0; pk.Move3_PP = pp; break;
+            case 3: pk.Move4 = move; pk.Move4_PPUps = 0; pk.Move4_PP = pp; break;
         }
     }
 

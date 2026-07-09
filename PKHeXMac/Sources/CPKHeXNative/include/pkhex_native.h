@@ -69,6 +69,13 @@ int32_t pkhex_item_get_name(uint16_t item, uint16_t *out_buffer, int32_t out_buf
 int32_t pkhex_pkm_is_legal(int64_t handle);
 int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length, uint8_t verbose);
 
+/* Highest move ID valid for this PKM's format, for a fallback "all moves" picker. */
+uint16_t pkhex_pkm_get_max_move_id(int64_t handle);
+
+/* The move IDs this PKM can currently legally learn, for building a move picker. */
+int32_t pkhex_pkm_get_legal_move_count(int64_t handle);
+uint16_t pkhex_pkm_get_legal_move(int64_t handle, int32_t move_list_index);
+
 /* --- Trainer info --- */
 int32_t pkhex_save_get_ot_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 void pkhex_save_set_ot_name(int64_t handle, const uint16_t *name, int32_t length);

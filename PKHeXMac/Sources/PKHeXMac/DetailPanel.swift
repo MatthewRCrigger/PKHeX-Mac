@@ -12,6 +12,19 @@ struct DetailPanel: View {
         return location.slot(slot, in: saveFile)
     }
 
+    /// Writes a mutated `pkm` back into its slot, since each `PKM` handle is a snapshot
+    /// deserialized fresh from the save's byte buffer — edits made on it are otherwise discarded
+    /// the next time this panel re-reads the slot (e.g. on the next SwiftUI re-render).
+    private func commit(_ pkm: PKM) {
+        guard case .slots(let location) = store.selectedSidebarItem, let slot = store.selectedSlot else { return }
+        switch location {
+        case .party: saveFile.setPartySlot(pkm, index: slot)
+        case .box(let box): saveFile.setSlot(pkm, box: box, slot: slot)
+        }
+        store.markDirty()
+        refreshToken += 1
+    }
+
     var body: some View {
         Group {
             if let pkm {
@@ -46,8 +59,7 @@ struct DetailPanel: View {
                     .font(.title3.weight(.semibold))
                 EditableNumberField(label: "Level", value: Int(pkm.level), range: 1...100) { newValue in
                     pkm.level = UInt8(newValue)
-                    store.markDirty()
-                    refreshToken += 1
+                    commit(pkm)
                 }
                 Text(pkm.natureName)
                     .foregroundStyle(.secondary)
@@ -63,8 +75,7 @@ struct DetailPanel: View {
             maxLength: pkm.maxNicknameLength
         ) { newValue in
             pkm.nickname = newValue
-            store.markDirty()
-            refreshToken += 1
+            commit(pkm)
         }
     }
 
@@ -84,14 +95,12 @@ struct DetailPanel: View {
                     Text(label(for: stat)).frame(width: 90, alignment: .leading)
                     StatValueField(prefix: "IV", value: Int(pkm.iv(stat)), range: 0...31) { newValue in
                         pkm.setIV(stat, to: Int32(newValue))
-                        store.markDirty()
-                        refreshToken += 1
+                        commit(pkm)
                     }
                     .frame(width: 90, alignment: .leading)
                     StatValueField(prefix: "EV", value: Int(pkm.ev(stat)), range: 0...252) { newValue in
                         pkm.setEV(stat, to: Int32(newValue))
-                        store.markDirty()
-                        refreshToken += 1
+                        commit(pkm)
                     }
                 }
                 .font(.system(.body, design: .monospaced))
@@ -101,13 +110,26 @@ struct DetailPanel: View {
 
     @ViewBuilder
     private func movesSection(for pkm: PKM) -> some View {
+        let options = moveOptions(for: pkm)
         VStack(alignment: .leading, spacing: 6) {
             Text("Moves").font(.headline)
             ForEach(0..<4, id: \.self) { index in
                 let move = pkm.move(index)
                 HStack {
-                    Text(move == 0 ? "—" : PokemonNames.move(move))
-                        .frame(width: 140, alignment: .leading)
+                    Picker("", selection: Binding(
+                        get: { move },
+                        set: { newValue in
+                            guard newValue != move else { return }
+                            pkm.setMove(index, to: newValue)
+                            commit(pkm)
+                        }
+                    )) {
+                        ForEach(options, id: \.self) { moveID in
+                            Text(moveID == 0 ? "—" : PokemonNames.move(moveID)).tag(moveID)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 160, alignment: .leading)
                     if move != 0 {
                         Text("PP \(pkm.movePP(index))/\(pkm.movePPMax(index))")
                             .foregroundStyle(.secondary)
@@ -116,6 +138,15 @@ struct DetailPanel: View {
                 .font(.system(.body, design: .monospaced))
             }
         }
+    }
+
+    /// Legal moves for `pkm`, plus its current 4 moves and a "—" placeholder so the picker always
+    /// contains whatever is currently equipped even if legality analysis wouldn't otherwise permit it.
+    private func moveOptions(for pkm: PKM) -> [UInt16] {
+        var options = Set(pkm.legalMoves)
+        options.formUnion(pkm.moves)
+        options.insert(0)
+        return options.sorted { $0 == 0 ? true : $1 == 0 ? false : PokemonNames.move($0) < PokemonNames.move($1) }
     }
 
     private func label(for stat: Stat) -> String {

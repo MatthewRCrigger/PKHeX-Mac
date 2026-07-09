@@ -24,7 +24,6 @@ struct BagView: View {
     @EnvironmentObject private var store: SaveStore
     let saveFile: SaveFile
     @StateObject private var bagStore = BagStore()
-    @State private var isPresentingAddItem = false
     @State private var refreshToken = 0
 
     var body: some View {
@@ -53,52 +52,61 @@ struct BagView: View {
             }
         }
         .navigationTitle("Bag")
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    isPresentingAddItem = true
-                } label: {
-                    Label("Add Item", systemImage: "plus")
-                }
-                .disabled(bagStore.bag == nil)
-            }
-        }
-        .sheet(isPresented: $isPresentingAddItem) {
-            if let bag = bagStore.bag, bagStore.selectedPouchIndex < bag.pouches.count {
-                AddItemSheet(pouch: bag.pouches[bagStore.selectedPouchIndex]) {
-                    bagStore.commit()
-                    store.markDirty()
-                    refreshToken += 1
-                    isPresentingAddItem = false
-                } onCancel: {
-                    isPresentingAddItem = false
-                }
-            }
-        }
         .onAppear { bagStore.load(from: saveFile) }
     }
 }
 
+/// Lists a pouch's occupied slots, in order, followed by an "Add Item" row. Slots are kept
+/// contiguous from index 0 — there are no gaps/blank slots to show, so removing an item shifts
+/// every following item down one slot rather than leaving a hole behind.
 private struct PouchView: View {
     let pouch: Pouch
     let onChange: () -> Void
 
+    private var legalItems: [(id: Int, name: String)] {
+        pouch.legalItems
+            .map { (id: $0, name: PokemonNames.item(UInt16($0))) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 1) {
-                ForEach(0..<pouch.slotCount, id: \.self) { slot in
-                    ItemRow(pouch: pouch, slot: slot, onChange: onChange)
+                ForEach(0..<pouch.occupiedSlotCount, id: \.self) { slot in
+                    ItemRow(
+                        pouch: pouch,
+                        slot: slot,
+                        legalItems: legalItems,
+                        onChange: onChange,
+                        onDelete: {
+                            pouch.removeItem(at: slot)
+                            onChange()
+                        }
+                    )
                 }
+
+                AddItemRow(
+                    rowIndex: pouch.occupiedSlotCount,
+                    legalItems: legalItems,
+                    onAdd: { itemIndex in
+                        pouch.addItem(itemIndex: itemIndex, count: 1)
+                        onChange()
+                    }
+                )
             }
         }
         .background(.background)
     }
 }
 
+/// A row for an occupied slot: an inline dropdown bound to the slot's current item (changing the
+/// selection swaps the item in place) plus a quantity field and delete button.
 private struct ItemRow: View {
     let pouch: Pouch
     let slot: Int
+    let legalItems: [(id: Int, name: String)]
     let onChange: () -> Void
+    let onDelete: () -> Void
 
     @State private var countText: String = ""
 
@@ -106,28 +114,35 @@ private struct ItemRow: View {
 
     var body: some View {
         HStack {
-            Text(itemIndex == 0 ? "—" : PokemonNames.item(UInt16(itemIndex)))
-                .frame(minWidth: 160, alignment: .leading)
-                .foregroundStyle(itemIndex == 0 ? .secondary : .primary)
-            Spacer()
-            if itemIndex != 0 {
-                TextField("Qty", text: $countText)
-                    .frame(width: 70)
-                    .multilineTextAlignment(.trailing)
-                    .onSubmit {
-                        if let count = Int(countText) {
-                            pouch.setItem(slot, itemIndex: itemIndex, count: count)
-                            onChange()
-                        }
-                    }
-                Button(role: .destructive) {
-                    pouch.setItem(slot, itemIndex: 0, count: 0)
+            Picker("", selection: Binding(
+                get: { itemIndex },
+                set: { newIndex in
+                    pouch.setItem(slot, itemIndex: newIndex, count: pouch.itemCount(slot))
                     onChange()
-                } label: {
-                    Image(systemName: "trash")
                 }
-                .buttonStyle(.borderless)
+            )) {
+                ForEach(legalItems, id: \.id) { item in
+                    Text(item.name).tag(item.id)
+                }
             }
+            .labelsHidden()
+            .frame(minWidth: 160, alignment: .leading)
+
+            Spacer()
+
+            TextField("Qty", text: $countText)
+                .frame(width: 70)
+                .multilineTextAlignment(.trailing)
+                .onSubmit {
+                    if let count = Int(countText) {
+                        pouch.setItem(slot, itemIndex: itemIndex, count: count)
+                        onChange()
+                    }
+                }
+            Button(role: .destructive, action: onDelete) {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -136,57 +151,40 @@ private struct ItemRow: View {
     }
 }
 
-/// Sheet for adding a new item to a pouch: search the pouch's legal item list, pick one, set a
-/// starting quantity. Works the same whether the pouch is a Gen 1-3 style free-form bag (few
-/// slots, many legal items) or a Gen 4+ style one-slot-per-item bag — either way this just finds
-/// the pouch's first empty slot and assigns it.
-private struct AddItemSheet: View {
-    let pouch: Pouch
-    let onAdd: () -> Void
-    let onCancel: () -> Void
+/// Trailing row appended after every occupied slot: an inline dropdown with no current selection
+/// ("Add Item…" placeholder). Picking an item appends it straight into the pouch's first empty
+/// slot — no extra confirmation step.
+private struct AddItemRow: View {
+    let rowIndex: Int
+    let legalItems: [(id: Int, name: String)]
+    let onAdd: (Int) -> Void
 
-    @State private var searchText = ""
-    @State private var selectedItemIndex: Int?
-    @State private var countText = "1"
-
-    private var filteredItems: [(id: Int, name: String)] {
-        let all = pouch.legalItems.map { (id: $0, name: PokemonNames.item(UInt16($0))) }
-        guard !searchText.isEmpty else { return all }
-        return all.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
+    @State private var selection: Int?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Text("Add to \(pouch.type.displayName)")
-                .font(.headline)
-                .padding()
-
-            TextField("Search items…", text: $searchText)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-            List(filteredItems, id: \.id, selection: $selectedItemIndex) { item in
-                Text(item.name).tag(item.id)
-            }
-            .frame(minHeight: 240)
-
-            HStack {
-                Text("Quantity")
-                TextField("Qty", text: $countText)
-                    .frame(width: 70)
-                Spacer()
-                Button("Cancel", action: onCancel)
-                Button("Add") {
-                    guard let selectedItemIndex, let count = Int(countText) else { return }
-                    pouch.addItem(itemIndex: selectedItemIndex, count: count)
-                    onAdd()
+        HStack {
+            Picker("", selection: Binding(
+                get: { selection },
+                set: { newIndex in
+                    if let newIndex {
+                        onAdd(newIndex)
+                    }
+                    selection = nil
                 }
-                .keyboardShortcut(.defaultAction)
-                .disabled(selectedItemIndex == nil || Int(countText) == nil)
+            )) {
+                Text("Add Item…").tag(Int?.none)
+                ForEach(legalItems, id: \.id) { item in
+                    Text(item.name).tag(Int?.some(item.id))
+                }
             }
-            .padding()
+            .labelsHidden()
+            .frame(minWidth: 160, alignment: .leading)
+            .foregroundStyle(.secondary)
+
+            Spacer()
         }
-        .frame(width: 360, height: 420)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(rowIndex.isMultiple(of: 2) ? Color.gray.opacity(0.05) : Color.clear)
     }
 }

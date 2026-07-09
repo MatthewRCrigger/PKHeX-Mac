@@ -67,6 +67,28 @@ public struct Pouch {
         let slot = pkhex_bag_add_item(bagHandle, Int32(index), Int32(itemIndex), Int32(count))
         return slot >= 0 ? Int(slot) : nil
     }
+
+    /// Removes the item at `slot` and shifts every following occupied slot down by one, so the
+    /// pouch's occupied slots stay contiguous from index 0 with no gap left behind.
+    public func removeItem(at slot: Int) {
+        var write = slot
+        for read in (slot + 1)..<slotCount {
+            let index = itemIndex(read)
+            if index == 0 { break }
+            setItem(write, itemIndex: index, count: itemCount(read))
+            write += 1
+        }
+        setItem(write, itemIndex: 0, count: 0)
+    }
+
+    /// Number of occupied slots, assuming occupied slots are packed contiguously from index 0.
+    public var occupiedSlotCount: Int {
+        var count = 0
+        while count < slotCount, itemIndex(count) != 0 {
+            count += 1
+        }
+        return count
+    }
 }
 
 /// A snapshot of a save's inventory. Edits are made on this object and must be committed back

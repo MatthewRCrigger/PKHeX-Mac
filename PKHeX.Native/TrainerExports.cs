@@ -22,6 +22,12 @@ public static class TrainerExports
         sav.OT = new string(new ReadOnlySpan<char>(name, length));
     }
 
+    /// <summary>
+    /// Maximum OT name length (in characters) for the loaded save's generation/language.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_max_ot_name_length")]
+    public static int SaveGetMaxOTNameLength(long handle) => HandleTable.Get<SaveFile>(handle)?.MaxStringLengthTrainer ?? 0;
+
     [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_tid")]
     public static ushort SaveGetTID(long handle) => HandleTable.Get<SaveFile>(handle)?.TID16 ?? 0;
 

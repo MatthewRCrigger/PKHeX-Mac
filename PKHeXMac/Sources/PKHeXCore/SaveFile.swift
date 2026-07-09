@@ -20,6 +20,9 @@ public final class SaveFile {
         set { writeNativeString(newValue) { pkhex_save_set_ot_name(handle, $0, $1) } }
     }
 
+    /// Maximum OT name length for this save's generation/language.
+    public var maxOTNameLength: Int { Int(pkhex_save_get_max_ot_name_length(handle)) }
+
     public var tid: UInt16 {
         get { pkhex_save_get_tid(handle) }
         set { pkhex_save_set_tid(handle, newValue) }

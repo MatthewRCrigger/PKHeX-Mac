@@ -4,17 +4,20 @@ import SwiftUI
 struct TrainerView: View {
     let saveFile: SaveFile
 
-    @State private var otName: String = ""
-    @State private var tid: String = ""
-    @State private var sid: String = ""
-    @State private var money: String = ""
     @State private var genderIndex = 0
+    @State private var refreshToken = 0
 
     var body: some View {
         Form {
             Section("Trainer") {
-                TextField("OT Name", text: $otName)
-                    .onSubmit { saveFile.otName = otName }
+                EditableTextField(
+                    "OT Name",
+                    value: saveFile.otName,
+                    maxLength: saveFile.maxOTNameLength
+                ) { newValue in
+                    saveFile.otName = newValue
+                    refreshToken += 1
+                }
                 Picker("Gender", selection: $genderIndex) {
                     Text("Male").tag(0)
                     Text("Female").tag(1)
@@ -22,39 +25,40 @@ struct TrainerView: View {
                 .onChange(of: genderIndex) { _, newValue in
                     saveFile.trainerGender = UInt8(newValue)
                 }
-                TextField("Trainer ID", text: $tid)
-                    .onSubmit { commitID() }
-                TextField("Secret ID", text: $sid)
-                    .onSubmit { commitID() }
+                EditableNumberField(
+                    label: "Trainer ID",
+                    value: Int(saveFile.tid),
+                    range: 0...65535
+                ) { newValue in
+                    saveFile.tid = UInt16(newValue)
+                    refreshToken += 1
+                }
+                EditableNumberField(
+                    label: "Secret ID",
+                    value: Int(saveFile.sid),
+                    range: 0...65535
+                ) { newValue in
+                    saveFile.sid = UInt16(newValue)
+                    refreshToken += 1
+                }
             }
             Section("Progress") {
-                TextField("Money", text: $money)
-                    .onSubmit { commitMoney() }
+                EditableNumberField(
+                    label: "Money",
+                    value: Int(saveFile.money),
+                    range: 0...saveFile.maxMoney
+                ) { newValue in
+                    saveFile.money = UInt32(newValue)
+                    refreshToken += 1
+                }
                 LabeledContent("Played Time", value: "\(saveFile.playedHours)h \(saveFile.playedMinutes)m")
                 LabeledContent("Generation", value: "Gen \(saveFile.generation)")
             }
         }
+        .id(refreshToken)
         .formStyle(.grouped)
         .frame(maxWidth: 480)
         .navigationTitle("Trainer")
-        .onAppear(perform: reload)
-    }
-
-    private func reload() {
-        otName = saveFile.otName
-        tid = String(saveFile.tid)
-        sid = String(saveFile.sid)
-        money = String(saveFile.money)
-        genderIndex = Int(saveFile.trainerGender)
-    }
-
-    private func commitID() {
-        if let value = UInt16(tid) { saveFile.tid = value }
-        if let value = UInt16(sid) { saveFile.sid = value }
-    }
-
-    private func commitMoney() {
-        guard let value = UInt32(money) else { return }
-        saveFile.money = min(value, UInt32(saveFile.maxMoney))
+        .onAppear { genderIndex = Int(saveFile.trainerGender) }
     }
 }

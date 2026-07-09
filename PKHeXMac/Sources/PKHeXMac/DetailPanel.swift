@@ -5,6 +5,8 @@ struct DetailPanel: View {
     @EnvironmentObject private var store: SaveStore
     let saveFile: SaveFile
 
+    @State private var refreshToken = 0
+
     private var pkm: PKM? {
         guard case .slots(let location) = store.selectedSidebarItem, let slot = store.selectedSlot else { return nil }
         return location.slot(slot, in: saveFile)
@@ -16,6 +18,7 @@ struct DetailPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         header(for: pkm)
+                        nicknameField(for: pkm)
                         legalityBadge(for: pkm)
                         statsSection(for: pkm)
                         movesSection(for: pkm)
@@ -23,6 +26,7 @@ struct DetailPanel: View {
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .id(refreshToken)
             } else {
                 Text("Select a Pokémon")
                     .foregroundStyle(.secondary)
@@ -37,12 +41,28 @@ struct DetailPanel: View {
         HStack(spacing: 12) {
             SpriteImage(fileName: pkm.spriteFileName)
                 .frame(width: 68, height: 56)
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(pkm.speciesName)
                     .font(.title3.weight(.semibold))
-                Text("Level \(pkm.level) · \(pkm.natureName)")
+                EditableNumberField(label: "Level", value: Int(pkm.level), range: 1...100) { newValue in
+                    pkm.level = UInt8(newValue)
+                    refreshToken += 1
+                }
+                Text(pkm.natureName)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func nicknameField(for pkm: PKM) -> some View {
+        EditableTextField(
+            "Nickname",
+            value: pkm.nickname,
+            maxLength: pkm.maxNicknameLength
+        ) { newValue in
+            pkm.nickname = newValue
+            refreshToken += 1
         }
     }
 
@@ -60,8 +80,15 @@ struct DetailPanel: View {
             ForEach(Stat.allCases, id: \.self) { stat in
                 HStack {
                     Text(label(for: stat)).frame(width: 90, alignment: .leading)
-                    Text("IV \(pkm.iv(stat))").frame(width: 60, alignment: .leading)
-                    Text("EV \(pkm.ev(stat))")
+                    StatValueField(prefix: "IV", value: Int(pkm.iv(stat)), range: 0...31) { newValue in
+                        pkm.setIV(stat, to: Int32(newValue))
+                        refreshToken += 1
+                    }
+                    .frame(width: 90, alignment: .leading)
+                    StatValueField(prefix: "EV", value: Int(pkm.ev(stat)), range: 0...252) { newValue in
+                        pkm.setEV(stat, to: Int32(newValue))
+                        refreshToken += 1
+                    }
                 }
                 .font(.system(.body, design: .monospaced))
             }

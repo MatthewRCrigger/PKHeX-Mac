@@ -150,6 +150,12 @@ public static class PkmExports
     }
 
     /// <summary>
+    /// Maximum nickname length (in characters) for this PKM's generation/language.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_max_nickname_length")]
+    public static int PkmGetMaxNicknameLength(long handle) => HandleTable.Get<PKM>(handle)?.MaxStringLengthNickname ?? 0;
+
+    /// <summary>
     /// Writes the base sprite file name (without extension, e.g. "b_25-1s") for this PKM's
     /// current species/form/gender/shininess into <paramref name="outBuffer"/> (length in chars).
     /// Returns the required length in chars; call once with null to size, again to fill.

@@ -57,6 +57,8 @@ void pkhex_pkm_set_nickname(int64_t handle, const uint16_t *name, int32_t length
 
 int32_t pkhex_pkm_get_sprite_file_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 
+int32_t pkhex_pkm_get_max_nickname_length(int64_t handle);
+
 /* --- Name lookups (current display language; UTF-16, size-then-fill like above) --- */
 int32_t pkhex_species_get_name(uint16_t species, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_move_get_name(uint16_t move, uint16_t *out_buffer, int32_t out_buffer_length);
@@ -70,6 +72,7 @@ int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int3
 /* --- Trainer info --- */
 int32_t pkhex_save_get_ot_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 void pkhex_save_set_ot_name(int64_t handle, const uint16_t *name, int32_t length);
+int32_t pkhex_save_get_max_ot_name_length(int64_t handle);
 
 uint16_t pkhex_save_get_tid(int64_t handle);
 void pkhex_save_set_tid(int64_t handle, uint16_t tid);

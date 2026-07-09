@@ -4,3 +4,4 @@ obj/
 *.sav
 *.dsv
 *.sav.bak
+/AppIcon.icns

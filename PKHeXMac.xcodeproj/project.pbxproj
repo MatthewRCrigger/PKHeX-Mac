@@ -13,6 +13,7 @@
 		334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */; };
 		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
 		54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965F0E77C9A38612EA7511CD /* TrainerView.swift */; };
+		70CA7B2485041D7FEFC95D65 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */; };
 		9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1A5A4853A160F141612244 /* BoxGridView.swift */; };
 		9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
 		A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -60,6 +61,7 @@
 		51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Native.dylib; path = "PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib"; sourceTree = "<group>"; };
 		5EA318ED5D175D4BD77340DB /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
 		5EE0AA02E3445D8A02271413 /* SaveFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveFile.swift; sourceTree = "<group>"; };
+		80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableField.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
 		965F0E77C9A38612EA7511CD /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 				4A1A5A4853A160F141612244 /* BoxGridView.swift */,
 				042BD126A70CAEFE24C3C7B8 /* ContentView.swift */,
 				D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */,
+				80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */,
 				2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */,
 				8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */,
 				965F0E77C9A38612EA7511CD /* TrainerView.swift */,
@@ -269,6 +272,7 @@
 				9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */,
 				2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */,
 				11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */,
+				70CA7B2485041D7FEFC95D65 /* EditableField.swift in Sources */,
 				E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */,
 				334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */,
 				54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */,

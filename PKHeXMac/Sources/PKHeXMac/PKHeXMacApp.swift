@@ -18,7 +18,7 @@ struct PKHeXMacApp: App {
             CommandGroup(after: .saveItem) {
                 Button("Save") { store.save() }
                     .keyboardShortcut("s", modifiers: .command)
-                    .disabled(store.saveFile == nil)
+                    .disabled(!store.hasUnsavedChanges)
             }
         }
     }

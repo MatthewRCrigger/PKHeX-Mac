@@ -2,6 +2,7 @@ import PKHeXCore
 import SwiftUI
 
 struct TrainerView: View {
+    @EnvironmentObject private var store: SaveStore
     let saveFile: SaveFile
 
     @State private var genderIndex = 0
@@ -16,6 +17,7 @@ struct TrainerView: View {
                     maxLength: saveFile.maxOTNameLength
                 ) { newValue in
                     saveFile.otName = newValue
+                    store.markDirty()
                     refreshToken += 1
                 }
                 Picker("Gender", selection: $genderIndex) {
@@ -24,6 +26,7 @@ struct TrainerView: View {
                 }
                 .onChange(of: genderIndex) { _, newValue in
                     saveFile.trainerGender = UInt8(newValue)
+                    store.markDirty()
                 }
                 EditableNumberField(
                     label: "Trainer ID",
@@ -31,6 +34,7 @@ struct TrainerView: View {
                     range: 0...65535
                 ) { newValue in
                     saveFile.tid = UInt16(newValue)
+                    store.markDirty()
                     refreshToken += 1
                 }
                 EditableNumberField(
@@ -39,6 +43,7 @@ struct TrainerView: View {
                     range: 0...65535
                 ) { newValue in
                     saveFile.sid = UInt16(newValue)
+                    store.markDirty()
                     refreshToken += 1
                 }
             }
@@ -49,6 +54,7 @@ struct TrainerView: View {
                     range: 0...saveFile.maxMoney
                 ) { newValue in
                     saveFile.money = UInt32(newValue)
+                    store.markDirty()
                     refreshToken += 1
                 }
                 LabeledContent("Played Time", value: "\(saveFile.playedHours)h \(saveFile.playedMinutes)m")

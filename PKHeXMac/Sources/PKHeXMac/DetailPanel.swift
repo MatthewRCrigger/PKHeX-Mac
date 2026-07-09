@@ -46,6 +46,7 @@ struct DetailPanel: View {
                     .font(.title3.weight(.semibold))
                 EditableNumberField(label: "Level", value: Int(pkm.level), range: 1...100) { newValue in
                     pkm.level = UInt8(newValue)
+                    store.markDirty()
                     refreshToken += 1
                 }
                 Text(pkm.natureName)
@@ -62,6 +63,7 @@ struct DetailPanel: View {
             maxLength: pkm.maxNicknameLength
         ) { newValue in
             pkm.nickname = newValue
+            store.markDirty()
             refreshToken += 1
         }
     }
@@ -82,11 +84,13 @@ struct DetailPanel: View {
                     Text(label(for: stat)).frame(width: 90, alignment: .leading)
                     StatValueField(prefix: "IV", value: Int(pkm.iv(stat)), range: 0...31) { newValue in
                         pkm.setIV(stat, to: Int32(newValue))
+                        store.markDirty()
                         refreshToken += 1
                     }
                     .frame(width: 90, alignment: .leading)
                     StatValueField(prefix: "EV", value: Int(pkm.ev(stat)), range: 0...252) { newValue in
                         pkm.setEV(stat, to: Int32(newValue))
+                        store.markDirty()
                         refreshToken += 1
                     }
                 }

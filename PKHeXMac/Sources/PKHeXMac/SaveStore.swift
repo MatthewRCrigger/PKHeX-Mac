@@ -43,7 +43,15 @@ final class SaveStore: ObservableObject {
     @Published var selectedSidebarItem: SidebarSelection = .trainer
     @Published var selectedSlot: Int?
     @Published var errorMessage: String?
+    @Published private(set) var hasUnsavedChanges = false
+    @Published private(set) var lastSaveFailed = false
     private var loadedURL: URL?
+
+    /// Call after any edit to a PKM, the trainer, or the bag so the UI can show unsaved-changes
+    /// state and the Save button/menu item has something to act on.
+    func markDirty() {
+        hasUnsavedChanges = true
+    }
 
     func presentOpenPanel() {
         let panel = NSOpenPanel()
@@ -62,6 +70,8 @@ final class SaveStore: ObservableObject {
             loadedURL = url
             selectedSidebarItem = .trainer
             selectedSlot = nil
+            hasUnsavedChanges = false
+            lastSaveFailed = false
         } catch {
             errorMessage = "Couldn't open that file as a Pokémon save: \(error)"
         }
@@ -72,8 +82,11 @@ final class SaveStore: ObservableObject {
         do {
             let data = try saveFile.write()
             try data.write(to: loadedURL)
+            hasUnsavedChanges = false
+            lastSaveFailed = false
         } catch {
             errorMessage = "Couldn't save: \(error)"
+            lastSaveFailed = true
         }
     }
 }

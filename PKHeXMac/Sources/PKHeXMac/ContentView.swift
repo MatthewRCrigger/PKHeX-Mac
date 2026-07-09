@@ -27,6 +27,11 @@ struct ContentView: View {
                             .navigationSplitViewColumnWidth(min: 280, ideal: 320)
                     }
                 }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        SaveButton()
+                    }
+                }
             } else {
                 EmptyStateView()
             }
@@ -39,6 +44,35 @@ struct ContentView: View {
         } message: {
             Text(store.errorMessage ?? "")
         }
+    }
+}
+
+private struct SaveButton: View {
+    @EnvironmentObject private var store: SaveStore
+    @State private var showSavedConfirmation = false
+
+    var body: some View {
+        Button {
+            store.save()
+            if !store.lastSaveFailed {
+                showSavedConfirmation = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    showSavedConfirmation = false
+                }
+            }
+        } label: {
+            if showSavedConfirmation {
+                Label("Saved", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Label(
+                    store.hasUnsavedChanges ? "Save •" : "Save",
+                    systemImage: "square.and.arrow.down"
+                )
+            }
+        }
+        .disabled(!store.hasUnsavedChanges)
+        .help(store.hasUnsavedChanges ? "Save changes to disk" : "No unsaved changes")
     }
 }
 

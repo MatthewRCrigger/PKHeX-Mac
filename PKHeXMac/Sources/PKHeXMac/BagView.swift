@@ -21,6 +21,7 @@ final class BagStore: ObservableObject {
 }
 
 struct BagView: View {
+    @EnvironmentObject private var store: SaveStore
     let saveFile: SaveFile
     @StateObject private var bagStore = BagStore()
     @State private var isPresentingAddItem = false
@@ -41,7 +42,7 @@ struct BagView: View {
                     if bagStore.selectedPouchIndex < bag.pouches.count {
                         PouchView(
                             pouch: bag.pouches[bagStore.selectedPouchIndex],
-                            onChange: { bagStore.commit(); refreshToken += 1 }
+                            onChange: { bagStore.commit(); store.markDirty(); refreshToken += 1 }
                         )
                         .id(refreshToken)
                         .frame(minWidth: 360)
@@ -66,6 +67,7 @@ struct BagView: View {
             if let bag = bagStore.bag, bagStore.selectedPouchIndex < bag.pouches.count {
                 AddItemSheet(pouch: bag.pouches[bagStore.selectedPouchIndex]) {
                     bagStore.commit()
+                    store.markDirty()
                     refreshToken += 1
                     isPresentingAddItem = false
                 } onCancel: {

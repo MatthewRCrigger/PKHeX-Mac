@@ -37,6 +37,25 @@ public static class LegalityExports
     }
 
     /// <summary>
+    /// Writes the human-readable legality report (same text as pkhex_pkm_get_legality_report with
+    /// verbose off), one reason per line, into <paramref name="outBuffer"/>. Empty if legal.
+    /// Intended for callers that want to show just the first line/reason in a UI banner.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_legality_lines")]
+    public static unsafe int PkmGetLegalityLines(long handle, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        var la = new LegalityAnalysis(pk);
+        var report = la.Valid ? "" : la.Report(false);
+        if (outBuffer is null || outBufferLength < report.Length)
+            return report.Length;
+        report.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
+        return report.Length;
+    }
+
+    /// <summary>
     /// Highest move ID valid for this PKM's format, for building a fallback "all moves" picker.
     /// </summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_max_move_id")]

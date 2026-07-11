@@ -49,6 +49,11 @@ public final class SaveFile {
     public var playedHours: Int { Int(pkhex_save_get_played_hours(handle)) }
     public var playedMinutes: Int { Int(pkhex_save_get_played_minutes(handle)) }
 
+    public var maxSpeciesID: Int { Int(pkhex_save_get_max_species_id(handle)) }
+    public var dexSeenCount: Int { Int(pkhex_save_get_dex_seen_count(handle)) }
+    public var dexCaughtCount: Int { Int(pkhex_save_get_dex_caught_count(handle)) }
+    public var hasPokedex: Bool { pkhex_save_has_pokedex(handle) == 1 }
+
     public init(data: Data) throws {
         let handle: Int64 = data.withUnsafeBytes { rawBuffer in
             let base = rawBuffer.bindMemory(to: UInt8.self).baseAddress
@@ -84,6 +89,21 @@ public final class SaveFile {
 
     public func setPartySlot(_ pkm: PKM, index: Int) {
         _ = pkhex_save_set_party_slot(handle, pkm.handle, Int32(index))
+    }
+
+    /// Display name for the given box (0-indexed), e.g. "Box 1" or a custom name if this save
+    /// format supports them.
+    public func boxName(_ box: Int) -> String {
+        readNativeString { pkhex_save_get_box_name(handle, Int32(box), $0, $1) }
+    }
+
+    /// Creates a new blank-template Pokemon of the given species (level 1, this save's trainer
+    /// info), for inserting into an empty slot via `setSlot`/`setPartySlot`. Returns nil if the
+    /// species is out of range for this save's generation.
+    public func createBlankPKM(species: UInt16) -> PKM? {
+        let pkmHandle = pkhex_save_create_blank_pkm(handle, species)
+        guard pkmHandle != 0 else { return nil }
+        return PKM(handle: pkmHandle)
     }
 
     /// Loads a fresh snapshot of the bag. Edit its pouches, then call `bag.commit(to: self)` to

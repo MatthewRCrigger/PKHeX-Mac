@@ -15,6 +15,16 @@ int32_t pkhex_save_get_box_count(int64_t handle);
 int32_t pkhex_save_get_box_slot_count(int64_t handle);
 uint8_t pkhex_save_get_generation(int64_t handle);
 
+uint16_t pkhex_save_get_max_species_id(int64_t handle);
+int32_t pkhex_save_get_dex_seen_count(int64_t handle);
+int32_t pkhex_save_get_dex_caught_count(int64_t handle);
+uint8_t pkhex_save_has_pokedex(int64_t handle);
+int32_t pkhex_save_get_box_name(int64_t handle, int32_t box, uint16_t *out_buffer, int32_t out_buffer_length);
+
+/* Creates a blank-template PKM of the given species (level 1, this save's trainer/language),
+ * ready for pkhex_save_set_slot/pkhex_save_set_party_slot. Release with pkhex_pkm_close. */
+int64_t pkhex_save_create_blank_pkm(int64_t handle, uint16_t species);
+
 int64_t pkhex_save_get_slot(int64_t handle, int32_t box, int32_t slot);
 int32_t pkhex_save_set_slot(int64_t save_handle, int64_t pkm_handle, int32_t box, int32_t slot);
 
@@ -38,6 +48,17 @@ void pkhex_pkm_set_nature(int64_t handle, uint8_t nature);
 
 uint8_t pkhex_pkm_get_gender(int64_t handle);
 void pkhex_pkm_set_gender(int64_t handle, uint8_t gender);
+
+uint8_t pkhex_pkm_get_is_shiny(int64_t handle);
+
+uint16_t pkhex_pkm_get_held_item(int64_t handle);
+void pkhex_pkm_set_held_item(int64_t handle, uint16_t item);
+
+uint16_t pkhex_pkm_get_ability(int64_t handle);
+
+/* Type IDs (see pkhex_type_get_name); Type2 equals Type1 for single-type species. */
+uint8_t pkhex_pkm_get_type1(int64_t handle);
+uint8_t pkhex_pkm_get_type2(int64_t handle);
 
 uint16_t pkhex_pkm_get_move(int64_t handle, int32_t index);
 void pkhex_pkm_set_move(int64_t handle, int32_t index, uint16_t move);
@@ -64,10 +85,16 @@ int32_t pkhex_species_get_name(uint16_t species, uint16_t *out_buffer, int32_t o
 int32_t pkhex_move_get_name(uint16_t move, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_nature_get_name(uint8_t nature, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_item_get_name(uint16_t item, uint16_t *out_buffer, int32_t out_buffer_length);
+int32_t pkhex_type_get_name(uint8_t type, uint16_t *out_buffer, int32_t out_buffer_length);
+int32_t pkhex_ability_get_name(uint16_t ability, uint16_t *out_buffer, int32_t out_buffer_length);
 
 /* --- Legality --- */
 int32_t pkhex_pkm_is_legal(int64_t handle);
 int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length, uint8_t verbose);
+
+/* Human-readable legality reasons, one per line, empty if legal (verbose off; same text as
+ * pkhex_pkm_get_legality_report(verbose:0)). Intended for showing just the first line in a UI banner. */
+int32_t pkhex_pkm_get_legality_lines(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 
 /* Highest move ID valid for this PKM's format, for a fallback "all moves" picker. */
 uint16_t pkhex_pkm_get_max_move_id(int64_t handle);

@@ -42,6 +42,39 @@ public final class PKM {
         set { pkhex_pkm_set_gender(handle, newValue) }
     }
 
+    public var isShiny: Bool {
+        pkhex_pkm_get_is_shiny(handle) == 1
+    }
+
+    public var heldItem: UInt16 {
+        get { pkhex_pkm_get_held_item(handle) }
+        set { pkhex_pkm_set_held_item(handle, newValue) }
+    }
+
+    /// Current ability ID (already resolved for this Pokemon's ability slot).
+    public var ability: UInt16 {
+        pkhex_pkm_get_ability(handle)
+    }
+
+    /// Primary and secondary type IDs; `type2 == type1` for single-type species.
+    public var type1: UInt8 { pkhex_pkm_get_type1(handle) }
+    public var type2: UInt8 { pkhex_pkm_get_type2(handle) }
+
+    /// This Pokemon's type IDs, deduplicated (one entry for single-type species).
+    public var types: [UInt8] {
+        type1 == type2 ? [type1] : [type1, type2]
+    }
+
+    /// Display name for this Pokemon's current held item, e.g. "Leftovers". Empty if none held.
+    public var heldItemName: String {
+        heldItem == 0 ? "" : PokemonNames.item(heldItem)
+    }
+
+    /// Display name for this Pokemon's current ability, e.g. "Intimidate".
+    public var abilityName: String {
+        PokemonNames.ability(ability)
+    }
+
     public func move(_ index: Int) -> UInt16 {
         pkhex_pkm_get_move(handle, Int32(index))
     }
@@ -109,6 +142,13 @@ public final class PKM {
         readNativeString { pkhex_pkm_get_legality_report(handle, $0, $1, verbose ? 1 : 0) }
     }
 
+    /// Human-readable legality reasons, one per line; empty if legal. Use `.first` for a banner's
+    /// "first reason" summary.
+    public var legalityReasons: [String] {
+        let report = readNativeString { pkhex_pkm_get_legality_lines(handle, $0, $1) }
+        return report.isEmpty ? [] : report.split(separator: "\n").map(String.init)
+    }
+
     /// Display name for this Pokemon's current species, e.g. "Totodile".
     public var speciesName: String {
         PokemonNames.species(species)
@@ -147,5 +187,14 @@ public enum PokemonNames {
 
     public static func item(_ id: UInt16) -> String {
         readNativeString { pkhex_item_get_name(id, $0, $1) }
+    }
+
+    /// Display name for a type ID, e.g. "Fire", "Water".
+    public static func type(_ id: UInt8) -> String {
+        readNativeString { pkhex_type_get_name(id, $0, $1) }
+    }
+
+    public static func ability(_ id: UInt16) -> String {
+        readNativeString { pkhex_ability_get_name(id, $0, $1) }
     }
 }

@@ -53,6 +53,30 @@ public static class PkmExports
             pk.Gender = gender;
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_is_shiny")]
+    public static byte PkmGetIsShiny(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.IsShiny == true ? 1 : 0);
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_held_item")]
+    public static ushort PkmGetHeldItem(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.HeldItem ?? 0);
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_held_item")]
+    public static void PkmSetHeldItem(long handle, ushort item)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.HeldItem = item;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ability")]
+    public static ushort PkmGetAbility(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.Ability ?? 0);
+
+    /// <summary>Primary type ID (see pkhex_type_get_name).</summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type1")]
+    public static byte PkmGetType1(long handle) => HandleTable.Get<PKM>(handle)?.PersonalInfo.Type1 ?? 0;
+
+    /// <summary>Secondary type ID, equal to Type1 if the species has only one type.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type2")]
+    public static byte PkmGetType2(long handle) => HandleTable.Get<PKM>(handle)?.PersonalInfo.Type2 ?? 0;
+
     // Moves: index 0-3.
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move")]
     public static ushort PkmGetMove(long handle, int index)
@@ -209,6 +233,31 @@ public static class PkmExports
     {
         var list = GameInfo.Strings.natures;
         var name = nature < list.Length ? list[nature] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of a Move-type (0-18, matches PKHeX.Core's
+    /// MoveType enum) into <paramref name="outBuffer"/>, e.g. "Fire", "Water".
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_type_get_name")]
+    public static unsafe int TypeGetName(byte type, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.types;
+        var name = type < list.Length ? list[type] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of an Ability ID into <paramref name="outBuffer"/>.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_ability_get_name")]
+    public static unsafe int AbilityGetName(ushort ability, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.abilitylist;
+        var name = ability < list.Length ? list[ability] : "";
         return WriteString(name, outBuffer, outBufferLength);
     }
 

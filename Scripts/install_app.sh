@@ -42,4 +42,12 @@ rm -rf "$DEST_APP"
 cp -R "$DERIVED_DATA_APP" "$DEST_APP"
 xattr -dr com.apple.quarantine "$DEST_APP" 2>/dev/null || true
 
+# Re-sign the whole bundle (app + embedded frameworks) as one unit. Xcode signs each
+# piece with its own ad-hoc identity at build time; copying the .app out of DerivedData
+# without re-signing leaves the outer binary and PKHeXCore.framework with mismatched
+# ad-hoc Team IDs, which dyld refuses to load ("different Team IDs") and the app
+# crashes on launch. --deep re-signs nested frameworks/binaries with the same identity.
+echo "Re-signing bundle…"
+codesign --force --deep --sign - "$DEST_APP"
+
 echo "Done. Installed at $DEST_APP"

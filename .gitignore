@@ -6,4 +6,5 @@ build/
 *.dsv
 *.sav.bak
 /AppIcon.icns
-design_handoff_circuit_redesign
+design_handoff_circuit_redesign/
+Examples/

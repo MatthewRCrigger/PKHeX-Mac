@@ -43,6 +43,16 @@ public static class PkmExports
             pk.Nature = (Nature)nature;
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ball")]
+    public static byte PkmGetBall(long handle) => HandleTable.Get<PKM>(handle)?.Ball ?? 0;
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_ball")]
+    public static void PkmSetBall(long handle, byte ball)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.Ball = ball;
+    }
+
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_gender")]
     public static byte PkmGetGender(long handle) => HandleTable.Get<PKM>(handle)?.Gender ?? 0;
 
@@ -56,6 +66,56 @@ public static class PkmExports
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_is_shiny")]
     public static byte PkmGetIsShiny(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.IsShiny == true ? 1 : 0);
 
+    /// <summary>
+    /// True if this PKM has computed party stats (i.e. it was read from a party slot, not a box
+    /// slot). Box-stored Pokemon have no meaningful "in the field" state, so status condition
+    /// should be treated as not-applicable/hidden when this is false, even if the raw status byte
+    /// happens to be nonzero.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_party_stats_present")]
+    public static byte PkmGetPartyStatsPresent(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.PartyStatsPresent == true ? 1 : 0);
+
+    /// <summary>
+    /// Normalized status condition (0=None, 1=Paralysis, 2=Sleep, 3=Freeze, 4=Burn, 5=Poison),
+    /// matching PKHeX.Core's Gen5+ StatusType enum regardless of which generation this PKM
+    /// actually is. Uses PKM.GetStatusType(), which decodes the raw Status_Condition int (whose
+    /// bit layout differs between Gen1-4's StatusCondition bitflags and Gen5+'s plain StatusType)
+    /// the same way for every generation.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_status_type")]
+    public static byte PkmGetStatusType(long handle)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        return (byte)pk.GetStatusType();
+    }
+
+    /// <summary>
+    /// Sets the status condition from a normalized StatusType value (see pkhex_pkm_get_status_type).
+    /// Writes a raw Status_Condition value chosen so that PKM.GetStatusType() decodes back to the
+    /// same StatusType for BOTH the Gen1-4 bitflag layout and the Gen5+ plain-enum layout (that
+    /// method doesn't branch on generation, so one set of raw values is correct everywhere):
+    /// None=0, Sleep=2 (any 1-7 value reads as asleep), Paralysis=1&lt;&lt;6, Burn=1&lt;&lt;4,
+    /// Poison=1&lt;&lt;3, Freeze=1&lt;&lt;5. A naive "raw = (int)StatusType" would be wrong for
+    /// Gen1-4 since e.g. StatusType.Poison=5 falls inside the 1-7 "asleep" range there.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_status_type")]
+    public static void PkmSetStatusType(long handle, byte statusType)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return;
+        pk.Status_Condition = (StatusType)statusType switch
+        {
+            StatusType.None => 0,
+            StatusType.Sleep => (int)StatusCondition.Sleep2,
+            StatusType.Paralysis => (int)StatusCondition.Paralysis,
+            StatusType.Burn => (int)StatusCondition.Burn,
+            StatusType.Freeze => (int)StatusCondition.Freeze,
+            StatusType.Poison => (int)StatusCondition.Poison,
+            _ => 0,
+        };
+    }
+
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_held_item")]
     public static ushort PkmGetHeldItem(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.HeldItem ?? 0);
 
@@ -66,16 +126,82 @@ public static class PkmExports
             pk.HeldItem = item;
     }
 
+    /// <summary>
+    /// Writes the display name of this PKM's held item into <paramref name="outBuffer"/>, resolved
+    /// through its own generation context. Use this instead of pkhex_item_get_name for held items —
+    /// Gen 1-3 entities store the held item id using their own legacy numbering, not the shared/
+    /// modern id space pkhex_item_get_name assumes.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_held_item_name")]
+    public static unsafe int PkmGetHeldItemName(long handle, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk || pk.HeldItem == 0)
+            return 0;
+        return WriteItemNameForContext(pk, (ushort)pk.HeldItem, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the display name of an arbitrary item id, resolved through this PKM's own generation
+    /// context (see pkhex_pkm_get_held_item_name's remarks) — for building a held-item picker that
+    /// lists candidate items (1...pkhex_pkm_get_max_item_id) rather than just the currently-held one.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_item_name")]
+    public static unsafe int PkmGetItemName(long handle, ushort item, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        return WriteItemNameForContext(pk, item, outBuffer, outBufferLength);
+    }
+
+    private static unsafe int WriteItemNameForContext(PKM pk, ushort item, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.GetItemStrings(pk.Context, pk.Version);
+        var name = item < list.Length ? list[item] : "";
+        if (outBuffer is null || outBufferLength < name.Length)
+            return name.Length;
+        name.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
+        return name.Length;
+    }
+
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ability")]
     public static ushort PkmGetAbility(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.Ability ?? 0);
 
     /// <summary>Primary type ID (see pkhex_type_get_name).</summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type1")]
-    public static byte PkmGetType1(long handle) => HandleTable.Get<PKM>(handle)?.PersonalInfo.Type1 ?? 0;
+    public static byte PkmGetType1(long handle)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        return NormalizeType(pk.PersonalInfo.Type1, pk.Format);
+    }
 
     /// <summary>Secondary type ID, equal to Type1 if the species has only one type.</summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type2")]
-    public static byte PkmGetType2(long handle) => HandleTable.Get<PKM>(handle)?.PersonalInfo.Type2 ?? 0;
+    public static byte PkmGetType2(long handle)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        return NormalizeType(pk.PersonalInfo.Type2, pk.Format);
+    }
+
+    /// <summary>
+    /// Generations 1-2 store Type1/Type2 using an internal byte layout that doesn't match the
+    /// modern MoveType numbering exposed via pkhex_type_get_name/GameInfo.Strings.types (e.g. Ghost
+    /// is legacy byte 8 but modern id 7; Steel/Dark, added mid-Gen2, sit at legacy 9/27 rather than
+    /// their modern 8/16). Remap legacy bytes to modern ids so type badges/lookups are correct for
+    /// Gen 1-2 saves. Verified against known species (Gastly=Ghost/Poison, Steelix=Steel/Ground,
+    /// Skarmory=Steel/Flying, Tyranitar=Rock/Dark, etc).
+    /// </summary>
+    private static byte NormalizeType(byte value, byte format)
+    {
+        if (format > 2)
+            return value;
+        if (value <= 5) return value;       // Normal..Rock unchanged
+        if (value <= 9) return (byte)(value - 1); // Bug(7)->6, Ghost(8)->7, Steel(9)->8
+        return (byte)(value - 11);          // Fire(20)->9 .. Dark(27)->16
+    }
 
     // Moves: index 0-3.
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move")]
@@ -201,6 +327,27 @@ public static class PkmExports
     }
 
     /// <summary>
+    /// Writes the base artwork file name (without extension, e.g. "a_1025", "a_25-1") for this
+    /// PKM's current species/form/gender/shininess into <paramref name="outBuffer"/> (length in
+    /// chars). This is a separate, newer icon set (see ArtworkFileName.cs) covering species up
+    /// through National Dex #1025 — prefer it over pkhex_pkm_get_sprite_file_name's set, which
+    /// stops around #905. The exact generated name is not guaranteed to exist in the shipped asset
+    /// catalog for every form/shiny combination; callers should fall back to a form/shiny-stripped
+    /// variant (and ultimately pkhex_pkm_get_sprite_file_name) if the named asset is missing.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_artwork_file_name")]
+    public static unsafe int PkmGetArtworkFileName(long handle, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+
+        var formarg = pk is IFormArgument f ? f.FormArgument : 0;
+        var name = ArtworkFileName.GetArtworkFileName(pk.Species, pk.Form, pk.Gender, formarg, pk.Context, pk.IsShiny);
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
     /// Writes the current (English) display name of a species ID into <paramref name="outBuffer"/>.
     /// Returns the required length in chars; call once with null to size, again to fill.
     /// </summary>
@@ -258,6 +405,19 @@ public static class PkmExports
     {
         var list = GameInfo.Strings.abilitylist;
         var name = ability < list.Length ? list[ability] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the current (English) display name of a Ball ID (see PKHeX.Core's Ball enum) into
+    /// <paramref name="outBuffer"/>, e.g. "Poké Ball", "Ultra Ball".
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_ball_get_name")]
+    public static unsafe int BallGetName(byte ball, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.balllist;
+        var name = ball < list.Length ? list[ball] : "";
         return WriteString(name, outBuffer, outBufferLength);
     }
 

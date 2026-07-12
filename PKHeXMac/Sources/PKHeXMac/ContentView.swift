@@ -9,27 +9,37 @@ struct ContentView: View {
     var body: some View {
         Group {
             if let saveFile = store.saveFile {
-                NavigationSplitView {
+                // A plain HStack, not NavigationSplitView. NavigationSplitView is backed by a real
+                // NSSplitViewController on macOS, which owns its dividers' draggability itself —
+                // no SwiftUI-side width constraint actually disables dragging, only hints at a
+                // preferred size. Worse, NSSplitViewController auto-persists dragged frame sizes
+                // via AppKit's own window-identifier-derived autosave, so a user who drags the
+                // sidebar to zero width gets that collapsed state restored on every future launch
+                // with no in-app way back (confirmed: this happened twice in testing, and the fix
+                // both times was manually deleting "NSSplitView Subview Frames..." keys from
+                // `defaults`). A plain HStack has no NSSplitView anywhere in it: nothing to drag,
+                // nothing for AppKit to persist, so this entire class of stuck state is impossible.
+                HStack(spacing: 0) {
                     BoxSidebar(saveFile: saveFile)
-                } content: {
-                    switch store.selectedSidebarItem {
-                    case .trainer:
-                        TrainerView(saveFile: saveFile)
-                            .navigationSplitViewColumnWidth(min: 480, ideal: 700)
-                    case .bag:
-                        BagView(saveFile: saveFile)
-                            .navigationSplitViewColumnWidth(min: 480, ideal: 700)
-                    case .slots:
-                        BoxGridView(saveFile: saveFile)
-                            .navigationSplitViewColumnWidth(min: 420, ideal: 560)
+
+                    Divider()
+
+                    Group {
+                        switch store.selectedSidebarItem {
+                        case .trainer:
+                            TrainerView(saveFile: saveFile)
+                        case .bag:
+                            BagView(saveFile: saveFile)
+                        case .slots:
+                            BoxGridView(saveFile: saveFile)
+                        }
                     }
-                } detail: {
-                    switch store.selectedSidebarItem {
-                    case .trainer, .bag:
-                        EmptyView()
-                    case .slots:
+                    .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
+
+                    if case .slots = store.selectedSidebarItem {
+                        Divider()
                         DetailPanel(saveFile: saveFile)
-                            .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                            .frame(width: 336)
                     }
                 }
             } else {
@@ -55,6 +65,21 @@ private struct BoxSidebar: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(saveFile.gameName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.9))
+                    .lineLimit(1)
+                Text("Generation \(saveFile.generation)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 11)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
                     SidebarRow(
@@ -101,14 +126,13 @@ private struct BoxSidebar: View {
                     }
                 }
                 .padding(.horizontal, 9)
-                .padding(.top, 12)
             }
 
-            SidebarFooter(saveFile: saveFile)
+            SidebarFooter()
         }
+        .frame(width: 186)
         .background(Theme.bgPanel)
-        .navigationSplitViewColumnWidth(min: 160, ideal: 186)
-        .onChange(of: store.selectedSidebarItem) { _, _ in store.selectedSlot = nil }
+        .onChange(of: store.selectedSidebarItem) { _, _ in store.inspectedSlot = nil }
     }
 }
 
@@ -175,37 +199,14 @@ private struct SidebarRow: View {
 
 // MARK: - Sidebar footer
 
-/// Pinned to the bottom of the sidebar: trainer identity, the accent-color control, and the Save
-/// button. Moved out of the title bar per the Circuit spec.
+/// Pinned to the bottom of the sidebar: Open and Save buttons side by side.
 private struct SidebarFooter: View {
-    @EnvironmentObject private var store: SaveStore
-    let saveFile: SaveFile
-    @State private var showAccentPopover = false
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 9) {
-                TrainerAvatar(size: 28)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(saveFile.otName)
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundStyle(Color.white.opacity(0.9))
-                        .lineLimit(1)
-                    Text("Gen \(saveFile.generation)")
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(Theme.textSecondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 4)
-
-                AccentSwatchButton(isPresented: $showAccentPopover)
-            }
-            .padding(.horizontal, 6)
-
+        HStack(spacing: 8) {
+            OpenSaveButton()
             SaveButton()
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, 9)
         .padding(.top, 10)
         .padding(.bottom, 12)
         .overlay(alignment: .top) {
@@ -216,45 +217,19 @@ private struct SidebarFooter: View {
     }
 }
 
-/// 28px accent-gradient circle with a person glyph — the trainer avatar shown in the sidebar
-/// footer. Reusable elsewhere (e.g. the Trainer screen header uses a larger version of the same
-/// idea).
-struct TrainerAvatar: View {
-    @EnvironmentObject private var accentStore: AccentStore
-    var size: CGFloat = 28
-
-    var body: some View {
-        let accent = accentStore.accent.color
-        Circle()
-            .fill(
-                LinearGradient(
-                    colors: [accent.opacity(0.9), accent.opacity(0.55)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .frame(width: size, height: size)
-            .overlay {
-                Image(systemName: "person.fill")
-                    .font(.system(size: size * 0.46, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.92))
-            }
-    }
-}
-
-/// The 28px swatch button in the sidebar footer that opens the accent picker popover upward.
-private struct AccentSwatchButton: View {
-    @EnvironmentObject private var accentStore: AccentStore
-    @Binding var isPresented: Bool
+/// Opens a different save file. Lives in the sidebar footer so it's reachable without going to
+/// the File menu or quitting the app — the only other ways to switch files once one is open.
+private struct OpenSaveButton: View {
+    @EnvironmentObject private var store: SaveStore
 
     var body: some View {
         Button {
-            isPresented.toggle()
+            store.presentOpenPanel()
         } label: {
-            Circle()
-                .fill(accentStore.accent.color)
-                .frame(width: 14, height: 14)
-                .frame(width: 28, height: 28)
+            Image(systemName: "folder")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.white.opacity(0.7))
+                .frame(width: 34, height: 30)
                 .background(Theme.bgElevated2)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(
@@ -263,43 +238,12 @@ private struct AccentSwatchButton: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Accent color")
-        .popover(isPresented: $isPresented, arrowEdge: .top) {
-            AccentSwatchPopover()
-        }
+        .help("Open a different save file… (⌘O)")
     }
 }
 
-/// Popover content: a row of accent swatch circles. Clicking one sets `AccentStore.accent`.
-private struct AccentSwatchPopover: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
-    var body: some View {
-        HStack(spacing: 9) {
-            ForEach(AccentColor.allCases) { option in
-                Button {
-                    accentStore.accent = option
-                } label: {
-                    Circle()
-                        .fill(option.color)
-                        .frame(width: 22, height: 22)
-                        .overlay {
-                            if accentStore.accent == option {
-                                Circle()
-                                    .strokeBorder(Color.white.opacity(0.9), lineWidth: 2)
-                                    .padding(-2)
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(12)
-    }
-}
-
-/// Full-width Save button living in the sidebar footer: "Saved" (muted) when clean, "Save •"
-/// (accent fill) when `SaveStore.hasUnsavedChanges` is true.
+/// Save button living in the sidebar footer: "Saved" (muted) when clean, "Save •" (accent fill)
+/// when `SaveStore.hasUnsavedChanges` is true.
 private struct SaveButton: View {
     @EnvironmentObject private var store: SaveStore
     @EnvironmentObject private var accentStore: AccentStore
@@ -333,6 +277,7 @@ private struct SaveButton: View {
 private struct EmptyStateView: View {
     @EnvironmentObject private var store: SaveStore
     @EnvironmentObject private var accentStore: AccentStore
+    @AppStorage("backupBeforeWriting") private var backupBeforeWriting = true
 
     var body: some View {
         ZStack {
@@ -369,12 +314,14 @@ private struct EmptyStateView: View {
 
                 DropZone()
 
-                RecentList()
-
-                Text("A backup is written automatically before your first save · v3.0 · Gen 1–7")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.white.opacity(0.28))
-                    .multilineTextAlignment(.center)
+                Text(
+                    backupBeforeWriting
+                        ? "A backup is written automatically before your first save · Gen 1–7"
+                        : "Gen 1–7"
+                )
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.28))
+                .multilineTextAlignment(.center)
             }
             .frame(maxWidth: 640)
             .padding(40)
@@ -490,68 +437,6 @@ private struct DropZone: View {
                 }
             }
             return true
-        }
-    }
-}
-
-/// Static placeholder rows — there is no recent-files persistence layer yet, so this is a stub
-/// illustrating the intended layout rather than real data.
-private struct RecentList: View {
-    private struct Recent {
-        let color: Color
-        let fileName: String
-        let subtitle: String
-        let timestamp: String
-    }
-
-    private let items: [Recent] = [
-        Recent(color: Color(hex: 0x3FD0C9), fileName: "DAWN.sav", subtitle: "Platinum · Gen 4", timestamp: "2 days ago"),
-        Recent(color: Color(hex: 0xE0B34D), fileName: "GOLD.sav", subtitle: "Crystal · Gen 2", timestamp: "last week"),
-    ]
-
-    var body: some View {
-        if !items.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("RECENT")
-                    .font(.system(size: 11, weight: .bold))
-                    .tracking(0.7)
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.leading, 2)
-
-                VStack(spacing: 2) {
-                    ForEach(items, id: \.fileName) { item in
-                        HStack(spacing: 12) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(item.color)
-                                .frame(width: 9, height: 9)
-                            Text(item.fileName)
-                                .font(.system(size: 13.5, weight: .semibold))
-                                .foregroundStyle(Color.white.opacity(0.85))
-                                .frame(width: 128, alignment: .leading)
-                                .lineLimit(1)
-                            Text(item.subtitle)
-                                .font(.system(size: 12))
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(item.timestamp)
-                                .font(.system(size: 11.5, design: .monospaced))
-                                .foregroundStyle(Color.white.opacity(0.35))
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(Color.white.opacity(0.3))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(Theme.bgPanel)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .strokeBorder(Color.white.opacity(0.05), lineWidth: 0.5)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
         }
     }
 }

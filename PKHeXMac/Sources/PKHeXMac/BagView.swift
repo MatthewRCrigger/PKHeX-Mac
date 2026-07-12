@@ -129,7 +129,7 @@ private struct PouchView: View {
 
     private var legalItems: [(id: Int, name: String)] {
         pouch.legalItems
-            .map { (id: $0, name: PokemonNames.item(UInt16($0))) }
+            .map { (id: $0, name: pouch.itemName($0)) }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
@@ -270,12 +270,12 @@ private struct ItemRow: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 7)
                         .fill(Theme.bgElevated1)
-                        .frame(width: 26, height: 26)
-                    Circle()
-                        .fill(Theme.textTertiary)
-                        .frame(width: 9, height: 9)
+                        .frame(width: 30, height: 30)
+                    ItemIconImage(itemID: itemIndex)
+                        .padding(4)
+                        .frame(width: 30, height: 30)
                 }
-                Text(PokemonNames.item(UInt16(itemIndex)))
+                Text(pouch.itemName(itemIndex))
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textPrimary)
             }
@@ -424,10 +424,10 @@ private struct ItemPickerSheet: View {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 8)
                                         .fill(Theme.bgContent)
-                                        .frame(width: 30, height: 30)
-                                    Circle()
-                                        .fill(Theme.textTertiary)
-                                        .frame(width: 11, height: 11)
+                                        .frame(width: 34, height: 34)
+                                    ItemIconImage(itemID: item.id)
+                                        .padding(4)
+                                        .frame(width: 34, height: 34)
                                 }
                                 Text(item.name)
                                     .font(.system(size: 13.5, weight: .semibold))

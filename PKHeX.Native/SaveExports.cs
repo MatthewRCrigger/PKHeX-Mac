@@ -53,6 +53,22 @@ public static class SaveExports
     [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_generation")]
     public static byte SaveGetGeneration(long handle) => HandleTable.Get<SaveFile>(handle)?.Generation ?? 0;
 
+    /// <summary>
+    /// Writes the display name of this save's game version (e.g. "Crystal", "Platinum",
+    /// "HeartGold") into <paramref name="outBuffer"/>. Returns the required length in chars; call
+    /// once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_game_name")]
+    public static unsafe int SaveGetGameName(long handle, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<SaveFile>(handle) is not { } sav)
+            return -1;
+        var list = GameInfo.Strings.gamelist;
+        var index = (int)sav.Version;
+        var name = index >= 0 && index < list.Length ? list[index] : "";
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
     /// <summary>Highest valid species ID for this save's game/generation.</summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_save_get_max_species_id")]
     public static ushort SaveGetMaxSpeciesId(long handle) => HandleTable.Get<SaveFile>(handle)?.MaxSpeciesID ?? 0;
@@ -105,6 +121,38 @@ public static class SaveExports
         pk.OriginalTrainerGender = sav.Gender;
         pk.RefreshChecksum();
         return HandleTable.Add(pk);
+    }
+
+    /// <summary>
+    /// Clears a box slot back to empty (writes the save's blank/species-0 template), matching how
+    /// the official editor's "Delete" action works. No-op (returns 0) if the save handle or
+    /// box/slot coordinates are invalid.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_clear_slot")]
+    public static int SaveClearSlot(long handle, int box, int slot)
+    {
+        var sav = HandleTable.Get<SaveFile>(handle);
+        if (sav is null || box < 0 || box >= sav.BoxCount || slot < 0 || slot >= sav.BoxSlotCount)
+            return -1;
+        sav.SetBoxSlotAtIndex(sav.BlankPKM, box, slot);
+        return 0;
+    }
+
+    /// <summary>
+    /// Clears a party slot back to empty. Unlike box slots, party members must stay contiguous
+    /// from index 0 (no gaps), so this slides every following party member down one slot and
+    /// clears the vacated last slot, matching the official editor's "Delete" action
+    /// (SaveFile.DeletePartySlot) rather than just blanking the slot in place.
+    /// No-op (returns -1) if the save handle or party index is invalid.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_save_clear_party_slot")]
+    public static int SaveClearPartySlot(long handle, int index)
+    {
+        var sav = HandleTable.Get<SaveFile>(handle);
+        if (sav is null || index < 0 || index >= sav.PartyCount)
+            return -1;
+        sav.DeletePartySlot(index);
+        return 0;
     }
 
     /// <summary>

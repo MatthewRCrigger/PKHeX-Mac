@@ -62,6 +62,13 @@ public static class LegalityExports
     public static ushort PkmGetMaxMoveId(long handle) => HandleTable.Get<PKM>(handle)?.MaxMoveID ?? 0;
 
     /// <summary>
+    /// Highest item ID valid for this PKM's format, for building a held-item picker (e.g.
+    /// 1...maxItemID, same shape as species/move pickers).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_max_item_id")]
+    public static ushort PkmGetMaxItemId(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.MaxItemID ?? 0);
+
+    /// <summary>
     /// Number of move IDs this PKM can currently legally learn (level-up, egg, TM/tutor, and the
     /// moves from its recorded encounter/relearn set), for building a move picker. Move ID 0
     /// ("None") is never included; callers should add their own placeholder for clearing a slot.

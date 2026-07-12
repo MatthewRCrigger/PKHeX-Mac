@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
 
@@ -6,6 +7,14 @@ namespace PKHeX.Native;
 
 public static class BagExports
 {
+    /// <summary>
+    /// Tracks the (EntityContext, Version) of the save each bag handle was loaded from, since item
+    /// names for Gen 1/2/3 saves must be resolved through GameInfo.Strings.GetItemStrings(context,
+    /// version) rather than the shared/modern GameInfo.Strings.itemlist — those generations store
+    /// item ids using their own legacy internal numbering, not the modern shared id space.
+    /// </summary>
+    private static readonly Dictionary<long, (EntityContext Context, GameVersion Version)> BagContext = new();
+
     /// <summary>
     /// Loads a snapshot of the save's bag. Returns a handle &gt; 0, or 0 if the save handle is
     /// invalid. Edits to items are made on this snapshot and are not persisted to the save until
@@ -16,11 +25,17 @@ public static class BagExports
     {
         if (HandleTable.Get<SaveFile>(saveHandle) is not { } sav)
             return 0;
-        return HandleTable.Add(sav.Inventory);
+        var handle = HandleTable.Add(sav.Inventory);
+        BagContext[handle] = (sav.Context, sav.Version);
+        return handle;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_close")]
-    public static void BagClose(long handle) => HandleTable.Remove(handle);
+    public static void BagClose(long handle)
+    {
+        HandleTable.Remove(handle);
+        BagContext.Remove(handle);
+    }
 
     /// <summary>
     /// Writes the bag snapshot's current item contents back into the save. Does not itself
@@ -176,6 +191,28 @@ public static class BagExports
     public static unsafe int ItemGetName(ushort item, char* outBuffer, int outBufferLength)
     {
         var list = GameInfo.Strings.itemlist;
+        var name = item < list.Length ? list[item] : "";
+        if (outBuffer is null || outBufferLength < name.Length)
+            return name.Length;
+        name.AsSpan().CopyTo(new Span<char>(outBuffer, outBufferLength));
+        return name.Length;
+    }
+
+    /// <summary>
+    /// Writes the display name of an item index as stored in this bag's pouches (i.e. as returned
+    /// by pkhex_bag_get_item_index / pkhex_bag_get_pouch_legal_item) into <paramref name="outBuffer"/>.
+    /// Unlike pkhex_item_get_name, this resolves through the bag's originating save's generation
+    /// context, which is required for Gen 1-3 saves: those store item ids using their own legacy
+    /// internal numbering (not the shared/modern id space pkhex_item_get_name assumes), so passing
+    /// a Gen 1-3 pouch's raw item index to pkhex_item_get_name returns the wrong name entirely.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_bag_get_item_name")]
+    public static unsafe int BagGetItemName(long bagHandle, ushort item, char* outBuffer, int outBufferLength)
+    {
+        var list = BagContext.TryGetValue(bagHandle, out var ctx)
+            ? GameInfo.Strings.GetItemStrings(ctx.Context, ctx.Version)
+            : GameInfo.Strings.itemlist;
         var name = item < list.Length ? list[item] : "";
         if (outBuffer is null || outBufferLength < name.Length)
             return name.Length;

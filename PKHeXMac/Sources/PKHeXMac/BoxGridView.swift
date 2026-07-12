@@ -42,6 +42,29 @@ struct BoxGridView: View {
             }
             .environmentObject(accentStore)
         }
+        .background(slotCopyPasteShortcuts)
+    }
+
+    /// Invisible buttons carrying the Copy/Paste/Delete keyboard shortcuts for the inspected slot.
+    /// Deliberately view-scoped (not app-level `.commands`) and gated by `disabled(_:)` on whether
+    /// there's actually something to act on — a disabled `Button`'s `.keyboardShortcut` doesn't
+    /// intercept the key, so ⌘C/⌘V/⌫ still reach a focused text field (nickname, OT name, etc.)
+    /// normally when there's nothing copyable/pasteable/deletable in the box/party grid.
+    @ViewBuilder
+    private var slotCopyPasteShortcuts: some View {
+        Group {
+            Button("Copy") { store.copyInspected() }
+                .keyboardShortcut("c", modifiers: .command)
+                .disabled(!store.canCopyOrDeleteInspected)
+            Button("Paste") { store.pasteIntoInspected() }
+                .keyboardShortcut("v", modifiers: .command)
+                .disabled(!store.canPaste)
+            Button("Delete") { store.deleteInspected() }
+                .keyboardShortcut(.delete, modifiers: [])
+                .disabled(!store.canDeleteInspected)
+        }
+        .opacity(0)
+        .allowsHitTesting(false)
     }
 
     // MARK: - Box view
@@ -61,13 +84,16 @@ struct BoxGridView: View {
                         let pkm = location.slot(slot, in: saveFile)
                         BoxTile(
                             pkm: pkm,
-                            isSelected: store.selectedSlot == slot && !isSelecting,
+                            isSelected: store.inspectedSlot == InspectedSlot(location: location, index: slot) && !isSelecting,
                             isSelecting: isSelecting,
                             isChecked: selectedIndices.contains(slot),
                             accent: accentStore.accent
                         )
                         .onTapGesture {
                             handleTap(slot: slot, pkm: pkm)
+                        }
+                        .contextMenu {
+                            slotContextMenu(location: location, slot: slot, pkm: pkm)
                         }
                     }
                 }
@@ -119,10 +145,6 @@ struct BoxGridView: View {
                     .buttonStyle(.plain)
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textSecondary)
-            } else {
-                Text("Click a slot to inspect · empty slot to add")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(Theme.textTertiary)
             }
 
             Button {
@@ -163,10 +185,45 @@ struct BoxGridView: View {
             }
             return
         }
-        if pkm != nil {
-            store.selectedSlot = slot
+        // Selecting an empty slot (instead of immediately opening the species picker) lets it be
+        // a Paste target like any other slot; use the right-click "Add Pokémon…" menu to open the
+        // picker explicitly.
+        store.inspectedSlot = InspectedSlot(location: location, index: slot)
+    }
+
+    @ViewBuilder
+    private func slotContextMenu(location: SlotLocation, slot: Int, pkm: PKM?) -> some View {
+        if pkm == nil {
+            Button("Add Pokémon…") {
+                pickerTarget = PickerTarget(location: location, slot: slot)
+            }
+            if store.copiedPKM != nil {
+                Button("Paste") {
+                    store.inspectedSlot = InspectedSlot(location: location, index: slot)
+                    store.pasteIntoInspected()
+                }
+            }
         } else {
-            pickerTarget = PickerTarget(location: location, slot: slot)
+            Button("Copy") {
+                store.inspectedSlot = InspectedSlot(location: location, index: slot)
+                store.copyInspected()
+            }
+            if store.copiedPKM != nil {
+                Button("Paste") {
+                    store.inspectedSlot = InspectedSlot(location: location, index: slot)
+                    store.pasteIntoInspected()
+                }
+            }
+            Divider()
+            let isLeadPartySlot: Bool = {
+                if case .party = location, slot == 0 { return true }
+                return false
+            }()
+            Button("Delete", role: .destructive) {
+                store.inspectedSlot = InspectedSlot(location: location, index: slot)
+                store.deleteInspected()
+            }
+            .disabled(isLeadPartySlot)
         }
     }
 
@@ -218,8 +275,6 @@ struct BoxGridView: View {
             .padding(.vertical, 8)
             .background(Theme.danger.opacity(0.14))
             .clipShape(RoundedRectangle(cornerRadius: 9))
-            .disabled(true)
-            .help("Not yet available: there is no API to clear a slot to empty in this build, so Release cannot be safely implemented yet.")
 
             Button("Cancel") {
                 isSelecting = false
@@ -257,11 +312,17 @@ struct BoxGridView: View {
         .clipShape(RoundedRectangle(cornerRadius: 9))
     }
 
-    /// Release currently has no safe implementation: `SaveFile.setSlot`/`setPartySlot` both require
-    /// a non-nil `PKM`, and there is no exposed "clear slot" API in PKHeXCore/CPKHeXNative. Rather
-    /// than fake success or crash, this is left as a documented no-op (button is disabled above).
+    /// Clears every selected slot to empty. Multi-select is box-only (see `pinnedPartyStrip`/
+    /// `isPartyView`), so there's no party-slot-1 protection concern here the way there is for
+    /// `SaveStore.deleteInspected()`.
     private func releaseSelected() {
-        // Intentionally not implemented — see doc comment above.
+        guard case .box(let box) = location else { return }
+        for slot in selectedIndices {
+            saveFile.clearSlot(box: box, slot: slot)
+        }
+        store.markDirty()
+        isSelecting = false
+        selectedIndices.removeAll()
     }
 
     private func choose(species: UInt16, for target: PickerTarget) {
@@ -273,7 +334,7 @@ struct BoxGridView: View {
             saveFile.setSlot(blank, box: box, slot: target.slot)
         }
         store.markDirty()
-        store.selectedSlot = target.slot
+        store.inspectedSlot = InspectedSlot(location: target.location, index: target.slot)
         pickerTarget = nil
     }
 
@@ -291,10 +352,21 @@ struct BoxGridView: View {
                         let pkm = saveFile.partySlot(index)
                         MiniTile(pkm: pkm, accent: accentStore.accent)
                             .frame(width: 52, height: 52)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(
+                                        store.inspectedSlot == InspectedSlot(location: .party, index: index)
+                                            ? accentStore.accent.color : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            }
                             .onTapGesture {
-                                guard pkm != nil else { return }
-                                store.selectedSidebarItem = .slots(.party)
-                                store.selectedSlot = index
+                                // Inspect this party member (or empty slot) without navigating the
+                                // content pane away from whatever box is currently open.
+                                store.inspectedSlot = InspectedSlot(location: .party, index: index)
+                            }
+                            .contextMenu {
+                                slotContextMenu(location: .party, slot: index, pkm: pkm)
                             }
                     }
                     Spacer()
@@ -308,7 +380,10 @@ struct BoxGridView: View {
 
     // MARK: - Party view
 
-    private var partyColumns: [GridItem] { [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)] }
+    /// Packs as many columns as fit at >=280pt each, so a narrow content pane falls back to a
+    /// single full-width column (room for the sprite, name, meta line, and type badges to render
+    /// without truncating) instead of always forcing 2 columns regardless of available width.
+    private var partyColumns: [GridItem] { [GridItem(.adaptive(minimum: 280, maximum: 400), spacing: 14)] }
 
     @ViewBuilder
     private var partyView: some View {
@@ -332,16 +407,14 @@ struct BoxGridView: View {
                         PartyCard(
                             pkm: saveFile.partySlot(index),
                             slotIndex: index,
-                            isSelected: store.selectedSlot == index,
+                            isSelected: store.inspectedSlot == InspectedSlot(location: .party, index: index),
                             accent: accentStore.accent
                         )
                         .onTapGesture {
-                            let pkm = saveFile.partySlot(index)
-                            if pkm != nil {
-                                store.selectedSlot = index
-                            } else {
-                                pickerTarget = PickerTarget(location: .party, slot: index)
-                            }
+                            store.inspectedSlot = InspectedSlot(location: .party, index: index)
+                        }
+                        .contextMenu {
+                            slotContextMenu(location: .party, slot: index, pkm: saveFile.partySlot(index))
                         }
                     }
                 }
@@ -383,7 +456,7 @@ private struct BoxTile: View {
             .overlay {
                 if let pkm {
                     ZStack {
-                        SpriteImage(fileName: pkm.spriteFileName)
+                        ArtworkImage(pkm: pkm)
                             .padding(6)
 
                         // type dots, bottom-left
@@ -483,7 +556,7 @@ private struct MiniTile: View {
             .overlay {
                 if let pkm {
                     ZStack {
-                        SpriteImage(fileName: pkm.spriteFileName)
+                        ArtworkImage(pkm: pkm)
                             .padding(4)
                         VStack {
                             Spacer()
@@ -561,7 +634,7 @@ private struct PartyCard: View {
                         RoundedRectangle(cornerRadius: 11)
                             .fill(Theme.bgWell)
                             .frame(width: 72, height: 64)
-                        SpriteImage(fileName: pkm.spriteFileName)
+                        ArtworkImage(pkm: pkm)
                             .padding(8)
                             .frame(width: 72, height: 64)
                         if pkm.isShiny {
@@ -602,11 +675,12 @@ private struct PartyCard: View {
                 HStack(spacing: 9) {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Theme.bgElevated3)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 24, height: 24)
                         .overlay {
-                            Circle()
-                                .fill(pkm.heldItem == 0 ? Color.white.opacity(0.15) : accent.color)
-                                .frame(width: 8, height: 8)
+                            if pkm.heldItem != 0 {
+                                ItemIconImage(itemID: Int(pkm.heldItem))
+                                    .padding(3)
+                            }
                         }
                     Text(pkm.heldItem == 0 ? "No item" : pkm.heldItemName)
                         .font(.system(size: 12))
@@ -702,6 +776,109 @@ struct SpriteImage: View {
             Image(nsImage: nsImage)
                 .resizable()
                 .interpolation(.none)
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Color.clear
+        }
+    }
+}
+
+/// Renders the icon for a Ball value (see PKHeX.Core's Ball enum) from the generated
+/// `_ball<value>` asset catalog entries (see Scripts/ — BallIcons.xcassets). Ball 0 ("None") has
+/// no icon; renders nothing rather than a placeholder, same fallback behavior as `SpriteImage`.
+struct BallIcon: View {
+    let ball: UInt8
+
+    var body: some View {
+        if let nsImage = NSImage(named: "_ball\(ball)") {
+            Image(nsImage: nsImage)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Color.clear
+        }
+    }
+}
+
+/// Renders a Pokemon's artwork (see `PKM.artworkFileName`), falling back through progressively
+/// simpler names — then to the older, lower-coverage sprite set — when the exact generated name
+/// isn't present in the shipped asset catalog (the artwork set hasn't been exhaustively verified
+/// to cover every form/shiny combination; see ArtworkFileName.cs's remarks). Unlike `SpriteImage`,
+/// this is not pixelated on render — the artwork set is a smoother/newer icon style, not the
+/// retro in-game sprite look `SpriteImage` intentionally preserves.
+struct ArtworkImage: View {
+    let pkm: PKM
+
+    var body: some View {
+        if let nsImage = Self.resolvedImage(for: pkm) {
+            Image(nsImage: nsImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Color.clear
+        }
+    }
+
+    /// Tries, in order: the exact artwork name; the same name without a trailing shiny "s"; the
+    /// same name with any "-"-prefixed form/gender suffix stripped down to "a_<species>"; then
+    /// the older sprite set's name (which has its own species/shiny fallback already baked into
+    /// how it's generated) as a last resort.
+    private static func resolvedImage(for pkm: PKM) -> NSImage? {
+        let artwork = pkm.artworkFileName
+        if let image = NSImage(named: artwork) { return image }
+
+        if artwork.hasSuffix("s") {
+            let withoutShiny = String(artwork.dropLast())
+            if let image = NSImage(named: withoutShiny) { return image }
+        }
+
+        let bareSpecies = "a_\(pkm.species)"
+        if let image = NSImage(named: bareSpecies) { return image }
+
+        return NSImage(named: pkm.spriteFileName)
+    }
+}
+
+/// Renders the icon for a party Pokemon's status condition from the generated `StatusIcons` asset
+/// catalog (see Scripts/generate_artwork_assets.py). `.none` has no icon; renders nothing rather
+/// than a placeholder, same fallback behavior as `BallIcon`.
+struct StatusIcon: View {
+    let status: StatusCondition
+
+    private var assetName: String? {
+        switch status {
+        case .none: return nil
+        case .paralysis: return "sickparalyze"
+        case .sleep: return "sicksleep"
+        case .freeze: return "sickfrostbite"
+        case .burn: return "sickburn"
+        case .poison: return "sickpoison"
+        }
+    }
+
+    var body: some View {
+        if let assetName, let nsImage = NSImage(named: assetName) {
+            Image(nsImage: nsImage)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+        } else {
+            Color.clear
+        }
+    }
+}
+
+/// Renders an item's icon art from the `ItemIcons` asset catalog (`bitem_<id>`), falling back to
+/// PKHeX's own "unknown item" placeholder (`bitem_unk`) when there's no dedicated art shipped for
+/// that item ID — coverage is ~606 of ~2684 possible item IDs, so most items use the fallback.
+struct ItemIconImage: View {
+    let itemID: Int
+
+    var body: some View {
+        if let nsImage = NSImage(named: "bitem_\(itemID)") ?? NSImage(named: "bitem_unk") {
+            Image(nsImage: nsImage)
+                .resizable()
                 .aspectRatio(contentMode: .fit)
         } else {
             Color.clear

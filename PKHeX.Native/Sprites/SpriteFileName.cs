@@ -69,7 +69,9 @@ public static class SpriteFileName
         return sb.ToString();
     }
 
-    private static ReadOnlySpan<ushort> SpeciesDefaultFormSprite =>
+    /// <summary>Species whose sprite art doesn't vary by form (only the default/form-0 art
+    /// exists). Shared with ArtworkFileName, which follows the same rule.</summary>
+    internal static ReadOnlySpan<ushort> SpeciesDefaultFormSprite =>
     [
         (ushort)Mothim,
         (ushort)Scatterbug,
@@ -84,7 +86,9 @@ public static class SpriteFileName
         (ushort)Sinistcha,
     ];
 
-    private static ReadOnlySpan<ushort> SpeciesGenderedSprite =>
+    /// <summary>Species with a distinct female sprite (suffixed 'f' on disk). Shared with
+    /// ArtworkFileName, which follows the same rule.</summary>
+    internal static ReadOnlySpan<ushort> SpeciesGenderedSprite =>
     [
         (ushort)Hippopotas,
         (ushort)Hippowdon,

@@ -12,7 +12,10 @@ struct PKHeXMacApp: App {
                 .environmentObject(accentStore)
                 .tint(accentStore.accent.color)
                 .preferredColorScheme(.dark)
-                .frame(minWidth: 900, minHeight: 600)
+                // Sidebar (186) + content min (420) + inspector (336) = 942 — the window can
+                // never be resized narrower than what the fixed-width sidebar/inspector panes and
+                // the content pane's own min width require (see ContentView's HStack layout).
+                .frame(minWidth: 942, minHeight: 600)
         }
         .commands {
             CommandGroup(replacing: .newItem) {

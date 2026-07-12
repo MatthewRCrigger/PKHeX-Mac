@@ -6,6 +6,31 @@ public enum Stat: Int32, CaseIterable {
     case hp = 0, attack, defense, specialAttack, specialDefense, speed
 }
 
+/// Normalized field/battle status condition for a party Pokemon. Values match PKHeX.Native's
+/// pkhex_pkm_get_status_type exactly, which normalizes both the Gen1-4 bitflag layout and the
+/// Gen5+ plain-enum layout of the underlying Status_Condition field into one shared enum. Only
+/// meaningful for Pokemon with `partyStatsPresent == true` — box-stored Pokemon aren't "in the
+/// field" and have no meaningful status.
+public enum StatusCondition: UInt8, CaseIterable {
+    case none = 0
+    case paralysis
+    case sleep
+    case freeze
+    case burn
+    case poison
+
+    public var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .paralysis: return "Paralyzed"
+        case .sleep: return "Asleep"
+        case .freeze: return "Frozen"
+        case .burn: return "Burned"
+        case .poison: return "Poisoned"
+        }
+    }
+}
+
 /// Wraps a single Pokemon (box slot or party member) handle from PKHeX.Native.
 public final class PKM {
     let handle: Int64
@@ -42,8 +67,35 @@ public final class PKM {
         set { pkhex_pkm_set_gender(handle, newValue) }
     }
 
+    /// Raw Ball value (see PKHeX.Core's Ball enum: 0 = None, 4 = Poké Ball, etc).
+    /// Only meaningful when `supportsBall` is true — Gen 1/2 entities have no ball concept and
+    /// always report 0 here regardless of what's set.
+    public var ball: UInt8 {
+        get { pkhex_pkm_get_ball(handle) }
+        set { pkhex_pkm_set_ball(handle, newValue) }
+    }
+
+    /// Whether this Pokemon's format actually tracks which Ball it was caught in. Gen 1/2 (format
+    /// 1/2) predate the Ball byte in PKHeX.Core's data model, so `ball` is a permanent no-op there
+    /// — gate any ball UI on this rather than on `ball == 0`, since 0 ("None") is also a valid,
+    /// legitimate reading on Gen 3+ entities.
+    public var supportsBall: Bool { format >= 3 }
+
     public var isShiny: Bool {
         pkhex_pkm_get_is_shiny(handle) == 1
+    }
+
+    /// True if this Pokemon has computed party stats (i.e. it came from a party slot, not a box
+    /// slot). Box-stored Pokemon have no "in the field" state — gate status-condition UI on this.
+    public var partyStatsPresent: Bool {
+        pkhex_pkm_get_party_stats_present(handle) == 1
+    }
+
+    /// Field/battle status condition (burned, paralyzed, asleep, etc). Only meaningful when
+    /// `partyStatsPresent` is true.
+    public var status: StatusCondition {
+        get { StatusCondition(rawValue: pkhex_pkm_get_status_type(handle)) ?? .none }
+        set { pkhex_pkm_set_status_type(handle, newValue.rawValue) }
     }
 
     public var heldItem: UInt16 {
@@ -66,8 +118,18 @@ public final class PKM {
     }
 
     /// Display name for this Pokemon's current held item, e.g. "Leftovers". Empty if none held.
+    /// Resolved through this Pokemon's own generation, correct for Gen 1-3 (which number items
+    /// differently than the shared/modern id space `PokemonNames.item(_:)` assumes).
     public var heldItemName: String {
-        heldItem == 0 ? "" : PokemonNames.item(heldItem)
+        guard heldItem != 0 else { return "" }
+        return readNativeString { pkhex_pkm_get_held_item_name(handle, $0, $1) }
+    }
+
+    /// Display name for an arbitrary item id, resolved through this Pokemon's own generation (see
+    /// `heldItemName`'s remarks) — for listing held-item picker candidates
+    /// (`1...maxItemID`), not just the currently-held item.
+    public func itemName(_ id: UInt16) -> String {
+        readNativeString { pkhex_pkm_get_item_name(handle, id, $0, $1) }
     }
 
     /// Display name for this Pokemon's current ability, e.g. "Intimidate".
@@ -104,6 +166,12 @@ public final class PKM {
         pkhex_pkm_get_max_move_id(handle)
     }
 
+    /// Highest item ID valid for this Pokemon's format, for building a held-item picker
+    /// (e.g. `1...maxItemID`, same shape as the species/move pickers).
+    public var maxItemID: UInt16 {
+        pkhex_pkm_get_max_item_id(handle)
+    }
+
     public func iv(_ stat: Stat) -> Int32 {
         pkhex_pkm_get_iv(handle, stat.rawValue)
     }
@@ -134,6 +202,16 @@ public final class PKM {
         readNativeString { pkhex_pkm_get_sprite_file_name(handle, $0, $1) }
     }
 
+    /// Base file name (without extension) for this Pokemon's artwork, e.g. "a_1025-1s". A newer,
+    /// higher-coverage icon set than `spriteFileName` (species up to #1025 vs ~#905) — see
+    /// Scripts/generate_artwork_assets.py. Not every form/shiny combination is guaranteed to exist
+    /// in the shipped asset catalog; use `ArtworkImage` (SwiftUI view) rather than loading this
+    /// name directly, since it applies the documented fallback chain (strip shiny, then form, then
+    /// fall back to the older sprite set) for names missing from the catalog.
+    public var artworkFileName: String {
+        readNativeString { pkhex_pkm_get_artwork_file_name(handle, $0, $1) }
+    }
+
     public var isLegal: Bool {
         pkhex_pkm_is_legal(handle) == 1
     }
@@ -157,6 +235,12 @@ public final class PKM {
     /// Display name for this Pokemon's current nature, e.g. "Adamant".
     public var natureName: String {
         PokemonNames.nature(nature)
+    }
+
+    /// Display name for this Pokemon's current ball, e.g. "Poké Ball". Only meaningful when
+    /// `supportsBall` is true.
+    public var ballName: String {
+        PokemonNames.ball(ball)
     }
 
     /// Current PP remaining in the given move slot (0-3).
@@ -196,5 +280,10 @@ public enum PokemonNames {
 
     public static func ability(_ id: UInt16) -> String {
         readNativeString { pkhex_ability_get_name(id, $0, $1) }
+    }
+
+    /// Display name for a Ball ID (see PKHeX.Core's Ball enum), e.g. "Poké Ball".
+    public static func ball(_ id: UInt8) -> String {
+        readNativeString { pkhex_ball_get_name(id, $0, $1) }
     }
 }

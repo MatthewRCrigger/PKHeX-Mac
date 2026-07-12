@@ -55,6 +55,15 @@ public struct Pouch {
         Int(pkhex_bag_get_item_count(bagHandle, Int32(index), Int32(slot)))
     }
 
+    /// Display name for an item id from this pouch (from `itemIndex(_:)` or `legalItems`).
+    /// Resolves through this bag's originating save's generation, since Gen 1-3 saves number
+    /// items using their own legacy scheme rather than the shared/modern id space — use this
+    /// instead of `PokemonNames.item(_:)` for any id that came from this bag.
+    public func itemName(_ itemID: Int) -> String {
+        let handle = bagHandle
+        return readNativeString { pkhex_bag_get_item_name(handle, UInt16(itemID), $0, $1) }
+    }
+
     /// Sets the item and quantity for a slot. Pass itemIndex 0 to clear the slot.
     public func setItem(_ slot: Int, itemIndex: Int, count: Int) {
         _ = pkhex_bag_set_item(bagHandle, Int32(index), Int32(slot), Int32(itemIndex), Int32(count))

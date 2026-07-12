@@ -13,6 +13,8 @@ public final class SaveFile {
     public let boxCount: Int
     public let boxSlotCount: Int
     public let generation: UInt8
+    /// Display name of this save's game version, e.g. "Crystal", "Platinum", "HeartGold".
+    public let gameName: String
     public var partyCount: Int { Int(pkhex_save_get_party_count(handle)) }
 
     public var otName: String {
@@ -65,6 +67,7 @@ public final class SaveFile {
         self.boxCount = Int(pkhex_save_get_box_count(handle))
         self.boxSlotCount = Int(pkhex_save_get_box_slot_count(handle))
         self.generation = pkhex_save_get_generation(handle)
+        self.gameName = readNativeString { pkhex_save_get_game_name(handle, $0, $1) }
     }
 
     deinit {
@@ -81,6 +84,11 @@ public final class SaveFile {
         _ = pkhex_save_set_slot(handle, pkm.handle, Int32(box), Int32(slot))
     }
 
+    /// Clears a box slot back to empty. Other slots are unaffected (box slots may have gaps).
+    public func clearSlot(box: Int, slot: Int) {
+        _ = pkhex_save_clear_slot(handle, Int32(box), Int32(slot))
+    }
+
     public func partySlot(_ index: Int) -> PKM? {
         let pkmHandle = pkhex_save_get_party_slot(handle, Int32(index))
         guard pkmHandle != 0 else { return nil }
@@ -89,6 +97,13 @@ public final class SaveFile {
 
     public func setPartySlot(_ pkm: PKM, index: Int) {
         _ = pkhex_save_set_party_slot(handle, pkm.handle, Int32(index))
+    }
+
+    /// Clears a party slot. Unlike box slots, every following party member slides down one slot
+    /// so the party stays contiguous from index 0 (matching how the party is actually read by the
+    /// game — there's no such thing as a "gap" in the middle of a party).
+    public func clearPartySlot(_ index: Int) {
+        _ = pkhex_save_clear_party_slot(handle, Int32(index))
     }
 
     /// Display name for the given box (0-indexed), e.g. "Box 1" or a custom name if this save

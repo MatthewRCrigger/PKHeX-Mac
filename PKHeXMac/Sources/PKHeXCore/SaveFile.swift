@@ -6,6 +6,13 @@ public enum PKHeXError: Error {
     case writeFailed
 }
 
+/// A cross-generation conversion (see `SaveFile.convertForTransfer`) that has no legal path — wrong
+/// direction, incompatible species/form, or a GB-era language mismatch. `message` matches
+/// PKHeX.WinForms' wording so it can be shown to the user as-is.
+public struct PKMConversionError: Error {
+    public let message: String
+}
+
 /// Wraps a loaded save file handle from PKHeX.Native. Closes the underlying handle on dealloc.
 public final class SaveFile {
     let handle: Int64
@@ -127,6 +134,21 @@ public final class SaveFile {
         let pkmHandle = pkhex_save_create_blank_pkm(handle, species)
         guard pkmHandle != 0 else { return nil }
         return PKM(handle: pkmHandle)
+    }
+
+    /// Converts a PKM from another (possibly different-generation) save into the format this save
+    /// requires, ready for `setSlot`/`setPartySlot` — e.g. dragging a Gen 3 Pokemon into a Gen 4
+    /// save's box. Returns `.failure` with a human-readable reason (matching PKHeX.WinForms'
+    /// wording) if no legal conversion path exists: wrong direction, incompatible species/form, or
+    /// a GB-era (Gen 1/2) language mismatch. Same-generation transfers always succeed here too, so
+    /// callers don't need to special-case "same format" themselves.
+    public func convertForTransfer(_ pkm: PKM) -> Result<PKM, PKMConversionError> {
+        let convertedHandle = pkhex_pkm_convert_to_save(pkm.handle, handle)
+        guard convertedHandle != 0 else {
+            let message = readNativeString { pkhex_pkm_get_convert_error(pkm.handle, handle, $0, $1) }
+            return .failure(PKMConversionError(message: message.isEmpty ? "This Pokémon can't be transferred to this save." : message))
+        }
+        return .success(PKM(handle: convertedHandle))
     }
 
     /// Loads a fresh snapshot of the bag. Edit its pouches, then call `bag.commit(to: self)` to

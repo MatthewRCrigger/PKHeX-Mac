@@ -193,6 +193,26 @@ int32_t pkhex_ability_get_description(uint16_t ability, uint16_t *out_buffer, in
 /* Ball display name (see PKHeX.Core's Ball enum), e.g. "Poké Ball", "Ultra Ball". */
 int32_t pkhex_ball_get_name(uint8_t ball, uint16_t *out_buffer, int32_t out_buffer_length);
 
+/* --- Cross-save / cross-generation conversion ---
+ * For dragging or pasting a Pokemon from one open save into another of a different generation
+ * (e.g. Gen 3 -> Gen 4, or 3DS Virtual Console Gen 1/2 -> Gen 7). Same-generation moves don't need
+ * these — just pkhex_save_set_slot/pkhex_save_set_party_slot directly. */
+
+/* Converts a PKM to the format required by dest_save_handle (its PKMType). Returns a handle to the
+ * converted PKM (release with pkhex_pkm_close), ready to place into dest_save_handle via
+ * pkhex_save_set_slot/pkhex_save_set_party_slot, or 0 if no legal conversion path exists (wrong
+ * direction, incompatible species/form, or a GB-era language mismatch) — call
+ * pkhex_pkm_get_convert_error for why. Does not mutate pkm_handle or dest_save_handle. */
+int64_t pkhex_pkm_convert_to_save(int64_t pkm_handle, int64_t dest_save_handle);
+
+/* 1 if pkhex_pkm_convert_to_save would succeed for this pair, 0 otherwise — cheap to call
+ * speculatively (e.g. during a drag, before a drop) without allocating a result handle. */
+uint8_t pkhex_pkm_can_convert_to_save(int64_t pkm_handle, int64_t dest_save_handle);
+
+/* Human-readable reason conversion would fail for this pair ("" if it would succeed), matching
+ * PKHeX.WinForms' wording. Size-then-fill like other string exports. */
+int32_t pkhex_pkm_get_convert_error(int64_t pkm_handle, int64_t dest_save_handle, uint16_t *out_buffer, int32_t out_buffer_length);
+
 /* --- Legality --- */
 int32_t pkhex_pkm_is_legal(int64_t handle);
 int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length, uint8_t verbose);

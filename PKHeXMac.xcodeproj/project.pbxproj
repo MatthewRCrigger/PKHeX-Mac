@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */; };
 		2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042BD126A70CAEFE24C3C7B8 /* ContentView.swift */; };
+		697F7C174BE5CAF3878ACF56 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7DA157C577B01B7AD77E41D /* AppDelegate.swift */; };
+		0C6B8017D3E5F3FE89630A4E /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */; };
+		F7C9E6F07B331604AF8AE652 /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */; };
 		290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; };
 		334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */; };
 		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
@@ -61,6 +64,9 @@
 		1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKHeXMacApp.swift; sourceTree = "<group>"; };
 		4A1A5A4853A160F141612244 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
+		A7DA157C577B01B7AD77E41D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragRegistry.swift; sourceTree = "<group>"; };
+		95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedSaveStore.swift; sourceTree = "<group>"; };
 		505571693819F220BFD40FE7 /* NativeString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeString.swift; sourceTree = "<group>"; };
 		51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Native.dylib; path = "PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib"; sourceTree = "<group>"; };
 		5EA318ED5D175D4BD77340DB /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
@@ -141,11 +147,14 @@
 		DC8CC27581F25EF459530A8C /* PKHeXMac */ = {
 			isa = PBXGroup;
 			children = (
+				A7DA157C577B01B7AD77E41D /* AppDelegate.swift */,
 				5EA318ED5D175D4BD77340DB /* BagView.swift */,
 				4A1A5A4853A160F141612244 /* BoxGridView.swift */,
 				042BD126A70CAEFE24C3C7B8 /* ContentView.swift */,
 				D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */,
+				14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */,
 				80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */,
+				95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */,
 				F5F4C0472A05A96C4CE95A64 /* Pickers.swift */,
 				2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */,
 				8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */,
@@ -277,11 +286,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				697F7C174BE5CAF3878ACF56 /* AppDelegate.swift in Sources */,
 				E02408354DB8D13A790C60D4 /* BagView.swift in Sources */,
 				9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */,
 				2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */,
 				11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */,
+				0C6B8017D3E5F3FE89630A4E /* DragRegistry.swift in Sources */,
 				70CA7B2485041D7FEFC95D65 /* EditableField.swift in Sources */,
+				F7C9E6F07B331604AF8AE652 /* FocusedSaveStore.swift in Sources */,
 				E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */,
 				A1CB877D2A13C3C946922083 /* Pickers.swift in Sources */,
 				334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */,

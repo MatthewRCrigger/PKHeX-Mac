@@ -204,4 +204,29 @@ final class SaveStore: ObservableObject {
         }
         markDirty()
     }
+
+    /// Places a Pokemon dragged in from another window's save into this save's slot, converting
+    /// its format if the two saves are different generations (e.g. Gen 3 -> Gen 4, or 3DS Virtual
+    /// Console Gen 1/2 -> Gen 7) — same-generation drags convert trivially (the source PKM as-is).
+    /// Sets `errorMessage` (surfaced as an alert) and returns false without touching this save if no
+    /// legal conversion path exists, matching PKHeX.WinForms' rejected-drop behavior — callers must
+    /// only clear the drag's original source slot when this returns true, since a rejected drop
+    /// should leave the dragged Pokemon exactly where it was.
+    @discardableResult
+    func receiveDroppedPKM(_ pkm: PKM, into location: SlotLocation, slot: Int) -> Bool {
+        guard let saveFile else { return false }
+        switch saveFile.convertForTransfer(pkm) {
+        case .success(let converted):
+            switch location {
+            case .party: saveFile.setPartySlot(converted, index: slot)
+            case .box(let box): saveFile.setSlot(converted, box: box, slot: slot)
+            }
+            markDirty()
+            inspectedSlot = InspectedSlot(location: location, index: slot)
+            return true
+        case .failure(let error):
+            errorMessage = error.message
+            return false
+        }
+    }
 }

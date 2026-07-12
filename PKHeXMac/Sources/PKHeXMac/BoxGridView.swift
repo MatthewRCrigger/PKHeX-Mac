@@ -6,6 +6,7 @@ import SwiftUI
 struct BoxGridView: View {
     @EnvironmentObject private var store: SaveStore
     @EnvironmentObject private var accentStore: AccentStore
+    @EnvironmentObject private var dragRegistry: DragRegistry
     let saveFile: SaveFile
 
     @State private var isSelecting = false
@@ -95,6 +96,8 @@ struct BoxGridView: View {
                         .contextMenu {
                             slotContextMenu(location: location, slot: slot, pkm: pkm)
                         }
+                        .dragSource(pkm, location: location, slot: slot, saveFile: saveFile, registry: dragRegistry)
+                        .dropTarget(location: location, slot: slot, saveFile: saveFile, store: store, registry: dragRegistry)
                     }
                 }
                 .padding(.horizontal, 18)
@@ -368,6 +371,8 @@ struct BoxGridView: View {
                             .contextMenu {
                                 slotContextMenu(location: .party, slot: index, pkm: pkm)
                             }
+                            .dragSource(pkm, location: .party, slot: index, saveFile: saveFile, registry: dragRegistry)
+                            .dropTarget(location: .party, slot: index, saveFile: saveFile, store: store, registry: dragRegistry)
                     }
                     Spacer()
                 }
@@ -416,6 +421,8 @@ struct BoxGridView: View {
                         .contextMenu {
                             slotContextMenu(location: .party, slot: index, pkm: saveFile.partySlot(index))
                         }
+                        .dragSource(saveFile.partySlot(index), location: .party, slot: index, saveFile: saveFile, registry: dragRegistry)
+                        .dropTarget(location: .party, slot: index, saveFile: saveFile, store: store, registry: dragRegistry)
                     }
                 }
             }

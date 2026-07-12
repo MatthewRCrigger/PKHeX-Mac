@@ -168,6 +168,47 @@ public static class PkmExports
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ability")]
     public static ushort PkmGetAbility(long handle) => (ushort)(HandleTable.Get<PKM>(handle)?.Ability ?? 0);
 
+    /// <summary>
+    /// Number of selectable ability slots for this PKM's species/form: 0 (Gen 1-2, no abilities),
+    /// 2 (Gen 3-4, Ability1/Ability2 only), or 3 (Gen 5+, adds a Hidden Ability slot).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ability_count")]
+    public static int PkmGetAbilityCount(long handle) => HandleTable.Get<PKM>(handle)?.PersonalInfo.AbilityCount ?? 0;
+
+    /// <summary>
+    /// Ability ID for slot <paramref name="index"/> (0=Ability1, 1=Ability2, 2=Hidden Ability) of
+    /// this PKM's species/form personal info, for building an ability picker's option list
+    /// alongside pkhex_pkm_get_ability_count.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ability_at_index")]
+    public static ushort PkmGetAbilityAtIndex(long handle, int index)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        var pi = pk.PersonalInfo;
+        if ((uint)index >= pi.AbilityCount)
+            return 0;
+        return (ushort)pi.GetAbilityAtIndex(index);
+    }
+
+    /// <summary>
+    /// Sets this PKM's ability to the one at the given slot index (0=Ability1, 1=Ability2,
+    /// 2=Hidden Ability), via PKHeX.Core's PKM.SetAbilityIndex — this correctly handles every
+    /// generation's storage quirks (Gen 3's PID-bit-derived ability, Gen 4/5's PID-derived ability
+    /// slot requiring a PID re-roll, Gen 6+'s independently stored Ability/AbilityNumber bytes)
+    /// rather than writing PKM.Ability directly, which is a silent no-op on Gen 3 and leaves a
+    /// mismatched AbilityNumber on Gen 4/5.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_ability_index")]
+    public static void PkmSetAbilityIndex(long handle, int index)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return;
+        if ((uint)index >= pk.PersonalInfo.AbilityCount)
+            return;
+        pk.SetAbilityIndex(index);
+    }
+
     /// <summary>Primary type ID (see pkhex_type_get_name).</summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type1")]
     public static byte PkmGetType1(long handle)
@@ -406,6 +447,21 @@ public static class PkmExports
         var list = GameInfo.Strings.abilitylist;
         var name = ability < list.Length ? list[ability] : "";
         return WriteString(name, outBuffer, outBufferLength);
+    }
+
+    /// <summary>
+    /// Writes the short flavor-text description of an Ability ID into <paramref name="outBuffer"/>
+    /// (e.g. "Powers up moves of the same type."). Empty if unknown/not yet catalogued — see
+    /// Scripts/generate_ability_descriptions.py for how this supplemental data set was built,
+    /// since PKHeX.Core ships no ability descriptions of its own.
+    /// Returns the required length in chars; call once with null to size, again to fill.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_ability_get_description")]
+    public static unsafe int AbilityGetDescription(ushort ability, char* outBuffer, int outBufferLength)
+    {
+        var list = GameInfo.Strings.abilitydescriptions;
+        var description = ability < list.Length ? list[ability] : "";
+        return WriteString(description, outBuffer, outBufferLength);
     }
 
     /// <summary>

@@ -30,6 +30,7 @@ struct DetailPanel: View {
     @State private var isStatusPickerPresented = false
     @State private var isHeldItemPickerPresented = false
     @State private var isNaturePickerPresented = false
+    @State private var isAbilityPickerPresented = false
 
     private var pkm: PKM? {
         guard let inspected = store.inspectedSlot else { return nil }
@@ -128,6 +129,16 @@ struct DetailPanel: View {
                     pkm.nature = newNature
                     commit(pkm)
                     isNaturePickerPresented = false
+                }
+                .environmentObject(accentStore)
+            }
+        }
+        .sheet(isPresented: $isAbilityPickerPresented) {
+            if let pkm {
+                AbilityPickerSheet(pkm: pkm) { newIndex in
+                    pkm.setAbilityIndex(newIndex)
+                    commit(pkm)
+                    isAbilityPickerPresented = false
                 }
                 .environmentObject(accentStore)
             }
@@ -260,7 +271,7 @@ struct DetailPanel: View {
 
             HStack(spacing: 10) {
                 natureCard(for: pkm)
-                infoCard(label: "ABILITY", value: pkm.abilityName)
+                abilityCard(for: pkm)
             }
 
             HStack(spacing: 10) {
@@ -337,6 +348,21 @@ struct DetailPanel: View {
             infoCard(label: "NATURE", value: pkm.natureName)
         }
         .buttonStyle(.plain)
+    }
+
+    /// Ability card: same plain label/value layout as Nature, tappable to open a picker listing
+    /// this species/form's selectable ability slots (see `AbilityPickerSheet`). Disabled when
+    /// `abilityCount == 0` (Gen 1-2 entities have no ability concept).
+    @ViewBuilder
+    private func abilityCard(for pkm: PKM) -> some View {
+        Button {
+            isAbilityPickerPresented = true
+        } label: {
+            infoCard(label: "ABILITY", value: pkm.abilityName)
+        }
+        .buttonStyle(.plain)
+        .disabled(pkm.abilityCount == 0)
+        .help(pkm.abilityCount == 0 ? "This Pokémon's format has no selectable abilities." : "")
     }
 
     /// Held item card: same icon-well layout as Ball/Status, tappable to open a held-item picker.

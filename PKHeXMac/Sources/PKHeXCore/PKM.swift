@@ -108,6 +108,25 @@ public final class PKM {
         pkhex_pkm_get_ability(handle)
     }
 
+    /// Number of selectable ability slots for this Pokemon's species/form: 0 (Gen 1-2, no
+    /// abilities), 2 (Gen 3-4, Ability1/Ability2 only), or 3 (Gen 5+, adds a Hidden Ability slot).
+    public var abilityCount: Int {
+        Int(pkhex_pkm_get_ability_count(handle))
+    }
+
+    /// Ability ID for slot `index` (0=Ability1, 1=Ability2, 2=Hidden Ability), for building an
+    /// ability picker's option list (`0..<abilityCount`).
+    public func abilityID(at index: Int) -> UInt16 {
+        pkhex_pkm_get_ability_at_index(handle, Int32(index))
+    }
+
+    /// Sets this Pokemon's ability to the one at the given slot index (0=Ability1, 1=Ability2,
+    /// 2=Hidden Ability). Handles every generation's storage quirks correctly (e.g. Gen 3-5 need a
+    /// PID re-roll to make the ability stick) — never write `ability` directly, there is no setter.
+    public func setAbilityIndex(_ index: Int) {
+        pkhex_pkm_set_ability_index(handle, Int32(index))
+    }
+
     /// Primary and secondary type IDs; `type2 == type1` for single-type species.
     public var type1: UInt8 { pkhex_pkm_get_type1(handle) }
     public var type2: UInt8 { pkhex_pkm_get_type2(handle) }
@@ -280,6 +299,13 @@ public enum PokemonNames {
 
     public static func ability(_ id: UInt16) -> String {
         readNativeString { pkhex_ability_get_name(id, $0, $1) }
+    }
+
+    /// Short flavor-text description of an ability, e.g. "Powers up moves of the same type."
+    /// Empty if unknown/not yet catalogued (a handful of very new abilities have no description
+    /// available in the source data set — see Scripts/generate_ability_descriptions.py).
+    public static func abilityDescription(_ id: UInt16) -> String {
+        readNativeString { pkhex_ability_get_description(id, $0, $1) }
     }
 
     /// Display name for a Ball ID (see PKHeX.Core's Ball enum), e.g. "Poké Ball".

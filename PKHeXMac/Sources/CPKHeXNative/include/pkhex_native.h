@@ -83,6 +83,16 @@ int32_t pkhex_pkm_get_item_name(int64_t handle, uint16_t item, uint16_t *out_buf
 
 uint16_t pkhex_pkm_get_ability(int64_t handle);
 
+/* Number of selectable ability slots for this PKM's species/form: 0 (Gen 1-2), 2 (Gen 3-4,
+ * Ability1/Ability2 only), or 3 (Gen 5+, adds a Hidden Ability slot). */
+int32_t pkhex_pkm_get_ability_count(int64_t handle);
+/* Ability ID for slot `index` (0=Ability1, 1=Ability2, 2=Hidden Ability), for building an ability
+ * picker's option list alongside pkhex_pkm_get_ability_count. */
+uint16_t pkhex_pkm_get_ability_at_index(int64_t handle, int32_t index);
+/* Sets this PKM's ability to the one at the given slot index (0=Ability1, 1=Ability2, 2=Hidden
+ * Ability), handling every generation's storage quirks correctly (PID re-rolls where needed). */
+void pkhex_pkm_set_ability_index(int64_t handle, int32_t index);
+
 /* Type IDs (see pkhex_type_get_name); Type2 equals Type1 for single-type species. */
 uint8_t pkhex_pkm_get_type1(int64_t handle);
 uint8_t pkhex_pkm_get_type2(int64_t handle);
@@ -118,6 +128,9 @@ int32_t pkhex_nature_get_name(uint8_t nature, uint16_t *out_buffer, int32_t out_
 int32_t pkhex_item_get_name(uint16_t item, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_type_get_name(uint8_t type, uint16_t *out_buffer, int32_t out_buffer_length);
 int32_t pkhex_ability_get_name(uint16_t ability, uint16_t *out_buffer, int32_t out_buffer_length);
+/* Short flavor-text description of an Ability ID, e.g. "Powers up moves of the same type."; empty
+ * if unknown/not yet catalogued (see Scripts/generate_ability_descriptions.py). */
+int32_t pkhex_ability_get_description(uint16_t ability, uint16_t *out_buffer, int32_t out_buffer_length);
 /* Ball display name (see PKHeX.Core's Ball enum), e.g. "Poké Ball", "Ultra Ball". */
 int32_t pkhex_ball_get_name(uint8_t ball, uint16_t *out_buffer, int32_t out_buffer_length);
 

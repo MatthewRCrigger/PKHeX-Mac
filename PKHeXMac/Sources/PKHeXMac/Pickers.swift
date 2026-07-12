@@ -411,6 +411,113 @@ struct NaturePickerSheet: View {
     }
 }
 
+// MARK: - Ability picker
+
+/// Modal sheet for choosing a Pokémon's ability from its species/form's slots (Ability 1,
+/// Ability 2, Hidden Ability — not every slot exists for every species/generation). Opened by
+/// tapping the Ability card in `DetailPanel`'s Summary tab. Small enough (0-3 options) to show as
+/// a plain vertical list of labeled rows rather than the search-filtered list pattern used by
+/// `HeldItemPickerSheet`.
+struct AbilityPickerSheet: View {
+    @EnvironmentObject private var accentStore: AccentStore
+    @Environment(\.dismiss) private var dismiss
+
+    let pkm: PKM
+    let onChoose: (Int) -> Void
+
+    private static let slotLabels = ["Ability 1", "Ability 2", "Hidden Ability"]
+
+    private var slots: [(index: Int, id: UInt16, name: String, description: String)] {
+        (0..<pkm.abilityCount).map { index in
+            let id = pkm.abilityID(at: index)
+            return (index: index, id: id, name: PokemonNames.ability(id), description: PokemonNames.abilityDescription(id))
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Text("Change Ability")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("\(pkm.speciesName) · currently \(pkm.abilityName)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 24, height: 24)
+                        .background(Theme.bgElevated2)
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 14)
+
+            VStack(spacing: 6) {
+                ForEach(slots, id: \.index) { slot in
+                    let isSelected = slot.id == pkm.ability
+                    Button {
+                        onChoose(slot.index)
+                    } label: {
+                        HStack(alignment: .top, spacing: 10) {
+                            Text(Self.slotLabels[slot.index])
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(isSelected ? accentStore.accent.onAccent.opacity(0.8) : Theme.textSecondary)
+                                .frame(width: 110, alignment: .leading)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(slot.name)
+                                    .font(.system(size: 13.5, weight: .semibold))
+                                    .foregroundStyle(isSelected ? accentStore.accent.onAccent : Theme.textPrimary)
+                                if !slot.description.isEmpty {
+                                    Text(slot.description)
+                                        .font(.system(size: 11.5))
+                                        .foregroundStyle(isSelected ? accentStore.accent.onAccent.opacity(0.85) : Theme.textSecondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+
+                            Spacer()
+                            if isSelected {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(accentStore.accent.onAccent)
+                            }
+                        }
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 11)
+                        .background(isSelected ? accentStore.accent.color : Theme.bgElevated1)
+                        .clipShape(RoundedRectangle(cornerRadius: 9))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 9)
+                                .strokeBorder(isSelected ? accentStore.accent.color : Color.clear, lineWidth: 1.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if slots.isEmpty {
+                    Text("This Pokémon's format has no selectable abilities.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.vertical, 20)
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
+        }
+        .frame(width: 480)
+        .background(Theme.bgTile)
+    }
+}
+
 // MARK: - Ball picker (§8)
 
 /// Modal sheet for choosing which Poké Ball a Pokémon was caught in. Opened by tapping the Ball

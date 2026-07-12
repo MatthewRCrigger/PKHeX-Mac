@@ -209,6 +209,216 @@ public static class PkmExports
         pk.SetAbilityIndex(index);
     }
 
+    // --- Met/Egg info ---
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_met_location")]
+    public static ushort PkmGetMetLocation(long handle) => HandleTable.Get<PKM>(handle)?.MetLocation ?? 0;
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_met_location")]
+    public static void PkmSetMetLocation(long handle, ushort location)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.MetLocation = location;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_egg_location")]
+    public static ushort PkmGetEggLocation(long handle) => HandleTable.Get<PKM>(handle)?.EggLocation ?? 0;
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_egg_location")]
+    public static void PkmSetEggLocation(long handle, ushort location)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.EggLocation = location;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_met_level")]
+    public static byte PkmGetMetLevel(long handle) => HandleTable.Get<PKM>(handle)?.MetLevel ?? 0;
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_met_level")]
+    public static void PkmSetMetLevel(long handle, byte level)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.MetLevel = level;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_fateful_encounter")]
+    public static byte PkmGetFatefulEncounter(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.FatefulEncounter == true ? 1 : 0);
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_fateful_encounter")]
+    public static void PkmSetFatefulEncounter(long handle, byte value)
+    {
+        if (HandleTable.Get<PKM>(handle) is { } pk)
+            pk.FatefulEncounter = value != 0;
+    }
+
+    /// <summary>
+    /// True if this PKM's format tracks a Met Date at all (Gen 4+ — see PKM.MetYear's virtual
+    /// no-op default). Gate Met Date UI on this rather than on MetDate being null, since null also
+    /// legitimately means "date fields present but zeroed/invalid".
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_supports_met_date")]
+    public static byte PkmGetSupportsMetDate(long handle) => (byte)((HandleTable.Get<PKM>(handle)?.Format ?? 0) >= 4 ? 1 : 0);
+
+    /// <summary>
+    /// True if this PKM's format tracks Egg Location/Date at all (Gen 4+). Gen 1-3 have no egg
+    /// location/date storage even though Gen 2-3 do have a working IsEgg flag — gate Egg Info UI
+    /// (location/date fields) on this, separately from whether IsEgg itself is togglable.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_supports_egg_location")]
+    public static byte PkmGetSupportsEggLocation(long handle) => (byte)((HandleTable.Get<PKM>(handle)?.Format ?? 0) >= 4 ? 1 : 0);
+
+    /// <summary>
+    /// True if this PKM's format has any concept of "is an egg" at all (Gen 2+ — Gen 1 games
+    /// predate the Day Care/egg mechanic entirely). Gate the Is-Egg toggle's availability on this.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_supports_is_egg")]
+    public static byte PkmGetSupportsIsEgg(long handle) => (byte)((HandleTable.Get<PKM>(handle)?.Format ?? 0) >= 2 ? 1 : 0);
+
+    /// <summary>
+    /// Met date, as (year, month, day) where year is the full 4-digit year (e.g. 2007), or all
+    /// zero if unset/invalid. Returns false if this PKM's format doesn't support Met Date at all
+    /// (see pkhex_pkm_get_supports_met_date) or the stored date fields don't form a valid date —
+    /// mirrors PKM.MetDate's own null-on-invalid behavior (PKM.cs).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_met_date")]
+    public static unsafe byte PkmGetMetDate(long handle, int* year, int* month, int* day)
+    {
+        *year = 0; *month = 0; *day = 0;
+        if (HandleTable.Get<PKM>(handle) is not { } pk || pk.MetDate is not { } date)
+            return 0;
+        *year = date.Year; *month = date.Month; *day = date.Day;
+        return 1;
+    }
+
+    /// <summary>
+    /// Sets the Met Date from a full 4-digit year/month/day. Pass year 0 to clear the date
+    /// (zeroes the underlying Year/Month/Day fields, matching PKM.MetDate = null).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_met_date")]
+    public static void PkmSetMetDate(long handle, int year, int month, int day)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return;
+        pk.MetDate = year == 0 ? null : new DateOnly(year, month, day);
+    }
+
+    /// <summary>Egg Met Date counterpart to pkhex_pkm_get_met_date — see its remarks.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_egg_date")]
+    public static unsafe byte PkmGetEggDate(long handle, int* year, int* month, int* day)
+    {
+        *year = 0; *month = 0; *day = 0;
+        if (HandleTable.Get<PKM>(handle) is not { } pk || pk.EggMetDate is not { } date)
+            return 0;
+        *year = date.Year; *month = date.Month; *day = date.Day;
+        return 1;
+    }
+
+    /// <summary>Egg Met Date counterpart to pkhex_pkm_set_met_date — see its remarks.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_egg_date")]
+    public static void PkmSetEggDate(long handle, int year, int month, int day)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return;
+        pk.EggMetDate = year == 0 ? null : new DateOnly(year, month, day);
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_is_egg")]
+    public static byte PkmGetIsEgg(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.IsEgg == true ? 1 : 0);
+
+    /// <summary>
+    /// True if this PKM either currently is an egg, or was originally received as one and has
+    /// since hatched (PKM.WasEgg = IsEgg || EggDay != 0) — i.e. it has legitimate egg
+    /// location/date info worth showing, as opposed to a Pokemon that was simply caught in the
+    /// wild and has no egg history at all.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_was_egg")]
+    public static byte PkmGetWasEgg(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.WasEgg == true ? 1 : 0);
+
+    /// <summary>
+    /// Toggles Is-Egg, replicating the essential (non-legality-dependent) parts of PKHeX.WinForms'
+    /// CHK_IsEgg handler: renaming to the localized egg name, resetting the hatch-counter
+    /// (OriginalTrainerFriendship) to its minimum, clearing the Met Date, and seeding a sensible
+    /// default Egg Location/Level so the entity isn't left with stale non-egg data. Does not
+    /// replicate the WinForms handler's traded-vs-untraded encounter analysis (which requires a
+    /// full LegalityAnalysis pass) — location/date are left at simple, safe defaults the user can
+    /// still edit directly afterward.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_is_egg")]
+    public static void PkmSetIsEgg(long handle, byte value)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return;
+        var isEgg = value != 0;
+        pk.IsEgg = isEgg;
+        if (isEgg)
+        {
+            pk.Nickname = SpeciesName.GetEggName(pk.Language, pk.Format);
+            pk.IsNicknamed = true;
+            pk.OriginalTrainerFriendship = (byte)EggStateLegality.GetMinimumEggHatchCycles(pk);
+            pk.MetDate = null;
+            if (pk.Format >= 4)
+            {
+                pk.MetLevel = EggStateLegality.GetEggLevelMet(pk.Version, pk.Format);
+                if (pk.EggLocation == 0)
+                    pk.EggLocation = LocationEdits.GetNoneLocation(pk);
+            }
+        }
+        else
+        {
+            pk.CurrentFriendship = pk.PersonalInfo.BaseFriendship;
+        }
+    }
+
+    /// <summary>
+    /// Number of candidate Met/Egg locations for this PKM's current version+context, for building
+    /// a location picker. Mirrors PKHeX.WinForms' CB_MetLocation/CB_EggLocation combo contents
+    /// exactly (GameInfo.GetLocationList), including per-version partitioning within a generation
+    /// (e.g. Ruby/Sapphire vs Emerald vs FireRed/LeafGreen each surface a different subset of the
+    /// shared Gen 3 location id space) and synthesized entries (e.g. BD/SP's extra "None", since
+    /// location id 0 is a real place — Jubilife City — in that game).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_location_count")]
+    public static int PkmGetLocationCount(long handle, byte egg)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        return GameInfo.GetLocationList(pk.Version, pk.Context, egg != 0).Count;
+    }
+
+    /// <summary>Location id at the given index of the list sized by pkhex_pkm_get_location_count.</summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_location_id_at_index")]
+    public static ushort PkmGetLocationIdAtIndex(long handle, byte egg, int index)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        var list = GameInfo.GetLocationList(pk.Version, pk.Context, egg != 0);
+        return (uint)index < (uint)list.Count ? (ushort)list[index].Value : (ushort)0;
+    }
+
+    /// <summary>
+    /// Display name for an arbitrary Met/Egg location id, resolved for this PKM's version+context
+    /// (the same numeric id can mean different places in different games — e.g. Gen 3 vs Gen 4 have
+    /// entirely disjoint id spaces, and Gen 4 D/P vs Pt/HG/SS overlap the same id range). Falls back
+    /// to an empty string if the id isn't present in this PKM's location list (e.g. a stale id left
+    /// over from a different game after a manual version change).
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_location_name")]
+    public static unsafe int PkmGetLocationName(long handle, ushort locationId, byte egg, char* outBuffer, int outBufferLength)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        var list = GameInfo.GetLocationList(pk.Version, pk.Context, egg != 0);
+        var name = "";
+        foreach (var item in list)
+        {
+            if (item.Value != locationId)
+                continue;
+            name = item.Text;
+            break;
+        }
+        return WriteString(name, outBuffer, outBufferLength);
+    }
+
     /// <summary>Primary type ID (see pkhex_type_get_name).</summary>
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_type1")]
     public static byte PkmGetType1(long handle)

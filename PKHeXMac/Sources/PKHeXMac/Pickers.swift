@@ -426,9 +426,14 @@ struct AbilityPickerSheet: View {
 
     private static let slotLabels = ["Ability 1", "Ability 2", "Hidden Ability"]
 
+    /// Slots to display, collapsing duplicates: e.g. a species with only one ability defined has
+    /// Ability 1 and Ability 2 pointing at the same ability ID, so only the first is shown. The
+    /// selection still writes the original slot index the duplicate represents.
     private var slots: [(index: Int, id: UInt16, name: String, description: String)] {
-        (0..<pkm.abilityCount).map { index in
+        var seen = Set<UInt16>()
+        return (0..<pkm.abilityCount).compactMap { index in
             let id = pkm.abilityID(at: index)
+            guard seen.insert(id).inserted else { return nil }
             return (index: index, id: id, name: PokemonNames.ability(id), description: PokemonNames.abilityDescription(id))
         }
     }
@@ -730,6 +735,435 @@ private struct HeldItemRow: View {
         .padding(.vertical, 8)
         .background(isSelected ? accentStore.accent.soft : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+// MARK: - Met/Egg location picker
+
+/// Modal sheet for choosing a Met or Egg Location. Opened by tapping the Met/Egg Location card in
+/// `DetailPanel`'s Met tab. Options come from `PKM.locationOptions(egg:)`, which mirrors
+/// PKHeX.WinForms' location combo contents exactly (version+context partitioned) — this sheet just
+/// presents that list with search, like `HeldItemPickerSheet`.
+struct LocationPickerSheet: View {
+    @EnvironmentObject private var accentStore: AccentStore
+    @Environment(\.dismiss) private var dismiss
+
+    let pkm: PKM
+    let egg: Bool
+    let onChoose: (UInt16) -> Void
+
+    @State private var query = ""
+
+    private var currentLocation: UInt16 { egg ? pkm.eggLocation : pkm.metLocation }
+    private var currentName: String { egg ? pkm.eggLocationName : pkm.metLocationName }
+
+    private var results: [(id: UInt16, name: String)] {
+        let all = pkm.locationOptions(egg: egg)
+        guard !query.isEmpty else { return all }
+        let lowered = query.lowercased()
+        return all.filter { $0.name.lowercased().contains(lowered) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 14) {
+                HStack(spacing: 10) {
+                    Text(egg ? "Change Egg Location" : "Change Met Location")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("\(pkm.speciesName) · currently \(currentLocation == 0 ? "—" : currentName)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 24, height: 24)
+                            .background(Theme.bgElevated2)
+                            .clipShape(RoundedRectangle(cornerRadius: 7))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 13))
+                        .foregroundStyle(accentStore.accent.color)
+                    TextField("Search locations…", text: $query)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14))
+                    Text("\(results.count) results")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .padding(.horizontal, 13)
+                .padding(.vertical, 10)
+                .background(Theme.bgContent)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(accentStore.accent.color, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    ForEach(results, id: \.id) { entry in
+                        LocationRow(name: entry.name, isSelected: entry.id == currentLocation)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                onChoose(entry.id)
+                            }
+                    }
+                }
+                .padding(8)
+
+                if results.isEmpty {
+                    Text("No locations match \u{201c}\(query)\u{201d}.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(30)
+                }
+            }
+        }
+        .frame(width: 560, height: 520)
+        .background(Theme.bgTile)
+    }
+}
+
+private struct LocationRow: View {
+    @EnvironmentObject private var accentStore: AccentStore
+
+    let name: String
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 13) {
+            Text(name)
+                .font(.system(size: 13.5, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(accentStore.accent.color)
+            }
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(isSelected ? accentStore.accent.soft : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+// MARK: - Met/Egg date picker
+
+/// Small popover with a graphical `DatePicker` — used by the Met Date and Egg Date cards in
+/// `DetailPanel`'s Met tab. Small enough to be a popover (like `StatusPickerPopover`) rather than a
+/// full sheet. Includes a "Clear" action since an unset date is a valid, meaningful state (not
+/// every format tracks these, and even those that do allow zeroed/absent dates).
+struct DatePickerPopover: View {
+    @EnvironmentObject private var accentStore: AccentStore
+
+    let components: DateComponents?
+    let onChoose: (DateComponents?) -> Void
+
+    @State private var selection: Date
+
+    init(components: DateComponents?, onChoose: @escaping (DateComponents?) -> Void) {
+        self.components = components
+        self.onChoose = onChoose
+        let calendar = Calendar(identifier: .gregorian)
+        _selection = State(initialValue: components.flatMap(calendar.date(from:)) ?? Date())
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            DatePicker("", selection: $selection, in: Date(timeIntervalSince1970: 946684800)...Date(timeIntervalSince1970: 4102358400), displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .accentColor(accentStore.accent.color)
+                .onChange(of: selection) { _, newValue in
+                    let calendar = Calendar(identifier: .gregorian)
+                    onChoose(calendar.dateComponents([.year, .month, .day], from: newValue))
+                }
+
+            Button("Clear date") {
+                onChoose(nil)
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 11.5, weight: .medium))
+            .foregroundStyle(Theme.textSecondary)
+        }
+        .padding(12)
+    }
+}
+
+// MARK: - Memory picker
+
+/// Modal sheet for choosing and configuring a Memory (OT or HT depending on `target`). Opened by
+/// tapping the OT/HT Memory card in `DetailPanel`'s Trainer tab. Two steps in one sheet: pick a
+/// memory ID from a searchable list (like `HeldItemPickerSheet`), then configure its
+/// Intensity/Feeling/Variable inline — a `MemoryArgType`-appropriate picker/stepper is shown for
+/// Variable (e.g. a location list for "General Location" memories, a species list for "caught
+/// {species}" memories) since that field means something different per memory ID.
+struct MemoryPickerSheet: View {
+    @EnvironmentObject private var accentStore: AccentStore
+    @Environment(\.dismiss) private var dismiss
+
+    let pkm: PKM
+    let target: MemoryTarget
+    let onCommit: () -> Void
+
+    @State private var query = ""
+    @State private var selectedMemory: UInt8?
+
+    private var currentMemory: UInt8 {
+        target == .originalTrainer ? pkm.originalTrainerMemory : pkm.handlingTrainerMemory
+    }
+
+    private var results: [(id: UInt8, line: String)] {
+        let all = pkm.memoryIDOptions.map { (id: $0, line: $0 == 0 ? "No memory" : pkm.memoryLine($0)) }
+        guard !query.isEmpty else { return all }
+        let lowered = query.lowercased()
+        return all.filter { $0.line.lowercased().contains(lowered) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Text(target == .originalTrainer ? "OT Memory" : "HT Memory")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text(pkm.speciesName)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 24, height: 24)
+                        .background(Theme.bgElevated2)
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 14)
+
+            if let memory = selectedMemory ?? (currentMemory != 0 ? currentMemory : nil) {
+                MemoryDetailView(pkm: pkm, target: target, memoryID: memory, onBack: {
+                    selectedMemory = nil
+                }, onCommit: onCommit)
+            } else {
+                memoryListView
+            }
+        }
+        .frame(width: 560, height: 520)
+        .background(Theme.bgTile)
+    }
+
+    private var memoryListView: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 13))
+                    .foregroundStyle(accentStore.accent.color)
+                TextField("Search memories…", text: $query)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 14))
+                Text("\(results.count) results")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(.horizontal, 13)
+            .padding(.vertical, 10)
+            .background(Theme.bgContent)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(accentStore.accent.color, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 18)
+
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    ForEach(results, id: \.id) { entry in
+                        MemoryRow(line: entry.line, isSelected: entry.id == currentMemory)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedMemory = entry.id
+                            }
+                    }
+                }
+                .padding(8)
+
+                if results.isEmpty {
+                    Text("No memories match \u{201c}\(query)\u{201d}.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(30)
+                }
+            }
+        }
+        .padding(.top, 10)
+    }
+}
+
+private struct MemoryRow: View {
+    @EnvironmentObject private var accentStore: AccentStore
+
+    let line: String
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 13) {
+            Text(line)
+                .font(.system(size: 12.5, weight: isSelected ? .semibold : .regular))
+                .foregroundStyle(Theme.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
+            Spacer()
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(accentStore.accent.color)
+            }
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(isSelected ? accentStore.accent.soft : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+/// Second step of `MemoryPickerSheet`: configure Intensity/Feeling/Variable for the chosen memory
+/// ID, then commit. `Variable`'s picker depends on `PKM.memoryVariableArgType`, since the same
+/// numeric field means a location, species, move, or item id depending on which memory this is.
+private struct MemoryDetailView: View {
+    @EnvironmentObject private var accentStore: AccentStore
+    @Environment(\.dismiss) private var dismiss
+
+    let pkm: PKM
+    let target: MemoryTarget
+    let memoryID: UInt8
+    let onBack: () -> Void
+    let onCommit: () -> Void
+
+    @State private var intensity: Int
+    @State private var feeling: Int
+    @State private var variable: UInt16
+
+    init(pkm: PKM, target: MemoryTarget, memoryID: UInt8, onBack: @escaping () -> Void, onCommit: @escaping () -> Void) {
+        self.pkm = pkm
+        self.target = target
+        self.memoryID = memoryID
+        self.onBack = onBack
+        self.onCommit = onCommit
+        let isCurrent = (target == .originalTrainer ? pkm.originalTrainerMemory : pkm.handlingTrainerMemory) == memoryID
+        if isCurrent {
+            _intensity = State(initialValue: Int(target == .originalTrainer ? pkm.originalTrainerMemoryIntensity : pkm.handlingTrainerMemoryIntensity))
+            _feeling = State(initialValue: Int(target == .originalTrainer ? pkm.originalTrainerMemoryFeeling : pkm.handlingTrainerMemoryFeeling))
+            _variable = State(initialValue: target == .originalTrainer ? pkm.originalTrainerMemoryVariable : pkm.handlingTrainerMemoryVariable)
+        } else {
+            let minIntensity = Int(pkm.memoryMinimumIntensity(memoryID))
+            _intensity = State(initialValue: max(minIntensity, 1))
+            _feeling = State(initialValue: 0)
+            _variable = State(initialValue: 0)
+        }
+    }
+
+    private var argType: UInt8 { pkm.memoryVariableArgType(memoryID) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Button {
+                onBack()
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("Choose a different memory")
+                        .font(.system(size: 11.5, weight: .medium))
+                }
+                .foregroundStyle(Theme.textSecondary)
+            }
+            .buttonStyle(.plain)
+
+            Text(memoryID == 0 ? "No memory" : pkm.memoryLine(memoryID))
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if memoryID != 0 {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("INTENSITY")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Theme.textTertiary)
+                        Stepper("\(intensity)", value: $intensity, in: Int(pkm.memoryMinimumIntensity(memoryID))...7)
+                            .font(.system(size: 13, design: .monospaced))
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("FEELING")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Theme.textTertiary)
+                        Stepper("\(feeling)", value: $feeling, in: 0...23)
+                            .font(.system(size: 13, design: .monospaced))
+                    }
+                }
+
+                if argType != 0 {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("VARIABLE")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Theme.textTertiary)
+                        Text(pkm.memoryVariableName(memoryID, variable: variable).isEmpty ? "#\(variable)" : pkm.memoryVariableName(memoryID, variable: variable))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Stepper("Variable: \(variable)", value: Binding(
+                            get: { Int(variable) },
+                            set: { variable = UInt16(max(0, min($0, 65535))) }
+                        ), in: 0...65535)
+                        .labelsHidden()
+                    }
+                }
+            }
+
+            Spacer()
+
+            Button("Save") {
+                if target == .originalTrainer {
+                    pkm.originalTrainerMemory = memoryID
+                    pkm.originalTrainerMemoryIntensity = UInt8(intensity)
+                    pkm.originalTrainerMemoryFeeling = UInt8(feeling)
+                    pkm.originalTrainerMemoryVariable = variable
+                } else {
+                    pkm.handlingTrainerMemory = memoryID
+                    pkm.handlingTrainerMemoryIntensity = UInt8(intensity)
+                    pkm.handlingTrainerMemoryFeeling = UInt8(feeling)
+                    pkm.handlingTrainerMemoryVariable = variable
+                }
+                onCommit()
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12.5, weight: .semibold))
+            .foregroundStyle(accentStore.accent.onAccent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(accentStore.accent.color)
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .padding(18)
     }
 }
 

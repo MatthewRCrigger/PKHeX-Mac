@@ -16,6 +16,9 @@ struct PKHeXMacApp: App {
                 // never be resized narrower than what the fixed-width sidebar/inspector panes and
                 // the content pane's own min width require (see ContentView's HStack layout).
                 .frame(minWidth: 942, minHeight: 600)
+                .onOpenURL { url in
+                    store.openFromFinder(url)
+                }
         }
         .commands {
             CommandGroup(replacing: .newItem) {

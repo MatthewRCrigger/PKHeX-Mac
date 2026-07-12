@@ -127,6 +127,316 @@ public final class PKM {
         pkhex_pkm_set_ability_index(handle, Int32(index))
     }
 
+    // MARK: - Met/Egg info
+
+    /// Location ID this Pokemon was met at. Display name via `metLocationName`; candidate list via
+    /// `metLocationOptions()`. The same numeric ID can mean a different place in a different game,
+    /// so always resolve/pick through those rather than a static table.
+    public var metLocation: UInt16 {
+        get { pkhex_pkm_get_met_location(handle) }
+        set { pkhex_pkm_set_met_location(handle, newValue) }
+    }
+
+    /// Location ID this Pokemon's egg was received/hatched at. Only meaningful when
+    /// `supportsEggLocation` is true (Gen 4+). See `metLocation`'s remarks on resolving names.
+    public var eggLocation: UInt16 {
+        get { pkhex_pkm_get_egg_location(handle) }
+        set { pkhex_pkm_set_egg_location(handle, newValue) }
+    }
+
+    /// Level this Pokemon was met/caught at.
+    public var metLevel: UInt8 {
+        get { pkhex_pkm_get_met_level(handle) }
+        set { pkhex_pkm_set_met_level(handle, newValue) }
+    }
+
+    /// Whether this Pokemon was obtained via a scripted/fateful encounter (e.g. a Mystery Gift or
+    /// static legendary encounter), rather than a normal wild/trade encounter.
+    public var fatefulEncounter: Bool {
+        get { pkhex_pkm_get_fateful_encounter(handle) != 0 }
+        set { pkhex_pkm_set_fateful_encounter(handle, newValue ? 1 : 0) }
+    }
+
+    /// Whether this Pokemon's format tracks a Met Date at all (Gen 4+). Gate Met Date UI on this,
+    /// not on `metDate == nil` — `nil` also legitimately means "present but unset/invalid".
+    public var supportsMetDate: Bool { pkhex_pkm_get_supports_met_date(handle) != 0 }
+
+    /// Whether this Pokemon's format tracks Egg Location/Date at all (Gen 4+). Gen 2-3 do have a
+    /// working `isEgg` flag but no egg location/date storage — gate Egg Info location/date fields
+    /// on this, separately from `supportsIsEgg`.
+    public var supportsEggLocation: Bool { pkhex_pkm_get_supports_egg_location(handle) != 0 }
+
+    /// Whether this Pokemon's format has any Is-Egg concept at all (Gen 2+; Gen 1 predates the Day
+    /// Care/egg mechanic entirely). Gate the Is-Egg toggle's availability on this.
+    public var supportsIsEgg: Bool { pkhex_pkm_get_supports_is_egg(handle) != 0 }
+
+    /// Date this Pokemon was met, or `nil` if unsupported/unset/invalid for this format.
+    public var metDate: DateComponents? {
+        get {
+            var year: Int32 = 0, month: Int32 = 0, day: Int32 = 0
+            guard pkhex_pkm_get_met_date(handle, &year, &month, &day) != 0 else { return nil }
+            return DateComponents(year: Int(year), month: Int(month), day: Int(day))
+        }
+        set {
+            if let newValue, let year = newValue.year, let month = newValue.month, let day = newValue.day {
+                pkhex_pkm_set_met_date(handle, Int32(year), Int32(month), Int32(day))
+            } else {
+                pkhex_pkm_set_met_date(handle, 0, 0, 0)
+            }
+        }
+    }
+
+    /// Date this Pokemon's egg was received/hatched, or `nil` if unsupported/unset/invalid. Only
+    /// meaningful when `supportsEggLocation` is true.
+    public var eggDate: DateComponents? {
+        get {
+            var year: Int32 = 0, month: Int32 = 0, day: Int32 = 0
+            guard pkhex_pkm_get_egg_date(handle, &year, &month, &day) != 0 else { return nil }
+            return DateComponents(year: Int(year), month: Int(month), day: Int(day))
+        }
+        set {
+            if let newValue, let year = newValue.year, let month = newValue.month, let day = newValue.day {
+                pkhex_pkm_set_egg_date(handle, Int32(year), Int32(month), Int32(day))
+            } else {
+                pkhex_pkm_set_egg_date(handle, 0, 0, 0)
+            }
+        }
+    }
+
+    /// Whether this Pokemon is currently an unhatched egg.
+    public var isEgg: Bool {
+        get { pkhex_pkm_get_is_egg(handle) != 0 }
+        set { pkhex_pkm_set_is_egg(handle, newValue ? 1 : 0) }
+    }
+
+    /// Whether this Pokemon currently is an egg, or was originally received as one and has since
+    /// hatched — i.e. it has legitimate egg history worth showing Egg Location/Date for, as opposed
+    /// to a plain wild-caught Pokemon with no egg history.
+    public var wasEgg: Bool { pkhex_pkm_get_was_egg(handle) != 0 }
+
+    /// Candidate Met (or Egg, if `egg` is true) Location IDs and display names for this Pokemon's
+    /// current version+context — mirrors PKHeX.WinForms' location combo contents, including
+    /// per-version partitioning within a generation and any synthesized entries. Use to build a
+    /// location picker.
+    public func locationOptions(egg: Bool) -> [(id: UInt16, name: String)] {
+        let count = Int(pkhex_pkm_get_location_count(handle, egg ? 1 : 0))
+        return (0..<count).map { index in
+            let id = pkhex_pkm_get_location_id_at_index(handle, egg ? 1 : 0, Int32(index))
+            let name = readNativeString { pkhex_pkm_get_location_name(handle, id, egg ? 1 : 0, $0, $1) }
+            return (id: id, name: name)
+        }
+    }
+
+    /// Display name for this Pokemon's current Met Location, resolved through its version+context.
+    public var metLocationName: String {
+        readNativeString { pkhex_pkm_get_location_name(handle, metLocation, 0, $0, $1) }
+    }
+
+    /// Display name for this Pokemon's current Egg Location, resolved through its version+context.
+    public var eggLocationName: String {
+        readNativeString { pkhex_pkm_get_location_name(handle, eggLocation, 1, $0, $1) }
+    }
+
+    // MARK: - Original Trainer / Handling Trainer
+
+    /// Name of this Pokemon's Original Trainer — may differ from the save's own trainer once
+    /// traded. Not the same as `SaveFile.otName`, which is the player's own identity.
+    public var originalTrainerName: String {
+        get { readNativeString { pkhex_pkm_get_ot_name(handle, $0, $1) } }
+        set { writeNativeString(newValue) { pkhex_pkm_set_ot_name(handle, $0, $1) } }
+    }
+
+    /// Maximum OT name length for this Pokemon's generation/language.
+    public var maxOriginalTrainerNameLength: Int { Int(pkhex_pkm_get_max_ot_name_length(handle)) }
+
+    /// 0 = male, 1 = female.
+    public var originalTrainerGender: UInt8 {
+        get { pkhex_pkm_get_ot_gender(handle) }
+        set { pkhex_pkm_set_ot_gender(handle, newValue) }
+    }
+
+    public var originalTrainerFriendship: UInt8 {
+        get { pkhex_pkm_get_ot_friendship(handle) }
+        set { pkhex_pkm_set_ot_friendship(handle, newValue) }
+    }
+
+    public var tid16: UInt16 {
+        get { pkhex_pkm_get_tid16(handle) }
+        set { pkhex_pkm_set_tid16(handle, newValue) }
+    }
+
+    public var sid16: UInt16 {
+        get { pkhex_pkm_get_sid16(handle) }
+        set { pkhex_pkm_set_sid16(handle, newValue) }
+    }
+
+    /// Resets OT name/gender/TID/SID/language to the given save's own trainer identity — undoes
+    /// trade history stamped into the OT fields. Does not touch Handling Trainer fields or
+    /// memories; pair with `currentHandler = 0` and `clearMemories()` for a full "make this
+    /// Pokemon look untraded" reset.
+    public func resetOriginalTrainerToSaveTrainer(_ saveFile: SaveFile) {
+        pkhex_pkm_reset_ot_to_save_trainer(handle, saveFile.handle)
+    }
+
+    /// Whether this Pokemon's format has any Handling Trainer concept at all (Gen 6+). Gate
+    /// Handling Trainer UI on this.
+    public var supportsHandlingTrainer: Bool { pkhex_pkm_get_supports_handling_trainer(handle) != 0 }
+
+    /// Whether this Pokemon currently has Handling Trainer data set at all (i.e. has been traded
+    /// at least once) — gate whether to show the HT UI at all, distinct from `currentHandler`
+    /// (who holds it right now).
+    public var hasHandlingTrainer: Bool { pkhex_pkm_get_has_handling_trainer(handle) != 0 }
+
+    public var handlingTrainerName: String {
+        get { readNativeString { pkhex_pkm_get_ht_name(handle, $0, $1) } }
+        set { writeNativeString(newValue) { pkhex_pkm_set_ht_name(handle, $0, $1) } }
+    }
+
+    /// 0 = male, 1 = female.
+    public var handlingTrainerGender: UInt8 {
+        get { pkhex_pkm_get_ht_gender(handle) }
+        set { pkhex_pkm_set_ht_gender(handle, newValue) }
+    }
+
+    public var handlingTrainerFriendship: UInt8 {
+        get { pkhex_pkm_get_ht_friendship(handle) }
+        set { pkhex_pkm_set_ht_friendship(handle, newValue) }
+    }
+
+    /// 0 = Original Trainer currently possesses this Pokemon, 1 = Handling Trainer does (traded).
+    public var currentHandler: UInt8 {
+        get { pkhex_pkm_get_current_handler(handle) }
+        set { pkhex_pkm_set_current_handler(handle, newValue) }
+    }
+
+    // MARK: - Memories
+
+    /// Whether this Pokemon's format tracks Original Trainer memories at all. Gen 6-9 track them
+    /// except Let's Go Pikachu/Eevee, which dropped the Amie/memory mechanic entirely.
+    public var supportsOriginalTrainerMemory: Bool { pkhex_pkm_get_supports_ot_memory(handle) != 0 }
+
+    /// Whether this Pokemon's format tracks Handling Trainer memories.
+    public var supportsHandlingTrainerMemory: Bool { pkhex_pkm_get_supports_ht_memory(handle) != 0 }
+
+    public var originalTrainerMemory: UInt8 {
+        get { pkhex_pkm_get_ot_memory(handle) }
+        set { pkhex_pkm_set_ot_memory(handle, newValue) }
+    }
+
+    public var originalTrainerMemoryIntensity: UInt8 {
+        get { pkhex_pkm_get_ot_memory_intensity(handle) }
+        set { pkhex_pkm_set_ot_memory_intensity(handle, newValue) }
+    }
+
+    public var originalTrainerMemoryFeeling: UInt8 {
+        get { pkhex_pkm_get_ot_memory_feeling(handle) }
+        set { pkhex_pkm_set_ot_memory_feeling(handle, newValue) }
+    }
+
+    public var originalTrainerMemoryVariable: UInt16 {
+        get { pkhex_pkm_get_ot_memory_variable(handle) }
+        set { pkhex_pkm_set_ot_memory_variable(handle, newValue) }
+    }
+
+    public var handlingTrainerMemory: UInt8 {
+        get { pkhex_pkm_get_ht_memory(handle) }
+        set { pkhex_pkm_set_ht_memory(handle, newValue) }
+    }
+
+    public var handlingTrainerMemoryIntensity: UInt8 {
+        get { pkhex_pkm_get_ht_memory_intensity(handle) }
+        set { pkhex_pkm_set_ht_memory_intensity(handle, newValue) }
+    }
+
+    public var handlingTrainerMemoryFeeling: UInt8 {
+        get { pkhex_pkm_get_ht_memory_feeling(handle) }
+        set { pkhex_pkm_set_ht_memory_feeling(handle, newValue) }
+    }
+
+    public var handlingTrainerMemoryVariable: UInt16 {
+        get { pkhex_pkm_get_ht_memory_variable(handle) }
+        set { pkhex_pkm_set_ht_memory_variable(handle, newValue) }
+    }
+
+    /// Zeroes OT + HT memory fields.
+    public func clearMemories() {
+        pkhex_pkm_clear_memories(handle)
+    }
+
+    /// Valid Memory IDs for this Pokemon's context (0 = "None" always included), for building a
+    /// memory picker.
+    public var memoryIDOptions: [UInt8] {
+        let count = Int(pkhex_pkm_get_memory_id_count(handle))
+        return (0..<count).map { pkhex_pkm_get_memory_id_at_index(handle, Int32($0)) }
+    }
+
+    /// Raw sentence template for a memory id, e.g. "{0} met {1} {2}. {4} that {3}." — for a memory
+    /// picker's option label.
+    public func memoryLine(_ memoryID: UInt8) -> String {
+        readNativeString { pkhex_memory_get_line(memoryID, $0, $1) }
+    }
+
+    /// What kind of value a memory's "variable" (TextVar) field means: 0=None, 1=GeneralLocation,
+    /// 2=SpecificLocation, 3=Species, 4=Move, 5=Item. Decides which picker to show for the
+    /// variable field.
+    public func memoryVariableArgType(_ memoryID: UInt8) -> UInt8 {
+        pkhex_memory_get_variable_arg_type(handle, memoryID)
+    }
+
+    /// Display name for a memory's variable value (e.g. "Route 5" instead of a bare numeric
+    /// TextVar), resolved per `memoryVariableArgType`.
+    public func memoryVariableName(_ memoryID: UInt8, variable: UInt16) -> String {
+        readNativeString { pkhex_memory_get_variable_name(handle, memoryID, variable, $0, $1) }
+    }
+
+    /// Lowest legal Intensity value for a given memory id.
+    public func memoryMinimumIntensity(_ memoryID: UInt8) -> UInt8 {
+        pkhex_memory_get_minimum_intensity(handle, memoryID)
+    }
+
+    /// Sets a known-legal "arrived via Link Trade" Handling Trainer memory — the same values
+    /// PKHeX.WinForms suggests when a trade is detected.
+    public func setTradeMemoryHT() {
+        pkhex_pkm_set_trade_memory_ht(handle)
+    }
+
+    // MARK: - Legality (structured)
+
+    /// One granular legality check result, for a "here's what's wrong" UI beyond the flat text
+    /// report (`legalityReasons`).
+    public struct LegalityResult {
+        public let severity: Int8
+        public let identifier: UInt8
+        public let message: String
+
+        /// True if this result represents an actual problem (Invalid or Fishy), not a routine
+        /// "this passed" entry.
+        public var isIssue: Bool { severity <= 0 }
+    }
+
+    /// Every individual legality check result for this Pokemon, both passing and failing — filter
+    /// on `isIssue` to show only problems. Building block for a granular legality UI, grouped by
+    /// `identifier` (matches PKHeX.Core's `CheckIdentifier` ordinal).
+    public var legalityResults: [LegalityResult] {
+        let count = Int(pkhex_pkm_get_legality_result_count(handle))
+        guard count > 0 else { return [] }
+        return (0..<count).map { index in
+            let severity = pkhex_pkm_get_legality_result_severity(handle, Int32(index))
+            let identifier = pkhex_pkm_get_legality_result_identifier(handle, Int32(index))
+            let message = readNativeString { pkhex_pkm_get_legality_result_message(handle, Int32(index), $0, $1) }
+            return LegalityResult(severity: severity, identifier: identifier, message: message)
+        }
+    }
+
+    /// Applies a curated, mechanically-safe quick-fix for the legality result at `index`, if one
+    /// is available for its category (Trainer/Memory/Handler/Ball). There is no general "make
+    /// legal" engine in PKHeX.Core to wrap — this only covers common, unambiguous repairs. Returns
+    /// true if a fix was applied.
+    @discardableResult
+    public func applyLegalityFix(at index: Int, saveFile: SaveFile) -> Bool {
+        pkhex_pkm_apply_legality_fix(handle, saveFile.handle, Int32(index)) == 1
+    }
+
     /// Primary and secondary type IDs; `type2 == type1` for single-type species.
     public var type1: UInt8 { pkhex_pkm_get_type1(handle) }
     public var type2: UInt8 { pkhex_pkm_get_type2(handle) }
@@ -324,5 +634,12 @@ public enum PokemonNames {
     /// Display name for a Ball ID (see PKHeX.Core's Ball enum), e.g. "Poké Ball".
     public static func ball(_ id: UInt8) -> String {
         readNativeString { pkhex_ball_get_name(id, $0, $1) }
+    }
+
+    /// Programmatic name of a `PKM.LegalityResult.identifier` value (e.g. "Trainer", "Memory",
+    /// "Ball", "Handler") — matches PKHeX.Core's `CheckIdentifier` enum member name exactly, not a
+    /// display string. Use to switch on category by name rather than hardcoding ordinal numbers.
+    public static func checkIdentifier(_ id: UInt8) -> String {
+        readNativeString { pkhex_check_identifier_get_name(id, $0, $1) }
     }
 }

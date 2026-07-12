@@ -69,24 +69,37 @@ final class SaveStore: ObservableObject {
         hasUnsavedChanges = true
     }
 
+    /// True if opening a different file should be blocked pending user confirmation, because doing
+    /// so would silently discard unsaved changes to the currently open save.
+    private func confirmDiscardingUnsavedChanges() -> Bool {
+        guard hasUnsavedChanges else { return true }
+        let alert = NSAlert()
+        alert.messageText = "You have unsaved changes"
+        alert.informativeText = "Opening a different save file will discard your unsaved changes to this one."
+        alert.addButton(withTitle: "Open Anyway")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .warning
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
     /// Prompts to open a different save file. If the currently open save has unsaved changes,
     /// confirms first — opening a new file discards them, there being only one save open at a time.
     func presentOpenPanel() {
-        if hasUnsavedChanges {
-            let alert = NSAlert()
-            alert.messageText = "You have unsaved changes"
-            alert.informativeText = "Opening a different save file will discard your unsaved changes to this one."
-            alert.addButton(withTitle: "Open Anyway")
-            alert.addButton(withTitle: "Cancel")
-            alert.alertStyle = .warning
-            guard alert.runModal() == .alertFirstButtonReturn else { return }
-        }
+        guard confirmDiscardingUnsavedChanges() else { return }
 
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.title = "Open Save File"
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        load(from: url)
+    }
+
+    /// Opens a file handed to us by the OS (double-click, Open With, drag onto the Dock icon).
+    /// Same unsaved-changes guard as `presentOpenPanel`, since Finder can hand us a file at any time
+    /// — including while a different save is already open with edits pending.
+    func openFromFinder(_ url: URL) {
+        guard confirmDiscardingUnsavedChanges() else { return }
         load(from: url)
     }
 

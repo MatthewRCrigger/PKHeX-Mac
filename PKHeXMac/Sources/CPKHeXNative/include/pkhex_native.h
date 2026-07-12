@@ -93,6 +93,57 @@ uint16_t pkhex_pkm_get_ability_at_index(int64_t handle, int32_t index);
  * Ability), handling every generation's storage quirks correctly (PID re-rolls where needed). */
 void pkhex_pkm_set_ability_index(int64_t handle, int32_t index);
 
+/* --- Met/Egg info --- */
+uint16_t pkhex_pkm_get_met_location(int64_t handle);
+void pkhex_pkm_set_met_location(int64_t handle, uint16_t location);
+
+uint16_t pkhex_pkm_get_egg_location(int64_t handle);
+void pkhex_pkm_set_egg_location(int64_t handle, uint16_t location);
+
+uint8_t pkhex_pkm_get_met_level(int64_t handle);
+void pkhex_pkm_set_met_level(int64_t handle, uint8_t level);
+
+uint8_t pkhex_pkm_get_fateful_encounter(int64_t handle);
+void pkhex_pkm_set_fateful_encounter(int64_t handle, uint8_t value);
+
+/* 1 if this PKM's format tracks a Met Date (Gen 4+) / Egg Location+Date (Gen 4+) / has any Is-Egg
+ * concept at all (Gen 2+ — Gen 1 predates Day Care/eggs entirely). Gate the corresponding UI on
+ * these rather than on the value being zero/null, since zero is also a legitimate reading. */
+uint8_t pkhex_pkm_get_supports_met_date(int64_t handle);
+uint8_t pkhex_pkm_get_supports_egg_location(int64_t handle);
+uint8_t pkhex_pkm_get_supports_is_egg(int64_t handle);
+
+/* Met/Egg date as (year, month, day) with a full 4-digit year. Returns 0 (all-zero out params) if
+ * this format doesn't support the date or the stored fields don't form a valid date. Pass year 0
+ * to pkhex_pkm_set_met_date/set_egg_date to clear the date. */
+uint8_t pkhex_pkm_get_met_date(int64_t handle, int32_t *year, int32_t *month, int32_t *day);
+void pkhex_pkm_set_met_date(int64_t handle, int32_t year, int32_t month, int32_t day);
+uint8_t pkhex_pkm_get_egg_date(int64_t handle, int32_t *year, int32_t *month, int32_t *day);
+void pkhex_pkm_set_egg_date(int64_t handle, int32_t year, int32_t month, int32_t day);
+
+uint8_t pkhex_pkm_get_is_egg(int64_t handle);
+/* 1 if this PKM currently is an egg OR was originally received as one and has since hatched
+ * (IsEgg || EggDay != 0) — i.e. it has legitimate egg history worth showing egg location/date for,
+ * as opposed to a plain wild-caught Pokemon with no egg history at all. */
+uint8_t pkhex_pkm_get_was_egg(int64_t handle);
+/* Toggling to true also renames to the localized egg name, resets the hatch counter, clears the
+ * Met Date, and seeds a default Egg Location/Level (see PkmExports.cs's PkmSetIsEgg remarks for
+ * exactly what this does and does not replicate from PKHeX.WinForms' fuller encounter-aware
+ * handler). Toggling to false restores CurrentFriendship to the species' base friendship. */
+void pkhex_pkm_set_is_egg(int64_t handle, uint8_t value);
+
+/* Candidate Met/Egg location ids for this PKM's current version+context (egg=1 for the Egg
+ * Location list, 0 for Met Location), for building a location picker — mirrors
+ * GameInfo.GetLocationList's per-version partitioning. Enumerate ids via
+ * pkhex_pkm_get_location_id_at_index(0..<count), then resolve display names via
+ * pkhex_pkm_get_location_name. */
+int32_t pkhex_pkm_get_location_count(int64_t handle, uint8_t egg);
+uint16_t pkhex_pkm_get_location_id_at_index(int64_t handle, uint8_t egg, int32_t index);
+/* Display name for a location id, resolved for this PKM's version+context (the same numeric id
+ * can mean different places in different games/generations). Empty string if not present in this
+ * PKM's current location list. */
+int32_t pkhex_pkm_get_location_name(int64_t handle, uint16_t location_id, uint8_t egg, uint16_t *out_buffer, int32_t out_buffer_length);
+
 /* Type IDs (see pkhex_type_get_name); Type2 equals Type1 for single-type species. */
 uint8_t pkhex_pkm_get_type1(int64_t handle);
 uint8_t pkhex_pkm_get_type2(int64_t handle);
@@ -150,6 +201,31 @@ int32_t pkhex_pkm_get_legality_report(int64_t handle, uint16_t *out_buffer, int3
  * pkhex_pkm_get_legality_report(verbose:0)). Intended for showing just the first line in a UI banner. */
 int32_t pkhex_pkm_get_legality_lines(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 
+/* Individual legality check results (both valid and invalid — filter on severity), for a granular
+ * "here's what's wrong" UI beyond pkhex_pkm_get_legality_lines' flat text report. Enumerate via
+ * pkhex_pkm_get_legality_result_count/severity/identifier/message (0..<count). */
+int32_t pkhex_pkm_get_legality_result_count(int64_t handle);
+/* -1 = Invalid, 0 = Fishy, 1 = Valid (matches PKHeX.Core's Severity enum values exactly). */
+int8_t pkhex_pkm_get_legality_result_severity(int64_t handle, int32_t index);
+/* Category ordinal (matches PKHeX.Core's CheckIdentifier enum) — group results by this, and use it
+ * to decide whether pkhex_pkm_apply_legality_fix has a quick-fix for this category. */
+uint8_t pkhex_pkm_get_legality_result_identifier(int64_t handle, int32_t index);
+/* Fully-resolved human-readable message for this result (item/species/move names substituted in).
+ * Size-then-fill like other string exports. */
+int32_t pkhex_pkm_get_legality_result_message(int64_t handle, int32_t index, uint16_t *out_buffer, int32_t out_buffer_length);
+
+/* Applies a curated, mechanically-safe quick-fix for the legality result at `index`, if one exists
+ * for its category (currently: Trainer, Memory, Handler, Ball — see PkmApplyLegalityFix's remarks
+ * in LegalityExports.cs). There is no general "make legal" engine in PKHeX.Core to wrap (that's a
+ * separate closed-source tool); this only covers common, unambiguous repairs. Returns 1 if applied,
+ * 0 if no quick-fix exists for this category, -1 on invalid handles/index. */
+int32_t pkhex_pkm_apply_legality_fix(int64_t pkm_handle, int64_t save_handle, int32_t index);
+
+/* Programmatic name of a CheckIdentifier ordinal (e.g. "Trainer", "Memory", "Ball", "Handler") —
+ * matches the enum member name exactly. Lets callers switch on category by name instead of
+ * hardcoding ordinals that would silently break if PKHeX.Core reorders the enum. */
+int32_t pkhex_check_identifier_get_name(uint8_t identifier, uint16_t *out_buffer, int32_t out_buffer_length);
+
 /* Highest move ID valid for this PKM's format, for a fallback "all moves" picker. */
 uint16_t pkhex_pkm_get_max_move_id(int64_t handle);
 
@@ -160,7 +236,100 @@ uint16_t pkhex_pkm_get_max_item_id(int64_t handle);
 int32_t pkhex_pkm_get_legal_move_count(int64_t handle);
 uint16_t pkhex_pkm_get_legal_move(int64_t handle, int32_t move_list_index);
 
-/* --- Trainer info --- */
+/* --- Per-Pokemon Original Trainer / Handling Trainer / Memories ---
+ * Distinct from the save-level "Trainer info" section below, which is the PLAYER's own identity.
+ * These bridge the OT/HT stamped onto an individual PKM, which can differ from the save's own
+ * trainer once a Pokemon has been traded. */
+
+int32_t pkhex_pkm_get_ot_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
+void pkhex_pkm_set_ot_name(int64_t handle, const uint16_t *name, int32_t length);
+int32_t pkhex_pkm_get_max_ot_name_length(int64_t handle);
+
+/* 0 = male, 1 = female */
+uint8_t pkhex_pkm_get_ot_gender(int64_t handle);
+void pkhex_pkm_set_ot_gender(int64_t handle, uint8_t gender);
+
+uint8_t pkhex_pkm_get_ot_friendship(int64_t handle);
+void pkhex_pkm_set_ot_friendship(int64_t handle, uint8_t value);
+
+uint16_t pkhex_pkm_get_tid16(int64_t handle);
+void pkhex_pkm_set_tid16(int64_t handle, uint16_t tid);
+uint16_t pkhex_pkm_get_sid16(int64_t handle);
+void pkhex_pkm_set_sid16(int64_t handle, uint16_t sid);
+
+/* Resets OT name/gender/TID/SID/language to the given save's own trainer identity — undoes trade
+ * history stamped into the OT fields. Does not touch Handling Trainer fields or memories. */
+void pkhex_pkm_reset_ot_to_save_trainer(int64_t pkm_handle, int64_t save_handle);
+
+/* 1 if this PKM's format has any Handling Trainer concept at all (Gen 6+). Gate HT UI on this. */
+uint8_t pkhex_pkm_get_supports_handling_trainer(int64_t handle);
+/* 1 if this PKM currently has HT data set (i.e. has been traded at least once) — gate whether to
+ * show the HT UI at all, separately from pkhex_pkm_get_current_handler (who holds it now). */
+uint8_t pkhex_pkm_get_has_handling_trainer(int64_t handle);
+
+int32_t pkhex_pkm_get_ht_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
+void pkhex_pkm_set_ht_name(int64_t handle, const uint16_t *name, int32_t length);
+uint8_t pkhex_pkm_get_ht_gender(int64_t handle);
+void pkhex_pkm_set_ht_gender(int64_t handle, uint8_t gender);
+uint8_t pkhex_pkm_get_ht_friendship(int64_t handle);
+void pkhex_pkm_set_ht_friendship(int64_t handle, uint8_t value);
+
+/* 0 = Original Trainer currently possesses it, 1 = Handling Trainer does (traded). */
+uint8_t pkhex_pkm_get_current_handler(int64_t handle);
+void pkhex_pkm_set_current_handler(int64_t handle, uint8_t value);
+
+/* 1 if this PKM's format tracks OT/HT memories respectively (Gen 6+, except Let's Go Pikachu/Eevee
+ * which drops the OT memory mechanic entirely — see PkmTrainerExports.cs remarks). Gate memory UI
+ * on these rather than format >= 6 alone. */
+uint8_t pkhex_pkm_get_supports_ot_memory(int64_t handle);
+uint8_t pkhex_pkm_get_supports_ht_memory(int64_t handle);
+
+uint8_t pkhex_pkm_get_ot_memory(int64_t handle);
+void pkhex_pkm_set_ot_memory(int64_t handle, uint8_t value);
+uint8_t pkhex_pkm_get_ot_memory_intensity(int64_t handle);
+void pkhex_pkm_set_ot_memory_intensity(int64_t handle, uint8_t value);
+uint8_t pkhex_pkm_get_ot_memory_feeling(int64_t handle);
+void pkhex_pkm_set_ot_memory_feeling(int64_t handle, uint8_t value);
+uint16_t pkhex_pkm_get_ot_memory_variable(int64_t handle);
+void pkhex_pkm_set_ot_memory_variable(int64_t handle, uint16_t value);
+
+uint8_t pkhex_pkm_get_ht_memory(int64_t handle);
+void pkhex_pkm_set_ht_memory(int64_t handle, uint8_t value);
+uint8_t pkhex_pkm_get_ht_memory_intensity(int64_t handle);
+void pkhex_pkm_set_ht_memory_intensity(int64_t handle, uint8_t value);
+uint8_t pkhex_pkm_get_ht_memory_feeling(int64_t handle);
+void pkhex_pkm_set_ht_memory_feeling(int64_t handle, uint8_t value);
+uint16_t pkhex_pkm_get_ht_memory_variable(int64_t handle);
+void pkhex_pkm_set_ht_memory_variable(int64_t handle, uint16_t value);
+
+/* Zeroes OT + HT memory fields. */
+void pkhex_pkm_clear_memories(int64_t handle);
+
+/* Valid Memory IDs for this PKM's context (0 = "None" always included), for building a memory
+ * picker. Enumerate via pkhex_pkm_get_memory_id_count/get_memory_id_at_index(0..<count). */
+int32_t pkhex_pkm_get_memory_id_count(int64_t handle);
+uint8_t pkhex_pkm_get_memory_id_at_index(int64_t handle, int32_t index);
+
+/* Raw sentence template for a memory id, e.g. "{0} met {1} {2}. {4} that {3}." — for a memory
+ * picker's option label. Size-then-fill like other string exports. */
+int32_t pkhex_memory_get_line(uint8_t memory_id, uint16_t *out_buffer, int32_t out_buffer_length);
+
+/* What kind of value the memory's "variable" (TextVar) field means for the given memory id:
+ * 0=None, 1=GeneralLocation, 2=SpecificLocation, 3=Species, 4=Move, 5=Item. Use to decide which
+ * picker to show for the variable field. */
+uint8_t pkhex_memory_get_variable_arg_type(int64_t handle, uint8_t memory_id);
+/* Display name for a memory's variable value, resolved per pkhex_memory_get_variable_arg_type
+ * (e.g. "Route 5" instead of a bare numeric TextVar). Size-then-fill like other string exports. */
+int32_t pkhex_memory_get_variable_name(int64_t handle, uint8_t memory_id, uint16_t variable, uint16_t *out_buffer, int32_t out_buffer_length);
+
+/* Lowest legal Intensity value for a given memory id. */
+uint8_t pkhex_memory_get_minimum_intensity(int64_t handle, uint8_t memory_id);
+
+/* Sets a known-legal "arrived via Link Trade" Handling Trainer memory — the same values
+ * PKHeX.WinForms suggests when a trade is detected. Convenience "suggest a memory" action. */
+void pkhex_pkm_set_trade_memory_ht(int64_t handle);
+
+/* --- Trainer info (save file / player identity) --- */
 int32_t pkhex_save_get_ot_name(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 void pkhex_save_set_ot_name(int64_t handle, const uint16_t *name, int32_t length);
 int32_t pkhex_save_get_max_ot_name_length(int64_t handle);

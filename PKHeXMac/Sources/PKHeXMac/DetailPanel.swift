@@ -5,6 +5,8 @@ private enum InspectorTab: String, CaseIterable {
     case summary = "Summary"
     case stats = "Stats"
     case moves = "Moves"
+    case met = "Met"
+    case trainer = "Trainer"
 }
 
 /// A single horizontal line, meant to be stroked with a dashed `StrokeStyle` — used for the
@@ -31,6 +33,13 @@ struct DetailPanel: View {
     @State private var isHeldItemPickerPresented = false
     @State private var isNaturePickerPresented = false
     @State private var isAbilityPickerPresented = false
+    @State private var metLocationPickerPresented = false
+    @State private var eggLocationPickerPresented = false
+    @State private var isMetDatePickerPresented = false
+    @State private var isEggDatePickerPresented = false
+    @State private var isLegalityExpanded = false
+    @State private var isMemoryPickerPresented = false
+    @State private var memoryPickerTarget: MemoryTarget?
 
     private var pkm: PKM? {
         guard let inspected = store.inspectedSlot else { return nil }
@@ -63,6 +72,8 @@ struct DetailPanel: View {
                         case .summary: summaryTab(for: pkm)
                         case .stats: statsTab(for: pkm)
                         case .moves: movesTab(for: pkm)
+                        case .met: metTab(for: pkm)
+                        case .trainer: trainerTab(for: pkm)
                         }
                     }
                 }
@@ -143,6 +154,35 @@ struct DetailPanel: View {
                 .environmentObject(accentStore)
             }
         }
+        .sheet(isPresented: $metLocationPickerPresented) {
+            if let pkm {
+                LocationPickerSheet(pkm: pkm, egg: false) { newLocation in
+                    pkm.metLocation = newLocation
+                    commit(pkm)
+                    metLocationPickerPresented = false
+                }
+                .environmentObject(accentStore)
+            }
+        }
+        .sheet(isPresented: $eggLocationPickerPresented) {
+            if let pkm {
+                LocationPickerSheet(pkm: pkm, egg: true) { newLocation in
+                    pkm.eggLocation = newLocation
+                    commit(pkm)
+                    eggLocationPickerPresented = false
+                }
+                .environmentObject(accentStore)
+            }
+        }
+        .sheet(isPresented: $isMemoryPickerPresented) {
+            if let pkm, let target = memoryPickerTarget {
+                MemoryPickerSheet(pkm: pkm, target: target) {
+                    commit(pkm)
+                    isMemoryPickerPresented = false
+                }
+                .environmentObject(accentStore)
+            }
+        }
     }
 
     // MARK: - Header
@@ -206,25 +246,57 @@ struct DetailPanel: View {
 
     // MARK: - Legality banner
 
+    /// Legality banner: collapsed to a one-line summary by default, expandable (tap) into a
+    /// per-issue list built from `PKM.legalityResults` — each issue shows its category and message,
+    /// with a "Fix" button wherever `applyLegalityFix` has a quick-fix for that category. There's
+    /// no general "make legal" engine in PKHeX.Core (that's a separate closed-source tool, not part
+    /// of this library) — only a curated set of common, unambiguous repairs is offered.
     @ViewBuilder
     private func legalityBanner(for pkm: PKM) -> some View {
         let isLegal = pkm.isLegal
-        HStack(spacing: 8) {
-            Circle()
-                .fill(isLegal ? Theme.legalDot : Theme.warnIcon)
-                .frame(width: 7, height: 7)
-            Text(isLegal ? "Legal" : "\(pkm.legalityReasons.count) issue\(pkm.legalityReasons.count == 1 ? "" : "s")")
-                .font(.system(size: 12.5, weight: .semibold))
-                .foregroundStyle(isLegal ? Theme.legalText : Theme.warnText)
-            Text(isLegal ? "passes all checks" : (pkm.legalityReasons.first ?? ""))
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
-                .lineLimit(1)
-                .truncationMode(.tail)
+        let issues = pkm.legalityResults.filter { $0.isIssue }
+
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                if !isLegal { isLegalityExpanded.toggle() }
+            } label: {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(isLegal ? Theme.legalDot : Theme.warnIcon)
+                        .frame(width: 7, height: 7)
+                    Text(isLegal ? "Legal" : "\(issues.count) issue\(issues.count == 1 ? "" : "s")")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(isLegal ? Theme.legalText : Theme.warnText)
+                    Text(isLegal ? "passes all checks" : (issues.first?.message ?? ""))
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: 8)
+                    if !isLegal {
+                        Image(systemName: isLegalityExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(isLegal)
+
+            if isLegalityExpanded && !isLegal {
+                VStack(spacing: 6) {
+                    ForEach(Array(issues.enumerated()), id: \.offset) { _, issue in
+                        legalityIssueRow(issue, pkm: pkm)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(isLegal ? Theme.legalFill : Theme.warnFill)
         .overlay(
             RoundedRectangle(cornerRadius: 9)
@@ -233,6 +305,54 @@ struct DetailPanel: View {
         .clipShape(RoundedRectangle(cornerRadius: 9))
         .padding(.horizontal, 18)
         .padding(.bottom, 14)
+    }
+
+    @ViewBuilder
+    private func legalityIssueRow(_ issue: PKM.LegalityResult, pkm: PKM) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(categoryName(for: issue.identifier))
+                .font(.system(size: 10, weight: .bold))
+                .tracking(0.3)
+                .foregroundStyle(Theme.textTertiary)
+                .frame(width: 68, alignment: .leading)
+            Text(issue.message)
+                .font(.system(size: 11.5))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            if hasQuickFix(for: issue.identifier) {
+                Button("Fix") {
+                    guard let index = pkm.legalityResults.firstIndex(where: {
+                        $0.identifier == issue.identifier && $0.message == issue.message
+                    }) else { return }
+                    pkm.applyLegalityFix(at: index, saveFile: saveFile)
+                    commit(pkm)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(accentStore.accent.bright)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(accentStore.accent.soft)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    /// Uppercased category label for a legality issue's identifier (resolved through PKHeX.Core's
+    /// own `CheckIdentifier` enum name, not a hardcoded ordinal table — see
+    /// `PokemonNames.checkIdentifier`).
+    private func categoryName(for identifier: UInt8) -> String {
+        PokemonNames.checkIdentifier(identifier).uppercased()
+    }
+
+    /// Whether `PKM.applyLegalityFix` has a quick-fix for this category — keep in sync with
+    /// `PkmApplyLegalityFix`'s switch in LegalityExports.cs.
+    private static let quickFixCategories: Set<String> = ["Trainer", "Memory", "Handler", "Ball"]
+
+    private func hasQuickFix(for identifier: UInt8) -> Bool {
+        Self.quickFixCategories.contains(PokemonNames.checkIdentifier(identifier))
     }
 
     // MARK: - Tabs
@@ -575,6 +695,563 @@ struct DetailPanel: View {
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 18)
+    }
+
+    // MARK: - Met tab
+
+    /// Met/Egg info tab: where/when/how a Pokémon was obtained. Gen 1 (`format == 1`) predates
+    /// this system entirely (no met location, level, or egg concept), so the whole section renders
+    /// as a dimmed placeholder there rather than a set of controls that would silently no-op.
+    @ViewBuilder
+    private func metTab(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if pkm.format < 2 {
+                Text("Gen 1 doesn't track Met/Egg info.")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Theme.textTertiary)
+            } else {
+                metInfoSection(for: pkm)
+                if pkm.supportsIsEgg {
+                    eggInfoSection(for: pkm)
+                }
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.bottom, 18)
+    }
+
+    @ViewBuilder
+    private func metInfoSection(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("MET INFO")
+
+            Button {
+                metLocationPickerPresented = true
+            } label: {
+                infoCard(label: "MET LOCATION", value: pkm.metLocation == 0 ? "—" : pkm.metLocationName)
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 10) {
+                metLevelCard(for: pkm)
+                if pkm.supportsMetDate {
+                    metDateCard(for: pkm)
+                } else {
+                    infoCard(label: "MET DATE", value: "—")
+                        .opacity(0.55)
+                }
+            }
+
+            fatefulEncounterCard(for: pkm)
+        }
+    }
+
+    @ViewBuilder
+    private func eggInfoSection(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("EGG INFO")
+
+            isEggCard(for: pkm)
+
+            if pkm.supportsEggLocation {
+                Button {
+                    eggLocationPickerPresented = true
+                } label: {
+                    infoCard(label: "EGG LOCATION", value: pkm.eggLocation == 0 ? "—" : pkm.eggLocationName)
+                }
+                .buttonStyle(.plain)
+                .disabled(!pkm.isEgg && !pkm.wasEgg)
+
+                eggDateCard(for: pkm)
+                    .disabled(!pkm.isEgg && !pkm.wasEgg)
+                    .opacity(pkm.isEgg || pkm.wasEgg ? 1 : 0.55)
+            }
+        }
+        .padding(.top, 6)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.hairline).frame(height: 0.5)
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 10.5, weight: .bold))
+            .tracking(0.4)
+            .foregroundStyle(Theme.textTertiary)
+    }
+
+    /// Met Level card: same inline-editable-field layout as the Summary tab's Level card.
+    @ViewBuilder
+    private func metLevelCard(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("MET LEVEL")
+                .font(.system(size: 10.5, weight: .bold))
+                .foregroundStyle(Theme.textTertiary)
+            StatValueField(prefix: "Lv", value: Int(pkm.metLevel), range: 0...100) { newValue in
+                pkm.metLevel = UInt8(newValue)
+                commit(pkm)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(11)
+        .background(Theme.bgElevated1)
+        .clipShape(RoundedRectangle(cornerRadius: 9))
+    }
+
+    @ViewBuilder
+    private func metDateCard(for pkm: PKM) -> some View {
+        Button {
+            isMetDatePickerPresented = true
+        } label: {
+            infoCard(label: "MET DATE", value: dateString(pkm.metDate))
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $isMetDatePickerPresented, arrowEdge: .top) {
+            DatePickerPopover(components: pkm.metDate) { newDate in
+                pkm.metDate = newDate
+                commit(pkm)
+                isMetDatePickerPresented = false
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func eggDateCard(for pkm: PKM) -> some View {
+        Button {
+            isEggDatePickerPresented = true
+        } label: {
+            infoCard(label: "EGG DATE", value: dateString(pkm.eggDate))
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $isEggDatePickerPresented, arrowEdge: .top) {
+            DatePickerPopover(components: pkm.eggDate) { newDate in
+                pkm.eggDate = newDate
+                commit(pkm)
+                isEggDatePickerPresented = false
+            }
+        }
+    }
+
+    /// Fateful Encounter toggle: not every format tracks this (see `PKM.fatefulEncounter`'s
+    /// abstract-on-every-concrete-class status), but it's harmless to show/toggle universally once
+    /// `format >= 2`, matching how the field is stored consistently from Gen 3 onward and is simply
+    /// always-false on Gen 2 (which predates the flag).
+    @ViewBuilder
+    private func fatefulEncounterCard(for pkm: PKM) -> some View {
+        Button {
+            pkm.fatefulEncounter.toggle()
+            commit(pkm)
+        } label: {
+            HStack {
+                infoCard(label: "FATEFUL ENCOUNTER", value: pkm.fatefulEncounter ? "Yes" : "No")
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Is-Egg toggle: flips the whole entity into/out of egg state via `PKM.isEgg`'s setter, which
+    /// (native-side) also renames to the egg name, resets the hatch counter, and clears the Met
+    /// Date — see `pkhex_pkm_set_is_egg`'s remarks for exactly what that entails.
+    @ViewBuilder
+    private func isEggCard(for pkm: PKM) -> some View {
+        Button {
+            pkm.isEgg.toggle()
+            commit(pkm)
+        } label: {
+            infoCard(label: "IS EGG", value: pkm.isEgg ? "Yes" : "No")
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func dateString(_ components: DateComponents?) -> String {
+        guard let components, let year = components.year, let month = components.month, let day = components.day else {
+            return "—"
+        }
+        return String(format: "%04d-%02d-%02d", year, month, day)
+    }
+
+    // MARK: - Trainer tab
+
+    /// OT/Handling Trainer + Memories tab. Every format tracks OT identity, so that section always
+    /// shows; Handling Trainer and Memories are Gen 6+ mechanics and are hidden entirely (not just
+    /// disabled) on earlier formats, matching how the Met tab hides Egg Info on formats that don't
+    /// support it.
+    @ViewBuilder
+    private func trainerTab(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            originalTrainerSection(for: pkm)
+
+            if pkm.supportsHandlingTrainer {
+                handlingTrainerSection(for: pkm)
+            }
+
+            if pkm.supportsOriginalTrainerMemory || pkm.supportsHandlingTrainerMemory {
+                memoriesSection(for: pkm)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.bottom, 18)
+    }
+
+    @ViewBuilder
+    private func originalTrainerSection(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionHeader("ORIGINAL TRAINER")
+                Spacer()
+                Button("Reset to My Trainer") {
+                    pkm.resetOriginalTrainerToSaveTrainer(saveFile)
+                    commit(pkm)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(accentStore.accent.bright)
+            }
+
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("OT NAME")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(Theme.textTertiary)
+                    OTNameField(pkm: pkm) { newValue in
+                        pkm.originalTrainerName = newValue
+                        commit(pkm)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(11)
+                .background(Theme.bgElevated1)
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+
+                otGenderCard(for: pkm)
+            }
+
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("TRAINER ID")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(Theme.textTertiary)
+                    StatValueField(prefix: "", value: Int(pkm.tid16), range: 0...65535) { newValue in
+                        pkm.tid16 = UInt16(newValue)
+                        commit(pkm)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(11)
+                .background(Theme.bgElevated1)
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("SECRET ID")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(Theme.textTertiary)
+                    StatValueField(prefix: "", value: Int(pkm.sid16), range: 0...65535) { newValue in
+                        pkm.sid16 = UInt16(newValue)
+                        commit(pkm)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(11)
+                .background(Theme.bgElevated1)
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("OT FRIENDSHIP")
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(Theme.textTertiary)
+                StatValueField(prefix: "", value: Int(pkm.originalTrainerFriendship), range: 0...255) { newValue in
+                    pkm.originalTrainerFriendship = UInt8(newValue)
+                    commit(pkm)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(11)
+            .background(Theme.bgElevated1)
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+        }
+    }
+
+    @ViewBuilder
+    private func otGenderCard(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("OT GENDER")
+                .font(.system(size: 10.5, weight: .bold))
+                .foregroundStyle(Theme.textTertiary)
+            HStack(spacing: 6) {
+                genderButton(title: "♂", isActive: pkm.originalTrainerGender == 0) {
+                    pkm.originalTrainerGender = 0
+                    commit(pkm)
+                }
+                genderButton(title: "♀", isActive: pkm.originalTrainerGender == 1) {
+                    pkm.originalTrainerGender = 1
+                    commit(pkm)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(11)
+        .background(Theme.bgElevated1)
+        .clipShape(RoundedRectangle(cornerRadius: 9))
+    }
+
+    private func genderButton(title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(isActive ? accentStore.accent.onAccent : Theme.textSecondary)
+                .frame(width: 28, height: 24)
+                .background(isActive ? accentStore.accent.color : Theme.bgElevated3)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Handling Trainer section: hidden UI entirely (not shown-but-disabled) when the Pokémon has
+    /// never been traded — matches PKHeX.WinForms' `ToggleHandlerVisibility`, which only reveals
+    /// the HT groupbox once `HandlingTrainerName` is non-empty. Shows an explanatory placeholder
+    /// with a way to seed HT data for testing/manual editing instead.
+    @ViewBuilder
+    private func handlingTrainerSection(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionHeader("HANDLING TRAINER")
+                Spacer()
+                currentHandlerToggle(for: pkm)
+            }
+
+            if !pkm.hasHandlingTrainer {
+                Text("This Pokémon hasn't been traded — no Handling Trainer is set.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textTertiary)
+                    .padding(.vertical, 4)
+            } else {
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("HT NAME")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Theme.textTertiary)
+                        HTNameField(pkm: pkm) { newValue in
+                            pkm.handlingTrainerName = newValue
+                            commit(pkm)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(11)
+                    .background(Theme.bgElevated1)
+                    .clipShape(RoundedRectangle(cornerRadius: 9))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("HT GENDER")
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Theme.textTertiary)
+                        HStack(spacing: 6) {
+                            genderButton(title: "♂", isActive: pkm.handlingTrainerGender == 0) {
+                                pkm.handlingTrainerGender = 0
+                                commit(pkm)
+                            }
+                            genderButton(title: "♀", isActive: pkm.handlingTrainerGender == 1) {
+                                pkm.handlingTrainerGender = 1
+                                commit(pkm)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(11)
+                    .background(Theme.bgElevated1)
+                    .clipShape(RoundedRectangle(cornerRadius: 9))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("HT FRIENDSHIP")
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(Theme.textTertiary)
+                    StatValueField(prefix: "", value: Int(pkm.handlingTrainerFriendship), range: 0...255) { newValue in
+                        pkm.handlingTrainerFriendship = UInt8(newValue)
+                        commit(pkm)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(11)
+                .background(Theme.bgElevated1)
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+            }
+        }
+        .padding(.top, 6)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.hairline).frame(height: 0.5)
+        }
+    }
+
+    /// "OT"/"HT" segmented toggle for `PKM.currentHandler` — who currently holds the Pokémon.
+    private func currentHandlerToggle(for pkm: PKM) -> some View {
+        HStack(spacing: 2) {
+            Button("OT") {
+                pkm.currentHandler = 0
+                commit(pkm)
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10.5, weight: .semibold))
+            .foregroundStyle(pkm.currentHandler == 0 ? accentStore.accent.onAccent : Theme.textSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(pkm.currentHandler == 0 ? accentStore.accent.color : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            Button("HT") {
+                pkm.currentHandler = 1
+                commit(pkm)
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 10.5, weight: .semibold))
+            .foregroundStyle(pkm.currentHandler == 1 ? accentStore.accent.onAccent : Theme.textSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(pkm.currentHandler == 1 ? accentStore.accent.color : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .padding(2)
+        .background(Theme.bgElevated1)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    /// Memories section: OT memory card (if supported) and HT memory card (if supported and the
+    /// Pokémon has an HT), each tappable into a `MemoryPickerSheet`. Also offers "Clear" and, for
+    /// HT, a one-tap "Set Trade Memory" suggestion mirroring PKHeX.WinForms' own trade-memory
+    /// convenience helper rather than requiring hand-picked Intensity/Feeling values.
+    @ViewBuilder
+    private func memoriesSection(for pkm: PKM) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionHeader("MEMORIES")
+                Spacer()
+                Button("Clear All") {
+                    pkm.clearMemories()
+                    commit(pkm)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(accentStore.accent.bright)
+            }
+
+            if pkm.supportsOriginalTrainerMemory {
+                memoryCard(title: "OT MEMORY", memoryID: pkm.originalTrainerMemory, pkm: pkm) {
+                    memoryPickerTarget = .originalTrainer
+                    isMemoryPickerPresented = true
+                }
+            }
+
+            if pkm.supportsHandlingTrainerMemory && pkm.hasHandlingTrainer {
+                memoryCard(title: "HT MEMORY", memoryID: pkm.handlingTrainerMemory, pkm: pkm) {
+                    memoryPickerTarget = .handlingTrainer
+                    isMemoryPickerPresented = true
+                }
+                Button("Suggest Trade Memory") {
+                    pkm.setTradeMemoryHT()
+                    commit(pkm)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textSecondary)
+            }
+        }
+        .padding(.top, 6)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Theme.hairline).frame(height: 0.5)
+        }
+    }
+
+    @ViewBuilder
+    private func memoryCard(title: String, memoryID: UInt8, pkm: PKM, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(Theme.textTertiary)
+                Text(memoryID == 0 ? "No memory" : pkm.memoryLine(memoryID))
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(11)
+            .background(Theme.bgElevated1)
+            .clipShape(RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Which trainer's memory a `MemoryPickerSheet` is editing.
+enum MemoryTarget {
+    case originalTrainer
+    case handlingTrainer
+}
+
+/// Editable OT Name field: same styling convention as `LevelField`/`NicknameField`.
+private struct OTNameField: View {
+    let pkm: PKM
+    let onCommit: (String) -> Void
+
+    @State private var draft = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        TextField("OT Name", text: $draft)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Theme.textPrimary)
+            .focused($isFocused)
+            .onSubmit { commit() }
+            .onAppear { draft = pkm.originalTrainerName }
+            .onChange(of: pkm.originalTrainerName) { _, newValue in
+                if !isFocused { draft = newValue }
+            }
+            .onChange(of: isFocused) { _, focused in
+                if !focused { commit() }
+            }
+            .onChange(of: draft) { _, newValue in
+                let max = pkm.maxOriginalTrainerNameLength
+                if max > 0, newValue.count > max {
+                    draft = String(newValue.prefix(max))
+                }
+            }
+    }
+
+    private func commit() {
+        guard draft != pkm.originalTrainerName else { return }
+        onCommit(draft)
+    }
+}
+
+/// Editable HT Name field: same styling convention as `OTNameField`.
+private struct HTNameField: View {
+    let pkm: PKM
+    let onCommit: (String) -> Void
+
+    @State private var draft = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        TextField("HT Name", text: $draft)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Theme.textPrimary)
+            .focused($isFocused)
+            .onSubmit { commit() }
+            .onAppear { draft = pkm.handlingTrainerName }
+            .onChange(of: pkm.handlingTrainerName) { _, newValue in
+                if !isFocused { draft = newValue }
+            }
+            .onChange(of: isFocused) { _, focused in
+                if !focused { commit() }
+            }
+    }
+
+    private func commit() {
+        guard draft != pkm.handlingTrainerName else { return }
+        onCommit(draft)
     }
 }
 

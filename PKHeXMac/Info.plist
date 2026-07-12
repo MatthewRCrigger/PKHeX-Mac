@@ -22,5 +22,48 @@
 	<string>1</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Pokémon Save File</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.pkhexmac.savefile</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.pkhexmac.savefile</string>
+			<key>UTTypeDescription</key>
+			<string>Pokémon Save File</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sav</string>
+					<string>dsv</string>
+					<string>dat</string>
+					<string>bin</string>
+					<string>gci</string>
+					<string>bin2</string>
+					<string>srm</string>
+					<string>rvsave</string>
+					<string>main</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

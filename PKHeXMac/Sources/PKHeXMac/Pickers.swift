@@ -774,6 +774,6 @@ private struct MoveRow: View {
         if moveID == pkm.move(slotIndex) {
             return "\(pkm.movePP(slotIndex))/\(pkm.movePPMax(slotIndex))"
         }
-        return "—"
+        return "\(pkm.moveBasePP(moveID))/\(pkm.moveBasePP(moveID))"
     }
 }

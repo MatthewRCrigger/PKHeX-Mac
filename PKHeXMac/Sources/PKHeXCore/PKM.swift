@@ -277,6 +277,13 @@ public final class PKM {
     public func movePPMax(_ index: Int) -> Int32 {
         pkhex_pkm_get_move_pp_max(handle, Int32(index))
     }
+
+    /// Base max PP (0 PP Ups) for an arbitrary move ID — what it would show if newly selected into
+    /// a slot (selecting a move always resets PP Ups to 0). Use `movePPMax(_:)` instead for a move
+    /// already equipped in a slot, which accounts for any PP Ups applied.
+    public func moveBasePP(_ move: UInt16) -> Int32 {
+        pkhex_pkm_get_move_base_pp(handle, move)
+    }
 }
 
 /// Display-name lookups for species/move/nature/item IDs, backed by PKHeX.Core's current-language

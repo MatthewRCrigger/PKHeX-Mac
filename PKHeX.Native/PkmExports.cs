@@ -520,6 +520,21 @@ public static class PkmExports
         return move == 0 ? 0 : pk.GetMovePP(move, ppUps);
     }
 
+    /// <summary>
+    /// Base max PP (0 PP Ups) for an arbitrary move ID, for this PKM's game context — used by the
+    /// move picker to show PP for candidate moves that aren't the one currently equipped in a slot
+    /// (pkhex_pkm_get_move_pp/_pp_max only read the PKM's already-stored slots, not an arbitrary
+    /// move ID). Selecting a move always resets it to full PP with no PP Ups (see
+    /// pkhex_pkm_set_move), so this is exactly what a newly-selected move's PP would be.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move_base_pp")]
+    public static int PkmGetMoveBasePP(long handle, ushort move)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return -1;
+        return move == 0 ? 0 : pk.GetMovePP(move, 0);
+    }
+
     private static unsafe int WriteString(string value, char* outBuffer, int outBufferLength)
     {
         if (outBuffer is null || outBufferLength < value.Length)

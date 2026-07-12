@@ -113,6 +113,10 @@ void pkhex_pkm_set_ev(int64_t handle, int32_t stat, int32_t value);
 int32_t pkhex_pkm_get_move_pp(int64_t handle, int32_t index);
 int32_t pkhex_pkm_get_move_pp_max(int64_t handle, int32_t index);
 
+/* Base max PP (0 PP Ups) for an arbitrary move ID, independent of any equipped slot — what a
+ * newly-selected move's PP would be, since selecting a move resets PP Ups to 0. */
+int32_t pkhex_pkm_get_move_base_pp(int64_t handle, uint16_t move);
+
 /* UTF-16 code units; call once with NULL buffer to size, again to fill. */
 int32_t pkhex_pkm_get_nickname(int64_t handle, uint16_t *out_buffer, int32_t out_buffer_length);
 void pkhex_pkm_set_nickname(int64_t handle, const uint16_t *name, int32_t length);

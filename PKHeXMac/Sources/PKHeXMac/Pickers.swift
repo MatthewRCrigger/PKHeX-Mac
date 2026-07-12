@@ -237,13 +237,12 @@ struct MoveEditorSheet: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                // Column header. There's no exposed category/power/accuracy lookup API
-                // (PokemonNames only resolves display names), so those columns show "—".
+                // Column header. PKHeX.Core (a save editor, not a battle simulator) doesn't ship
+                // base power/accuracy/category data for moves, so those columns aren't shown —
+                // only Type (real data) and PP.
                 HStack(spacing: 12) {
                     Text("MOVE").frame(width: 168, alignment: .leading)
-                    Text("CAT").frame(width: 70, alignment: .leading)
-                    Text("PWR").frame(width: 54, alignment: .trailing)
-                    Text("ACC").frame(width: 54, alignment: .trailing)
+                    Text("TYPE").frame(width: 70, alignment: .leading)
                     Text("PP").frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .font(.system(size: 10, weight: .bold))
@@ -753,19 +752,13 @@ private struct MoveRow: View {
             }
             .frame(width: 168, alignment: .leading)
 
-            // No move category/power/accuracy lookup API is exposed — shown as placeholders.
-            Text("—")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 70, alignment: .leading)
-            Text("—")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(Theme.textPrimary.opacity(0.7))
-                .frame(width: 54, alignment: .trailing)
-            Text("—")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(Theme.textPrimary.opacity(0.7))
-                .frame(width: 54, alignment: .trailing)
+            HStack {
+                if moveID != 0 {
+                    TypeBadge(typeID: pkm.moveType(moveID))
+                }
+            }
+            .frame(width: 70, alignment: .leading)
+
             Text(ppText)
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(accentStore.accent.bright)

@@ -144,7 +144,7 @@ struct EditableNumberField: View {
                     }
             } else {
                 HStack(spacing: 6) {
-                    Text("\(value)")
+                    Text(String(value))
                     Button {
                         draft = String(value)
                         isEditing = true

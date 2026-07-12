@@ -272,6 +272,19 @@ public static class PkmExports
         }
     }
 
+    /// <summary>
+    /// Type ID (see pkhex_type_get_name) of the given move ID, resolved for this PKM's game
+    /// context — a small number of moves' types differ across generations (e.g. Charm, Moonlight),
+    /// so the lookup is context-dependent rather than a plain move -> type table.
+    /// </summary>
+    [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_move_type")]
+    public static byte PkmGetMoveType(long handle, ushort move)
+    {
+        if (HandleTable.Get<PKM>(handle) is not { } pk)
+            return 0;
+        return MoveInfo.GetType(move, pk.Context);
+    }
+
     // IVs/EVs: stat index 0=HP,1=ATK,2=DEF,3=SPA,4=SPD,5=SPE (matches display convention).
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_iv")]
     public static int PkmGetIV(long handle, int stat)

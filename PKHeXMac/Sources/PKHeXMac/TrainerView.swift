@@ -51,7 +51,7 @@ struct TrainerView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
 
-                Text("\(saveFile.tid) · \(saveFile.sid) · Gen \(saveFile.generation)")
+                Text("\(String(saveFile.tid)) · \(String(saveFile.sid)) · Gen \(saveFile.generation)")
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(Theme.textSecondary)
 

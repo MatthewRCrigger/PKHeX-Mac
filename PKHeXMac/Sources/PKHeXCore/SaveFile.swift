@@ -112,6 +112,14 @@ public final class SaveFile {
         readNativeString { pkhex_save_get_box_name(handle, Int32(box), $0, $1) }
     }
 
+    /// Number of occupied slots in the given box (0-indexed). Box slots may have gaps, so this
+    /// counts non-empty slots rather than assuming they're packed from index 0.
+    public func boxOccupiedSlotCount(_ box: Int) -> Int {
+        (0..<boxSlotCount).reduce(0) { count, slotIndex in
+            self.slot(box: box, slot: slotIndex) != nil ? count + 1 : count
+        }
+    }
+
     /// Creates a new blank-template Pokemon of the given species (level 1, this save's trainer
     /// info), for inserting into an empty slot via `setSlot`/`setPartySlot`. Returns nil if the
     /// species is out of range for this save's generation.

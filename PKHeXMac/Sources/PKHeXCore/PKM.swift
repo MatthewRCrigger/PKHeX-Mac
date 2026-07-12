@@ -164,6 +164,12 @@ public final class PKM {
         pkhex_pkm_set_move(handle, Int32(index), move)
     }
 
+    /// Type ID (see `PokemonNames.type`) of the given move ID, resolved for this Pokemon's game
+    /// context (a handful of moves' types differ across generations). Pass move ID 0 for "—".
+    public func moveType(_ move: UInt16) -> UInt8 {
+        move == 0 ? 0 : pkhex_pkm_get_move_type(handle, move)
+    }
+
     public var moves: [UInt16] {
         (0..<4).map { move($0) }
     }

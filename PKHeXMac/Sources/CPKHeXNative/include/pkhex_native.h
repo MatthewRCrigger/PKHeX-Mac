@@ -100,6 +100,10 @@ uint8_t pkhex_pkm_get_type2(int64_t handle);
 uint16_t pkhex_pkm_get_move(int64_t handle, int32_t index);
 void pkhex_pkm_set_move(int64_t handle, int32_t index, uint16_t move);
 
+/* Type ID (see pkhex_type_get_name) of a move ID, resolved for this PKM's game context — a
+ * handful of moves' types differ across generations, so this isn't a static move->type table. */
+uint8_t pkhex_pkm_get_move_type(int64_t handle, uint16_t move);
+
 int32_t pkhex_pkm_get_iv(int64_t handle, int32_t stat);
 void pkhex_pkm_set_iv(int64_t handle, int32_t stat, int32_t value);
 

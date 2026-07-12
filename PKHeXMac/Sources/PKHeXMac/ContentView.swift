@@ -108,7 +108,7 @@ private struct BoxSidebar: View {
                     SidebarRow(
                         systemImage: "person.3",
                         title: "Party",
-                        trailingCount: saveFile.partyCount,
+                        trailingText: "\(saveFile.partyCount)",
                         isActive: store.selectedSidebarItem == .slots(.party)
                     ) {
                         store.selectedSidebarItem = .slots(.party)
@@ -116,9 +116,9 @@ private struct BoxSidebar: View {
 
                     ForEach(0..<saveFile.boxCount, id: \.self) { box in
                         SidebarRow(
-                            swatchIndex: box,
+                            systemImage: "shippingbox",
                             title: saveFile.boxName(box),
-                            trailingCount: saveFile.boxSlotCount,
+                            trailingText: "\(saveFile.boxOccupiedSlotCount(box)) / \(saveFile.boxSlotCount)",
                             isActive: store.selectedSidebarItem == .slots(.box(box))
                         ) {
                             store.selectedSidebarItem = .slots(.box(box))
@@ -136,23 +136,15 @@ private struct BoxSidebar: View {
     }
 }
 
-/// A single sidebar navigation row (Trainer / Bag / Party / Box). Either pass `systemImage` for an
-/// SF Symbol leading glyph, or `swatchIndex` to draw a colored box swatch square instead.
+/// A single sidebar navigation row (Trainer / Bag / Party / Box), with a leading SF Symbol glyph.
 private struct SidebarRow: View {
     @EnvironmentObject private var accentStore: AccentStore
 
     var systemImage: String?
-    var swatchIndex: Int?
     let title: String
-    var trailingCount: Int?
+    var trailingText: String?
     let isActive: Bool
     let action: () -> Void
-
-    private static let swatchPalette: [Color] = [
-        Color(hex: 0x3FD0C9), Color(hex: 0x4D90D5), Color(hex: 0x5BBF7A),
-        Color(hex: 0xFF9F43), Color(hex: 0xF76D9C), Color(hex: 0x8B7CFF),
-        Color(hex: 0xE0B34D), Color(hex: 0xC85B8E),
-    ]
 
     var body: some View {
         let accent = accentStore.accent
@@ -163,17 +155,13 @@ private struct SidebarRow: View {
                     Image(systemName: systemImage)
                         .font(.system(size: 13, weight: .regular))
                         .frame(width: 15, height: 15)
-                } else if let swatchIndex {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Self.swatchPalette[swatchIndex % Self.swatchPalette.count])
-                        .frame(width: 9, height: 9)
                 }
                 Text(title)
                     .font(.system(size: 13, weight: isActive ? .semibold : .regular))
                     .lineLimit(1)
                 Spacer(minLength: 4)
-                if let trailingCount {
-                    Text("\(trailingCount)")
+                if let trailingText {
+                    Text(trailingText)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.white.opacity(0.6))
                 }

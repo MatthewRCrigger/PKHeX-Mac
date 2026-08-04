@@ -16,12 +16,12 @@ targets:
     type: application
     platform: macOS
     sources:
-      - path: PKHeXMac/Sources/PKHeXMac
+      - path: PKHeXMac/Sources/PKHeXSwiftUI
       - path: PKHeXMac/Resources/Assets.xcassets
     dependencies:
       - target: PKHeXCore
         embed: true
-      - framework: PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib
+      - framework: PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish/PKHeX.Interop.dylib
         embed: true
         codeSign: true
     settings:
@@ -38,6 +38,30 @@ targets:
       properties:
         CFBundleDisplayName: PKHeXMac
         NSHumanReadableCopyright: ""
+        # Declared here rather than hand-edited into Info.plist: xcodegen regenerates that file
+        # from this block, so anything only in the plist is silently dropped on the next generate.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Pokémon Save File
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.pkhexmac.savefile
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.pkhexmac.savefile
+            UTTypeDescription: Pokémon Save File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - sav
+                - dsv
+                - dat
+                - bin
+                - gci
+                - bin2
+                - srm
+                - rvsave
+                - main
 
   PKHeXCore:
     type: framework
@@ -45,16 +69,16 @@ targets:
     sources:
       - path: PKHeXMac/Sources/PKHeXCore
     dependencies:
-      - framework: PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib
+      - framework: PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish/PKHeX.Interop.dylib
         embed: false
     preBuildScripts:
-      - name: Publish PKHeX.Native (NativeAOT)
+      - name: Publish PKHeX.Interop (NativeAOT)
         script: |
           set -e
           /usr/bin/env -i \
             HOME="$HOME" \
             PATH="$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin" \
-            dotnet publish "$SRCROOT/PKHeX.Native/PKHeX.Native.csproj" -c Release -r osx-arm64
+            dotnet publish "$SRCROOT/PKHeX.Interop/PKHeX.Interop.csproj" -c Release -r osx-arm64
         alwaysOutOfDate: true
     settings:
       base:

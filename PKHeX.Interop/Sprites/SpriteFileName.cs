@@ -3,7 +3,7 @@ using System.Text;
 using PKHeX.Core;
 using static PKHeX.Core.Species;
 
-namespace PKHeX.Native.Sprites;
+namespace PKHeX.Interop.Sprites;
 
 /// <summary>
 /// Ported from PKHeX.Drawing.PokeSprite.SpriteName.GetResourceStringSprite, which cannot be

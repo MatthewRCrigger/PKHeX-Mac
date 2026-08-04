@@ -3,7 +3,7 @@ using System.Text;
 using PKHeX.Core;
 using static PKHeX.Core.Species;
 
-namespace PKHeX.Native.Sprites;
+namespace PKHeX.Interop.Sprites;
 
 /// <summary>
 /// Filename generator for vendor/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon

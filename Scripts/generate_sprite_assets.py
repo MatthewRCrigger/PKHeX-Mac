@@ -2,7 +2,7 @@
 """
 Generates an Xcode asset catalog (Sprites.xcassets) from PKHeX.Drawing.PokeSprite's bundled
 Pokemon sprite PNGs. Each PNG becomes a single-scale .imageset named after its file stem
-(e.g. "b_25-1s"), matching the file names produced by PKHeX.Native's
+(e.g. "b_25-1s"), matching the file names produced by PKHeX.Interop's
 pkhex_pkm_get_sprite_file_name export.
 
 Run this again whenever vendor/PKHeX's sprite PNGs change (e.g. after a submodule update).

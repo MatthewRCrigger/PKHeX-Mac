@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
-using PKHeX.Native.Sprites;
+using PKHeX.Interop.Sprites;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 public static class PkmExports
 {

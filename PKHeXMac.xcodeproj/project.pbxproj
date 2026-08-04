@@ -7,30 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */; };
-		2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042BD126A70CAEFE24C3C7B8 /* ContentView.swift */; };
-		697F7C174BE5CAF3878ACF56 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7DA157C577B01B7AD77E41D /* AppDelegate.swift */; };
-		0C6B8017D3E5F3FE89630A4E /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */; };
-		F7C9E6F07B331604AF8AE652 /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */; };
+		071EFE8812DE993712573BC3 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
+		26E408D7A69E8B548C92F6AB /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */; };
 		290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; };
-		334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */; };
+		426DA9B6957298C1DF3031F9 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
+		455677238A49EB1E9CBD8625 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
+		4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */; };
 		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
-		54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 965F0E77C9A38612EA7511CD /* TrainerView.swift */; };
-		70CA7B2485041D7FEFC95D65 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */; };
-		9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1A5A4853A160F141612244 /* BoxGridView.swift */; };
+		5EF44AB9D7E09E91D260D491 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321E64E26089C2F438E2FE1A /* DetailPanel.swift */; };
 		9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
-		A1CB877D2A13C3C946922083 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F4C0472A05A96C4CE95A64 /* Pickers.swift */; };
 		A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A739EFF72563AF0D029D8E18 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */; };
+		B1AEAED12117644EA9B917F0 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299926E73B028F53F6DC025 /* BagView.swift */; };
 		B6B6253C86C4BAF5C1807365 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */; };
-		BE69BA902928488A72D51BA2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02400D19DAF2F2CE12565E36 /* SettingsView.swift */; };
+		BC86B41DCDDBD9DE0A26E3A1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8FA2AE5C5C0BA89142F29F /* Theme.swift */; };
+		BCBBB8F73D8748F63CB08297 /* PKHeX.Interop.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BDDCC6E0719A9D600DEECEFB /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB86BF7565C22F01133B76D /* SaveStore.swift */; };
+		C8B470F8AD14A1D06B57316E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9182C6871188B2219630B85 /* ContentView.swift */; };
+		C8B6E6EB4864C26231BB1D0C /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */; };
 		CA384DA96B3DDD068799649C /* PKM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07CFAF47DCE7B0F0292C0AF /* PKM.swift */; };
-		D571EAD167B7AD2DF080BF15 /* PKHeX.Native.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; };
-		DBC4D8FEAF495B1CF08D1EBB /* PKHeX.Native.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; };
-		E02408354DB8D13A790C60D4 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA318ED5D175D4BD77340DB /* BagView.swift */; };
-		E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */; };
+		D29F0A094CA5AB9B8974C57B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */; };
+		D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */; };
+		DCA7897E522F421BC93848F0 /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */; };
+		EB56E3C7171A204F28020791 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC6E0913AEBA97080A64120 /* Pickers.swift */; };
 		F5F31A4171692448212B8AA6 /* SaveFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE0AA02E3445D8A02271413 /* SaveFile.swift */; };
-		F8570BB01AEDABF39EAF9955 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0F8EDE9A38F453C4D81983A /* Theme.swift */; };
-		FCFD46DF8E9630781A721393 /* PKHeX.Native.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,7 +51,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */,
-				FCFD46DF8E9630781A721393 /* PKHeX.Native.dylib in Embed Frameworks */,
+				BCBBB8F73D8748F63CB08297 /* PKHeX.Interop.dylib in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -59,27 +59,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		02400D19DAF2F2CE12565E36 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		042BD126A70CAEFE24C3C7B8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKHeXMacApp.swift; sourceTree = "<group>"; };
-		4A1A5A4853A160F141612244 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
-		A7DA157C577B01B7AD77E41D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragRegistry.swift; sourceTree = "<group>"; };
-		95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedSaveStore.swift; sourceTree = "<group>"; };
+		1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
+		2299926E73B028F53F6DC025 /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
+		22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragRegistry.swift; sourceTree = "<group>"; };
+		2E8FA2AE5C5C0BA89142F29F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		321E64E26089C2F438E2FE1A /* DetailPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPanel.swift; sourceTree = "<group>"; };
+		4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKHeXMacApp.swift; sourceTree = "<group>"; };
+		4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedSaveStore.swift; sourceTree = "<group>"; };
 		505571693819F220BFD40FE7 /* NativeString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeString.swift; sourceTree = "<group>"; };
-		51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Native.dylib; path = "PKHeX.Native/bin/Release/net10.0/osx-arm64/publish/PKHeX.Native.dylib"; sourceTree = "<group>"; };
-		5EA318ED5D175D4BD77340DB /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
 		5EE0AA02E3445D8A02271413 /* SaveFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveFile.swift; sourceTree = "<group>"; };
-		80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableField.swift; sourceTree = "<group>"; };
+		7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
-		965F0E77C9A38612EA7511CD /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
-		A0F8EDE9A38F453C4D81983A /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		9AB86BF7565C22F01133B76D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
 		A831CF5D7FB2CAA3B64CB162 /* Bag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
-		D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPanel.swift; sourceTree = "<group>"; };
+		B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Interop.dylib; path = "PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish/PKHeX.Interop.dylib"; sourceTree = "<group>"; };
+		B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CBC6E0913AEBA97080A64120 /* Pickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pickers.swift; sourceTree = "<group>"; };
+		DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableField.swift; sourceTree = "<group>"; };
 		E07CFAF47DCE7B0F0292C0AF /* PKM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKM.swift; sourceTree = "<group>"; };
-		F5F4C0472A05A96C4CE95A64 /* Pickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pickers.swift; sourceTree = "<group>"; };
+		F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
+		F9182C6871188B2219630B85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -88,7 +88,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DBC4D8FEAF495B1CF08D1EBB /* PKHeX.Native.dylib in Frameworks */,
+				426DA9B6957298C1DF3031F9 /* PKHeX.Interop.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,7 +97,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */,
-				D571EAD167B7AD2DF080BF15 /* PKHeX.Native.dylib in Frameworks */,
+				455677238A49EB1E9CBD8625 /* PKHeX.Interop.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,11 +120,33 @@
 			isa = PBXGroup;
 			children = (
 				3D6F64218870FA07977FB061 /* PKHeXCore */,
-				DC8CC27581F25EF459530A8C /* PKHeXMac */,
+				61AA1368BAD535AEBDEDCB47 /* PKHeXSwiftUI */,
 				6B2D776BE1178B45488BC4FC /* Resources */,
 				86605450EA682B8D0464C726 /* Frameworks */,
 				EFC85DCB750313639E8ECEC4 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		61AA1368BAD535AEBDEDCB47 /* PKHeXSwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */,
+				2299926E73B028F53F6DC025 /* BagView.swift */,
+				F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */,
+				F9182C6871188B2219630B85 /* ContentView.swift */,
+				321E64E26089C2F438E2FE1A /* DetailPanel.swift */,
+				22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */,
+				DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */,
+				4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */,
+				CBC6E0913AEBA97080A64120 /* Pickers.swift */,
+				4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */,
+				9AB86BF7565C22F01133B76D /* SaveStore.swift */,
+				B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */,
+				2E8FA2AE5C5C0BA89142F29F /* Theme.swift */,
+				1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */,
+			);
+			name = PKHeXSwiftUI;
+			path = PKHeXMac/Sources/PKHeXSwiftUI;
 			sourceTree = "<group>";
 		};
 		6B2D776BE1178B45488BC4FC /* Resources */ = {
@@ -139,31 +161,9 @@
 		86605450EA682B8D0464C726 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				51870D1B75FB628048F4CA65 /* PKHeX.Native.dylib */,
+				B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		DC8CC27581F25EF459530A8C /* PKHeXMac */ = {
-			isa = PBXGroup;
-			children = (
-				A7DA157C577B01B7AD77E41D /* AppDelegate.swift */,
-				5EA318ED5D175D4BD77340DB /* BagView.swift */,
-				4A1A5A4853A160F141612244 /* BoxGridView.swift */,
-				042BD126A70CAEFE24C3C7B8 /* ContentView.swift */,
-				D696FB582A2EE37BA26C74D7 /* DetailPanel.swift */,
-				14C4B0C7D3959047E3C384D9 /* DragRegistry.swift */,
-				80EA8847E8C742C2CBD2B5D4 /* EditableField.swift */,
-				95C67457129C744E5F1CA93D /* FocusedSaveStore.swift */,
-				F5F4C0472A05A96C4CE95A64 /* Pickers.swift */,
-				2B17E8C5AF0B604B66C8E0DC /* PKHeXMacApp.swift */,
-				8EC36C6584A6ABF6C31D4C7D /* SaveStore.swift */,
-				02400D19DAF2F2CE12565E36 /* SettingsView.swift */,
-				A0F8EDE9A38F453C4D81983A /* Theme.swift */,
-				965F0E77C9A38612EA7511CD /* TrainerView.swift */,
-			);
-			name = PKHeXMac;
-			path = PKHeXMac/Sources/PKHeXMac;
 			sourceTree = "<group>";
 		};
 		EFC85DCB750313639E8ECEC4 /* Products */ = {
@@ -182,7 +182,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0373F4B4C3C270224CEFE016 /* Build configuration list for PBXNativeTarget "PKHeXCore" */;
 			buildPhases = (
-				A36DB559A7F264DEF85B6059 /* Publish PKHeX.Native (NativeAOT) */,
+				35B3F4A3C47AC9C5C23D4B55 /* Publish PKHeX.Interop (NativeAOT) */,
 				9C107B5FAAF0A7F98C90CA8B /* Sources */,
 				2EB7AF34D046C6F413E5CFAD /* Frameworks */,
 			);
@@ -261,7 +261,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		A36DB559A7F264DEF85B6059 /* Publish PKHeX.Native (NativeAOT) */ = {
+		35B3F4A3C47AC9C5C23D4B55 /* Publish PKHeX.Interop (NativeAOT) */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -270,14 +270,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Publish PKHeX.Native (NativeAOT)";
+			name = "Publish PKHeX.Interop (NativeAOT)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n/usr/bin/env -i \\\n  HOME=\"$HOME\" \\\n  PATH=\"$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin\" \\\n  dotnet publish \"$SRCROOT/PKHeX.Native/PKHeX.Native.csproj\" -c Release -r osx-arm64\n";
+			shellScript = "set -e\n/usr/bin/env -i \\\n  HOME=\"$HOME\" \\\n  PATH=\"$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin\" \\\n  dotnet publish \"$SRCROOT/PKHeX.Interop/PKHeX.Interop.csproj\" -c Release -r osx-arm64\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -286,20 +286,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				697F7C174BE5CAF3878ACF56 /* AppDelegate.swift in Sources */,
-				E02408354DB8D13A790C60D4 /* BagView.swift in Sources */,
-				9892329D0EB62D1409D910AD /* BoxGridView.swift in Sources */,
-				2163326FEBD5FC77370B3B30 /* ContentView.swift in Sources */,
-				11483870EDEE524EC26E5D41 /* DetailPanel.swift in Sources */,
-				0C6B8017D3E5F3FE89630A4E /* DragRegistry.swift in Sources */,
-				70CA7B2485041D7FEFC95D65 /* EditableField.swift in Sources */,
-				F7C9E6F07B331604AF8AE652 /* FocusedSaveStore.swift in Sources */,
-				E17C904B514993FA4461ABB3 /* PKHeXMacApp.swift in Sources */,
-				A1CB877D2A13C3C946922083 /* Pickers.swift in Sources */,
-				334F20BF90A941B88012F4C2 /* SaveStore.swift in Sources */,
-				BE69BA902928488A72D51BA2 /* SettingsView.swift in Sources */,
-				F8570BB01AEDABF39EAF9955 /* Theme.swift in Sources */,
-				54CEBC051087FBE21B74A60C /* TrainerView.swift in Sources */,
+				A739EFF72563AF0D029D8E18 /* AppDelegate.swift in Sources */,
+				B1AEAED12117644EA9B917F0 /* BagView.swift in Sources */,
+				DCA7897E522F421BC93848F0 /* BoxGridView.swift in Sources */,
+				C8B470F8AD14A1D06B57316E /* ContentView.swift in Sources */,
+				5EF44AB9D7E09E91D260D491 /* DetailPanel.swift in Sources */,
+				4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */,
+				071EFE8812DE993712573BC3 /* EditableField.swift in Sources */,
+				C8B6E6EB4864C26231BB1D0C /* FocusedSaveStore.swift in Sources */,
+				D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */,
+				EB56E3C7171A204F28020791 /* Pickers.swift in Sources */,
+				BDDCC6E0719A9D600DEECEFB /* SaveStore.swift in Sources */,
+				D29F0A094CA5AB9B8974C57B /* SettingsView.swift in Sources */,
+				BC86B41DCDDBD9DE0A26E3A1 /* Theme.swift in Sources */,
+				26E408D7A69E8B548C92F6AB /* TrainerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,7 +337,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"PKHeX.Native/bin/Release/net10.0/osx-arm64/publish\"",
+					"\"PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish\"",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
 				INFOPLIST_FILE = "PKHeXMac/PKHeXCore-Info.plist";
@@ -359,7 +359,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"PKHeX.Native/bin/Release/net10.0/osx-arm64/publish\"",
+					"\"PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish\"",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
 				INFOPLIST_FILE = PKHeXMac/Info.plist;
@@ -383,7 +383,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"PKHeX.Native/bin/Release/net10.0/osx-arm64/publish\"",
+					"\"PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish\"",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
 				INFOPLIST_FILE = "PKHeXMac/PKHeXCore-Info.plist";
@@ -528,7 +528,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"PKHeX.Native/bin/Release/net10.0/osx-arm64/publish\"",
+					"\"PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish\"",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
 				INFOPLIST_FILE = PKHeXMac/Info.plist;

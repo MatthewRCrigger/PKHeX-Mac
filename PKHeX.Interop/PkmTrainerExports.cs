@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 /// <summary>
 /// Per-Pokemon Original Trainer / Handling Trainer / Memory exports. Distinct from

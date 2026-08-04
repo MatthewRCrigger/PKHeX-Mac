@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 public static class TrainerExports
 {

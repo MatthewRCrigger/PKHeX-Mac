@@ -6,7 +6,7 @@ public enum Stat: Int32, CaseIterable {
     case hp = 0, attack, defense, specialAttack, specialDefense, speed
 }
 
-/// Normalized field/battle status condition for a party Pokemon. Values match PKHeX.Native's
+/// Normalized field/battle status condition for a party Pokemon. Values match PKHeX.Interop's
 /// pkhex_pkm_get_status_type exactly, which normalizes both the Gen1-4 bitflag layout and the
 /// Gen5+ plain-enum layout of the underlying Status_Condition field into one shared enum. Only
 /// meaningful for Pokemon with `partyStatsPresent == true` — box-stored Pokemon aren't "in the
@@ -31,7 +31,7 @@ public enum StatusCondition: UInt8, CaseIterable {
     }
 }
 
-/// Wraps a single Pokemon (box slot or party member) handle from PKHeX.Native.
+/// Wraps a single Pokemon (box slot or party member) handle from PKHeX.Interop.
 public final class PKM {
     let handle: Int64
 

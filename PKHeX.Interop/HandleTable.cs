@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 /// <summary>
 /// Tracks managed objects (SaveFile, PKM) exposed to native callers as opaque integer handles,

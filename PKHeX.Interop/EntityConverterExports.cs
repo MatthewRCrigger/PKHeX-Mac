@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 /// <summary>
 /// Cross-save/cross-generation PKM conversion, for dragging or pasting a Pokemon from one open

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
 
-namespace PKHeX.Native;
+namespace PKHeX.Interop;
 
 public static class LegalityExports
 {

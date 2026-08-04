@@ -13,7 +13,7 @@ public struct PKMConversionError: Error {
     public let message: String
 }
 
-/// Wraps a loaded save file handle from PKHeX.Native. Closes the underlying handle on dealloc.
+/// Wraps a loaded save file handle from PKHeX.Interop. Closes the underlying handle on dealloc.
 public final class SaveFile {
     let handle: Int64
 

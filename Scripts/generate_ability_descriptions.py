@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Generates vendor/PKHeX/PKHeX.Core/Resources/text/other/en/text_AbilityDescriptions_en.txt, a
-sibling resource to PKHeX.Core's own text_Abilities_en.txt — same line-per-ability-ID layout (line
-N = ability ID N, including the line-1 "—" placeholder for ID 0/None), but holding each ability's
-short flavor-text description instead of its name. PKHeX.Core ships no ability descriptions at all;
-this fills that gap using GameStrings.cs's existing convention (see abilitylist/Get("abilities")),
-under the name "AbilityDescriptions" so it can be loaded via Get("AbilityDescriptions") /
-Util.GetStringList("AbilityDescriptions", lang) with zero changes to the embedded-resource loading
-mechanism itself.
+Generates PKHeX.Interop/Resources/text_AbilityDescriptions_en.txt — same line-per-ability-ID layout
+as PKHeX.Core's own text_Abilities_en.txt (line N = ability ID N, including the line-1 placeholder
+for ID 0/None), but holding each ability's short flavor-text description instead of its name.
+PKHeX.Core ships no ability descriptions at all. Rather than patching the submodule to add one, the
+file is embedded in PKHeX.Interop and read back through the extension point PKHeX.Core exposes for
+exactly this purpose — Util.GetStringList(name, EmbeddedResourceCache) over our own assembly; see
+PkmExports.AbilityDescriptions. That keeps vendor/PKHeX an unmodified upstream checkout.
 
 Source data: Examples/abilities-table.html (git-ignored; a saved copy of a Pokemon reference site's
 sortable abilities table — one <tr> per ability with Name/Pokemon-count/Description/Gen columns).
@@ -25,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_HTML = ROOT / "Examples/abilities-table.html"
 NAMES_FILE = ROOT / "vendor/PKHeX/PKHeX.Core/Resources/text/other/en/text_Abilities_en.txt"
-OUT_FILE = ROOT / "vendor/PKHeX/PKHeX.Core/Resources/text/other/en/text_AbilityDescriptions_en.txt"
+OUT_FILE = ROOT / "PKHeX.Interop/Resources/text_AbilityDescriptions_en.txt"
 
 ROW_RE = re.compile(
     r'<tr>\s*<td>\s*<a class="ent-name"[^>]*>([^<]*)</a>\s*</td>.*?'

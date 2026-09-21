@@ -19,4 +19,11 @@
     <ProjectReference Include="..\vendor\PKHeX\PKHeX.Core\PKHeX.Core.csproj" />
   </ItemGroup>
 
+  <!-- Supplemental string data PKHeX.Core doesn't ship, loaded through its public
+       EmbeddedResourceCache extension point rather than by patching the submodule. -->
+  <ItemGroup>
+    <None Remove="Resources\**" />
+    <EmbeddedResource Include="Resources\**" />
+  </ItemGroup>
+
 </Project>

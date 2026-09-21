@@ -15,7 +15,7 @@ func readNativeString(_ call: (UnsafeMutablePointer<UInt16>?, Int32) -> Int32) -
 
 /// Converts a Swift String to a UTF-16 buffer and calls a native setter accessor with it.
 func writeNativeString(_ value: String, _ call: (UnsafePointer<UInt16>?, Int32) -> Void) {
-    var utf16 = Array(value.utf16)
+    let utf16 = Array(value.utf16)
     utf16.withUnsafeBufferPointer { ptr in
         call(ptr.baseAddress, Int32(ptr.count))
     }

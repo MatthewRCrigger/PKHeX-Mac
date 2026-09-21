@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-/* C ABI surface exported by PKHeX.Interop (see PKHeX.Interop/*.cs). All handles are opaque
+/* C ABI surface exported by PKHeX.Interop (see the PKHeX.Interop C# sources). All handles are opaque
  * non-zero int64 IDs into a managed registry; 0 means "invalid/not found". */
 
 /* --- Save lifecycle --- */

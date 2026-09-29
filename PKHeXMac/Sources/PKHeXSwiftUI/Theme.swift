@@ -1,82 +1,130 @@
+import AppKit
+import CoreText
 import SwiftUI
 
-/// Circuit design tokens: colors, typography, radii, and the accent theming system.
-/// See design_handoff_circuit_redesign/README.md for the source spec.
+/// GRID design tokens: true-black surfaces, hairline strokes, one amber "selected" accent, and
+/// signal colors that only ever mean state. See design_handoff_grid/README.md.
 enum Theme {
-    // MARK: Core surfaces (dark)
-    static let bgContent = Color(hex: 0x15171B)
-    static let bgPanel = Color(hex: 0x191C21)
-    static let bgTitlebar = Color(hex: 0x1D2026)
-    static let bgElevated1 = Color(hex: 0x20242B)
-    static let bgElevated2 = Color(hex: 0x262A31)
-    static let bgElevated3 = Color(hex: 0x2C3138)
-    static let bgTile = Color(hex: 0x1B1E24)
-    static let bgTileEmpty = Color(hex: 0x191C22)
-    static let bgWell = Color(hex: 0x171A1F)
-    static let bgWindowVoid = Color(hex: 0x0F1013)
-    static let hairline = Color.white.opacity(0.07)
+    // MARK: Surfaces
+    static let void = Color(hex: 0x000000)
+    static let surface1 = Color(hex: 0x060809)
+    static let surface2 = Color(hex: 0x0C1013)
+    static let surface3 = Color(hex: 0x141A1E)
+    static let scrim = Color.black.opacity(0.78)
 
-    // MARK: Text
-    static let textPrimary = Color.white.opacity(0.92)
-    static let textSecondary = Color.white.opacity(0.52)
-    static let textTertiary = Color.white.opacity(0.35)
+    // MARK: Lines
+    static let line100 = Color(hex: 0xD6EAF2)
+    static let line200 = Color(hex: 0x8FA8B4)
+    static let line300 = Color(hex: 0x4A5A63)
+    static let line400 = Color(hex: 0x202A2F)
 
-    // MARK: Status
-    static let legalText = Color(hex: 0x7FE39A)
-    static let legalDot = Color(hex: 0x2FD15B)
-    static let legalFill = legalDot.opacity(0.10)
-    static let legalBorder = legalDot.opacity(0.28)
-    static let warnText = Color(hex: 0xFFBD7A)
-    static let warnIcon = Color(hex: 0xFF9F43)
-    static let warnFill = warnIcon.opacity(0.12)
-    static let warnBorder = warnIcon.opacity(0.30)
-    static let danger = Color(hex: 0xFF8080)
-    static let shinyStar = Color(hex: 0xFFD34D)
-    static let flagDot = Color(hex: 0xFF6B6B)
+    // MARK: Ink
+    static let ink100 = Color(hex: 0xE4F2F8)
+    static let ink200 = Color(hex: 0xA8BCC6)
+    static let ink300 = Color(hex: 0x6B7C85)
+    /// Disabled only.
+    static let ink400 = Color(hex: 0x47555C)
+    static let inkInvert = Color.black
 
-    // MARK: Radius
-    enum Radius {
-        static let window: CGFloat = 12
-        static let panel: CGFloat = 13
-        static let tile: CGFloat = 9
-        static let control: CGFloat = 8
-        static let pill: CGFloat = 20
-        static let well: CGFloat = 10
-    }
+    // MARK: Signals
+    /// Selected / primary action.
+    static let amber = Color(hex: 0xF6C56A)
+    /// Focus / live.
+    static let cyan = Color(hex: 0x5FCDF3)
+    /// Legal / synced / IV 31.
+    static let green = Color(hex: 0x5EDCA9)
+    /// Illegal / destructive.
+    static let red = Color(hex: 0xF1604C)
+    /// Shiny / hidden ability.
+    static let violet = Color(hex: 0xE6A6F2)
 
-    // MARK: Type colors
-    /// [fill, isTextDark]
-    static func typeColor(_ typeName: String) -> (fill: Color, textOnFill: Color) {
-        let key = typeName.uppercased()
-        guard let (hex, dark) = typeHexes[key] else {
-            return (Color.gray, .white)
-        }
-        return (Color(hex: hex), dark ? Color(hex: 0x1A1C20) : .white)
-    }
+    static let amberFill = amber.opacity(0.12)
+    static let cyanFill = cyan.opacity(0.12)
+    static let greenFill = green.opacity(0.12)
+    static let redFill = red.opacity(0.14)
+    static let violetFill = violet.opacity(0.12)
 
-    private static let typeHexes: [String: (UInt32, Bool)] = [
-        "NORMAL": (0x9AA0A6, true), "FIRE": (0xFF7043, false), "WATER": (0x4D90D5, false),
-        "GRASS": (0x63BC5A, false), "ELECTRIC": (0xF2C94C, true), "ICE": (0x7FD0D6, true),
-        "FIGHTING": (0xD84F4F, false), "POISON": (0xA463C9, false), "GROUND": (0xD8A44B, false),
-        "FLYING": (0x92A8DC, true), "PSYCHIC": (0xF76D9C, false), "BUG": (0xA7B820, false),
-        "ROCK": (0xB8A038, false), "GHOST": (0x7A5AA0, false), "DRAGON": (0x7A6BBF, false),
-        "DARK": (0x55504F, false), "STEEL": (0xA8A8C0, true), "FAIRY": (0xEF9FE0, true),
-    ]
+    // MARK: Fonts
 
-    // MARK: Pouch colors
-    static func pouchColor(_ typeName: String) -> Color {
-        switch typeName {
-        case "Items": return Color(hex: 0x4D90D5)
-        case "Medicine": return Color(hex: 0xE46B6B)
-        case "Poké Balls": return Color(hex: 0xE0B34D)
-        case "TMs/HMs": return Color(hex: 0x7C5EC9)
-        case "Berries": return Color(hex: 0xC85B8E)
-        case "Battle Items": return Color(hex: 0x5BBF7A)
-        case "Key Items": return Color(hex: 0x9AA0A6)
-        case "Mail": return Color(hex: 0xC9A15E)
-        default: return Color(hex: 0x9AA0A6)
+    /// Registers the bundled Rajdhani + Space Mono faces for this process. Call once at launch.
+    static func registerFonts() {
+        let names = [
+            "Rajdhani-Regular", "Rajdhani-Medium", "Rajdhani-SemiBold", "Rajdhani-Bold",
+            "SpaceMono-Regular", "SpaceMono-Bold",
+        ]
+        for name in names {
+            guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else { continue }
+            CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
     }
+
+    /// Rajdhani: anything a person wrote (labels, names, body).
+    static func sans(_ size: CGFloat, _ weight: Font.Weight = .medium) -> Font {
+        let face: String
+        switch weight {
+        case .bold, .heavy, .black: face = "Rajdhani-Bold"
+        case .semibold: face = "Rajdhani-SemiBold"
+        case .regular, .light, .thin, .ultraLight: face = "Rajdhani-Regular"
+        default: face = "Rajdhani-Medium"
+        }
+        return .custom(face, fixedSize: max(size, 12))
+    }
+
+    /// Space Mono: anything a machine emitted (levels, IDs, counts, paths, PP, IVs).
+    static func mono(_ size: CGFloat = 12, bold: Bool = false) -> Font {
+        .custom(bold ? "SpaceMono-Bold" : "SpaceMono-Regular", fixedSize: max(size, 12))
+    }
+
+    // MARK: Text styles
+    enum TextStyle {
+        /// Caps label, tab, section header: 12/600, 0.18em.
+        case label
+        /// Nav row, menu item: 14/600, 0.12em.
+        case nav
+        /// View title (LEGENDS, PARTY): 20/600, 0.12em.
+        case viewTitle
+        /// Inspector nickname: 24/600.
+        case nickname
+        /// Trainer name hero: 32/600, 0.04em.
+        case hero
+        /// Values, names in rows: 16/500.
+        case value
+        /// Body / hint: 14/400.
+        case body
+
+        var font: Font {
+            switch self {
+            case .label: return Theme.sans(12, .semibold)
+            case .nav: return Theme.sans(14, .semibold)
+            case .viewTitle: return Theme.sans(20, .semibold)
+            case .nickname: return Theme.sans(24, .semibold)
+            case .hero: return Theme.sans(32, .semibold)
+            case .value: return Theme.sans(16, .medium)
+            case .body: return Theme.sans(14, .regular)
+            }
+        }
+
+        var tracking: CGFloat {
+            switch self {
+            case .label: return 2.16
+            case .nav: return 1.68
+            case .viewTitle: return 2.4
+            case .hero: return 1.28
+            case .nickname, .value, .body: return 0
+            }
+        }
+
+        var isCaps: Bool {
+            switch self {
+            case .label, .nav, .viewTitle, .hero: return true
+            case .nickname, .value, .body: return false
+            }
+        }
+    }
+
+    // MARK: Motion
+    /// 80 ms linear on color/background/border changes and nothing else.
+    static let hoverAnimation = Animation.linear(duration: 0.08)
 }
 
 extension Color {
@@ -88,62 +136,31 @@ extension Color {
     }
 }
 
-/// The app's themeable accent color, persisted via `@AppStorage`. Applied instantly across every
-/// accent-tinted surface: selection fills, focus rings, active nav, IV bars, toggles, Save button.
-enum AccentColor: String, CaseIterable, Identifiable {
-    case cyan, blue, green, orange, pink, purple, graphite
+// MARK: - Panel profile
+
+/// GRID's one configurable dimension: how panels are drawn. Replaces the old accent color.
+enum PanelProfile: String, CaseIterable, Identifiable {
+    case round, sharp
 
     var id: String { rawValue }
+    var title: String { rawValue.uppercased() }
 
-    var color: Color {
-        switch self {
-        case .cyan: return Color(hex: 0x3FD0C9)
-        case .blue: return Color(hex: 0x4D90D5)
-        case .green: return Color(hex: 0x5BBF7A)
-        case .orange: return Color(hex: 0xFF9F43)
-        case .pink: return Color(hex: 0xF76D9C)
-        case .purple: return Color(hex: 0x8B7CFF)
-        case .graphite: return Color(hex: 0x9AA0A6)
-        }
-    }
-
-    /// Text/icon color for content drawn on top of a solid accent fill; picked by luminance.
-    var onAccent: Color {
-        let ns = NSColor(color).usingColorSpace(.deviceRGB) ?? NSColor(color)
-        let luminance = 0.299 * ns.redComponent + 0.587 * ns.greenComponent + 0.114 * ns.blueComponent
-        return luminance > 0.58 ? Color(hex: 0x082322) : .white
-    }
-
-    /// Accent-colored text on dark backgrounds (brighter than the raw swatch for contrast).
-    var bright: Color {
-        color.opacity(0.92).mix(with: .white, by: 0.25)
-    }
-
-    var soft: Color { color.opacity(0.16) }
-    var border: Color { color.opacity(0.35) }
+    /// Panel border weight.
+    var borderWidth: CGFloat { self == .round ? 2 : 1 }
+    var outerRadius: CGFloat { self == .round ? 8 : 0 }
+    var innerRadius: CGFloat { self == .round ? 4 : 0 }
+    /// Void gap between the two strokes of a double frame.
+    var frameGap: CGFloat { self == .round ? 4 : 5 }
+    var titleSize: CGFloat { self == .round ? 14 : 12 }
 }
 
-private extension Color {
-    /// Approximate color mix by blending RGB components (no `ShapeStyle` mixing API pre-macOS 15).
-    func mix(with other: Color, by amount: Double) -> Color {
-        let a = NSColor(self).usingColorSpace(.deviceRGB) ?? NSColor(self)
-        let b = NSColor(other).usingColorSpace(.deviceRGB) ?? NSColor(other)
-        return Color(
-            red: a.redComponent + (b.redComponent - a.redComponent) * amount,
-            green: a.greenComponent + (b.greenComponent - a.greenComponent) * amount,
-            blue: a.blueComponent + (b.blueComponent - a.blueComponent) * amount
-        )
-    }
-}
-
-/// Wraps the persisted accent choice so views can read/write it via `@EnvironmentObject`
-/// without every view re-deriving `@AppStorage` boilerplate.
+/// Persists the chosen panel profile and publishes changes so every panel redraws live.
 @MainActor
-final class AccentStore: ObservableObject {
-    @AppStorage("accentColor") private var storedValue: String = AccentColor.cyan.rawValue
+final class PanelProfileStore: ObservableObject {
+    @AppStorage("panelProfile") private var storedValue: String = PanelProfile.round.rawValue
 
-    var accent: AccentColor {
-        get { AccentColor(rawValue: storedValue) ?? .cyan }
+    var profile: PanelProfile {
+        get { PanelProfile(rawValue: storedValue) ?? .round }
         set {
             objectWillChange.send()
             storedValue = newValue.rawValue

@@ -34,11 +34,9 @@ struct BagView: View {
                         pouches: bag.pouches,
                         selectedIndex: $bagStore.selectedPouchIndex
                     )
-                    .frame(width: 190)
+                    .frame(width: 196)
 
-                    Rectangle()
-                        .fill(Theme.hairline)
-                        .frame(width: 0.5)
+                    VRule(color: Theme.line300)
 
                     if bagStore.selectedPouchIndex < bag.pouches.count {
                         PouchView(
@@ -51,11 +49,11 @@ struct BagView: View {
                         Spacer()
                     }
                 }
-                .background(Theme.bgContent)
+                .background(Theme.void)
             } else {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Theme.bgContent)
+                    .background(Theme.void)
             }
         }
         .navigationTitle("Bag")
@@ -63,58 +61,67 @@ struct BagView: View {
     }
 }
 
-/// Left-hand pouch ("pocket") list. Active pouch gets an accent-soft fill and accent text.
+/// Left-hand pouch ("pocket") rail, styled like the sidebar nav. Active pouch is amber-filled.
 private struct PouchListView: View {
     let pouches: [Pouch]
     @Binding var selectedIndex: Int
-    @EnvironmentObject private var accentStore: AccentStore
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("POCKETS")
-                    .font(.system(size: 10.5, weight: .bold))
-                    .kerning(0.6)
-                    .foregroundStyle(Theme.textTertiary)
-                    .padding(.horizontal, 11)
-                    .padding(.top, 4)
-                    .padding(.bottom, 8)
+            VStack(alignment: .leading, spacing: 0) {
+                SectionHeader("Pockets")
+                    .padding(.horizontal, 14)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
 
                 ForEach(Array(pouches.enumerated()), id: \.offset) { index, pouch in
-                    let isActive = index == selectedIndex
-                    Button {
+                    PouchRailRow(
+                        name: pouch.type.displayName,
+                        count: pouch.occupiedSlotCount,
+                        isActive: index == selectedIndex
+                    ) {
                         selectedIndex = index
-                    } label: {
-                        HStack(spacing: 9) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 5)
-                                    .fill(Theme.pouchColor(pouch.type.displayName))
-                                    .frame(width: 16, height: 16)
-                                Circle()
-                                    .fill(Color.white.opacity(0.75))
-                                    .frame(width: 6, height: 6)
-                            }
-                            Text(pouch.type.displayName)
-                                .font(.system(size: 13, weight: isActive ? .semibold : .regular))
-                                .foregroundStyle(isActive ? accentStore.accent.color : Theme.textPrimary)
-                            Spacer()
-                            Text("\(pouch.occupiedSlotCount)")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 7)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(isActive ? accentStore.accent.soft : Color.clear)
-                        )
                     }
-                    .buttonStyle(.plain)
                 }
             }
-            .padding(9)
         }
-        .background(Theme.bgContent)
+        .background(Theme.void)
+    }
+}
+
+private struct PouchRailRow: View {
+    let name: String
+    let count: Int
+    let isActive: Bool
+    let action: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(isActive ? Theme.inkInvert : Color.clear)
+                    .frame(width: 2)
+                HStack(spacing: 8) {
+                    Text(name.uppercased())
+                        .font(Theme.sans(14, .semibold))
+                        .tracking(1.68)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text(pad(count, 2))
+                        .font(Theme.mono(12, bold: true))
+                }
+                .padding(.horizontal, 12)
+            }
+            .foregroundStyle(isActive ? Theme.inkInvert : Theme.ink200)
+            .frame(height: 36)
+            .frame(maxWidth: .infinity)
+            .background(isActive ? Theme.amber : (isHovering ? Theme.surface3 : Color.clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .animation(Theme.hoverAnimation, value: isHovering)
     }
 }
 
@@ -124,7 +131,7 @@ private struct PouchListView: View {
 private struct PouchView: View {
     let pouch: Pouch
     let onChange: () -> Void
-    @EnvironmentObject private var accentStore: AccentStore
+    @EnvironmentObject private var profileStore: PanelProfileStore
     @State private var showingItemPicker = false
 
     private var legalItems: [(id: Int, name: String)] {
@@ -135,103 +142,57 @@ private struct PouchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header: pouch name + count + "Set all to 99"
+            // Header: pouch name, leader, item count, "Set all 99"
             HStack(spacing: 12) {
-                Text(pouch.type.displayName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(pouch.occupiedSlotCount) / \(pouch.slotCount) slots")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button {
+                GridText(pouch.type.displayName, .viewTitle)
+                DottedLeader()
+                Text("\(pad(pouch.occupiedSlotCount, 2)) items")
+                    .font(Theme.mono(12))
+                    .foregroundStyle(Theme.ink300)
+                GridButton("Set all 99", .secondary, size: .sm) {
                     setAllTo99()
-                } label: {
-                    Text("Set all to 99")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(accentStore.accent.color)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(accentStore.accent.soft)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(accentStore.accent.border, lineWidth: 0.5)
-                                )
-                        )
                 }
-                .buttonStyle(.plain)
                 .disabled(pouch.occupiedSlotCount == 0)
-                .opacity(pouch.occupiedSlotCount == 0 ? 0.4 : 1)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 16)
             .padding(.top, 16)
             .padding(.bottom, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(Theme.hairline).frame(height: 0.5)
-            }
 
-            // Column headers
-            HStack {
-                Text("ITEM")
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(0.5)
-                    .foregroundStyle(Theme.textTertiary)
-                Spacer()
-                Text("QUANTITY")
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(0.5)
-                    .foregroundStyle(Theme.textTertiary)
-                    .frame(width: 120, alignment: .center)
-                Spacer().frame(width: 40)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
-
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(0..<pouch.occupiedSlotCount, id: \.self) { slot in
-                        ItemRow(
-                            pouch: pouch,
-                            slot: slot,
-                            zebra: slot.isMultiple(of: 2),
-                            onChange: onChange,
-                            onDelete: {
-                                pouch.removeItem(at: slot)
-                                onChange()
-                            }
-                        )
+            GridPanel {
+                VStack(spacing: 0) {
+                    PickerColumnHeader {
+                        Text("Item")
+                        Spacer()
+                        Text("Quantity")
+                            .frame(width: 124, alignment: .center)
+                        Spacer().frame(width: 36)
                     }
 
-                    Button {
-                        showingItemPicker = true
-                    } label: {
-                        HStack(spacing: 11) {
-                            RoundedRectangle(cornerRadius: 7)
-                                .strokeBorder(style: StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
-                                .foregroundStyle(Theme.textTertiary)
-                                .frame(width: 26, height: 26)
-                                .overlay(
-                                    Text("+")
-                                        .font(.system(size: 15))
-                                        .foregroundStyle(Theme.textTertiary)
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(0..<pouch.occupiedSlotCount, id: \.self) { slot in
+                                ItemRow(
+                                    pouch: pouch,
+                                    slot: slot,
+                                    onChange: onChange,
+                                    onDelete: {
+                                        pouch.removeItem(at: slot)
+                                        onChange()
+                                    }
                                 )
-                            Text("Add item to \(pouch.type.displayName)…")
-                                .font(.system(size: 13))
-                                .foregroundStyle(Theme.textSecondary)
-                            Spacer()
+                            }
+
+                            AddItemRow(pouchName: pouch.type.displayName) {
+                                showingItemPicker = true
+                            }
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 11)
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .background(Theme.bgContent)
+        .background(Theme.void)
         .sheet(isPresented: $showingItemPicker) {
             ItemPickerSheet(
                 pouch: pouch,
@@ -241,6 +202,7 @@ private struct PouchView: View {
                     onChange()
                 }
             )
+            .environmentObject(profileStore)
         }
     }
 
@@ -253,11 +215,10 @@ private struct PouchView: View {
     }
 }
 
-/// A row for an occupied slot: item name, a centered quantity stepper, and a trailing delete button.
+/// A row for an occupied slot: item name, a quantity stepper, and a trailing delete button.
 private struct ItemRow: View {
     let pouch: Pouch
     let slot: Int
-    let zebra: Bool
     let onChange: () -> Void
     let onDelete: () -> Void
 
@@ -266,48 +227,26 @@ private struct ItemRow: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            HStack(spacing: 11) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 7)
-                        .fill(Theme.bgElevated1)
-                        .frame(width: 30, height: 30)
-                    ItemIconImage(itemID: itemIndex)
-                        .padding(4)
-                        .frame(width: 30, height: 30)
-                }
-                Text(pouch.itemName(itemIndex))
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Text(pouch.itemName(itemIndex))
+                .font(Theme.sans(16, .medium))
+                .foregroundStyle(Theme.ink100)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 6) {
-                StepperButton(symbol: "−") {
-                    setCount(max(0, count - 1))
-                }
-                Text("\(count)")
-                    .font(.system(size: 12.5, design: .monospaced))
-                    .foregroundStyle(Theme.textPrimary)
-                    .frame(width: 44, alignment: .center)
-                StepperButton(symbol: "+") {
-                    setCount(min(99, count + 1))
-                }
+            GridStepper(
+                value: Binding(get: { count }, set: { _ in }),
+                range: 0...99,
+                width: 124
+            ) { newCount in
+                setCount(newCount)
             }
-            .frame(width: 120, alignment: .center)
 
-            HStack {
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.danger)
-                }
-                .buttonStyle(.plain)
-            }
-            .frame(width: 40, alignment: .center)
+            GridIconButton(systemImage: "trash", size: 28, bordered: false, hoverTint: Theme.red, help: "Remove", action: onDelete)
+                .padding(.leading, 8)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .background(zebra ? Color.white.opacity(0.02) : Color.clear)
+        .padding(.horizontal, 16)
+        .frame(height: 44)
+        .overlay(alignment: .bottom) { HRule(color: Theme.line400) }
     }
 
     private func setCount(_ newCount: Int) {
@@ -316,38 +255,42 @@ private struct ItemRow: View {
     }
 }
 
-private struct StepperButton: View {
-    let symbol: String
+private struct AddItemRow: View {
+    let pouchName: String
     let action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
-            Text(symbol)
-                .font(.system(size: 14))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 24, height: 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Theme.bgElevated1)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                        )
-                )
+            HStack(spacing: 10) {
+                Text("+")
+                    .font(Theme.mono(13))
+                Text("Add item to \(pouchName)…".uppercased())
+                    .font(Theme.sans(12, .semibold))
+                    .tracking(2.16)
+                Spacer()
+            }
+            .foregroundStyle(isHovering ? Theme.amber : Theme.ink300)
+            .padding(.horizontal, 16)
+            .frame(height: 44)
+            .frame(maxWidth: .infinity)
+            .background(isHovering ? Theme.surface3 : Color.clear)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .animation(Theme.hoverAnimation, value: isHovering)
     }
 }
 
-/// Modal sheet for adding an item to a pouch (spec §8 "Item picker"). Filters the pouch's legal
-/// items by substring match on name; choosing a result adds it at quantity 1 and dismisses.
+/// Modal sheet for adding an item to a pouch. Filters the pouch's legal items by substring match
+/// on name; choosing a result adds it at quantity 1 and dismisses.
 private struct ItemPickerSheet: View {
     let pouch: Pouch
     let legalItems: [(id: Int, name: String)]
     let onAdd: (Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var accentStore: AccentStore
     @State private var query = ""
 
     private var results: [(id: Int, name: String)] {
@@ -356,141 +299,45 @@ private struct ItemPickerSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 12) {
-                HStack(spacing: 10) {
-                    Text("Add item")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("to \(pouch.type.displayName)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
+        PickerShell(
+            title: "Add",
+            qualifier: "ITEM",
+            context: pouch.type.displayName.lowercased(),
+            searchPrompt: "item name",
+            searchText: $query,
+            resultCount: results.count,
+            footerHint: "added to its matching pocket · qty 001",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("Item")
                     Spacer()
+                    Text("Pocket")
+                }
+            },
+            content: {
+                ForEach(results, id: \.id) { item in
                     Button {
+                        onAdd(item.id)
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 24, height: 24)
-                            .background(
-                                RoundedRectangle(cornerRadius: 7)
-                                    .fill(Theme.bgElevated2)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(accentStore.accent.color)
-                    TextField("Search items…", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("\(results.count) matches")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Theme.bgContent)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(accentStore.accent.color, lineWidth: 1)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 13)
-                        .stroke(accentStore.accent.soft, lineWidth: 3)
-                        .padding(-3)
-                )
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.id) { item in
-                        Button {
-                            onAdd(item.id)
-                            dismiss()
-                        } label: {
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Theme.bgContent)
-                                        .frame(width: 34, height: 34)
-                                    ItemIconImage(itemID: item.id)
-                                        .padding(4)
-                                        .frame(width: 34, height: 34)
-                                }
-                                Text(item.name)
-                                    .font(.system(size: 13.5, weight: .semibold))
-                                    .foregroundStyle(Theme.textPrimary)
-                                Spacer()
-                                Text(pouch.type.displayName.uppercased())
-                                    .font(.system(size: 9.5, weight: .bold))
-                                    .foregroundStyle(Theme.textSecondary)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 2)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 5)
-                                            .fill(Color.white.opacity(0.08))
-                                    )
-                            }
-                            .padding(.horizontal, 11)
-                            .padding(.vertical, 9)
-                            .contentShape(Rectangle())
+                        HStack(spacing: 8) {
+                            Text(item.name)
+                                .font(Theme.sans(16, .medium))
+                                .foregroundStyle(Theme.ink100)
+                                .lineLimit(1)
+                            Spacer()
+                            Text(pouch.type.displayName.lowercased())
+                                .font(Theme.mono(12))
+                                .foregroundStyle(Theme.ink300)
                         }
-                        .buttonStyle(HoverableRowButtonStyle(hoverColor: accentStore.accent.soft))
                     }
-
-                    if results.isEmpty {
-                        Text("No items match \u{201C}\(query)\u{201D}.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textTertiary)
-                            .padding(30)
-                            .frame(maxWidth: .infinity)
-                    }
+                    .buttonStyle(PickerRowStyle())
                 }
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
+                if results.isEmpty {
+                    PickerEmptyState()
+                }
             }
-            .frame(maxHeight: 380)
-
-            Text("Items are added to their matching pocket, quantity 1.")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(Theme.hairline).frame(height: 0.5)
-                }
-        }
-        .frame(width: 560)
-        .background(Theme.bgElevated1)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-}
-
-/// A borderless button style that tints its background on hover, matching the picker's
-/// `style-hover="background:var(--asoft)"` row treatment from the design spec.
-private struct HoverableRowButtonStyle: ButtonStyle {
-    let hoverColor: Color
-    @State private var isHovering = false
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isHovering ? hoverColor : Color.clear)
-            )
-            .onHover { isHovering = $0 }
+        )
     }
 }

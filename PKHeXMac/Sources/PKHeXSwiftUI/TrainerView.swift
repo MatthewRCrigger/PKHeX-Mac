@@ -3,7 +3,6 @@ import SwiftUI
 
 struct TrainerView: View {
     @EnvironmentObject private var store: SaveStore
-    @EnvironmentObject private var accentStore: AccentStore
     let saveFile: SaveFile
 
     @State private var genderIndex = 0
@@ -11,283 +10,183 @@ struct TrainerView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 22) {
+            VStack(alignment: .leading, spacing: 20) {
                 header
-                identitySection
-                progressSection
+                HStack(alignment: .top, spacing: 12) {
+                    identityPanel
+                    progressPanel
+                }
             }
-            .frame(maxWidth: 560)
-            .padding(.horizontal, 30)
-            .padding(.vertical, 26)
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.bgContent)
+        .background(Theme.void)
         .id(refreshToken)
         .navigationTitle("Trainer")
         .onAppear { genderIndex = Int(saveFile.trainerGender) }
     }
 
-    // MARK: Header
+    // MARK: Hero
 
     private var header: some View {
-        HStack(spacing: 14) {
-            RoundedRectangle(cornerRadius: Theme.Radius.tile, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [accentStore.accent.color, accentStore.accent.color.opacity(0.55)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+        let name = saveFile.otName
+        let initial = name.first.map { String($0).uppercased() } ?? "?"
+        return HStack(spacing: 14) {
+            Text(initial)
+                .font(Theme.mono(20))
+                .foregroundStyle(Theme.ink100)
+                .frame(width: 52, height: 52)
+                .overlay(Circle().strokeBorder(Theme.line100, lineWidth: 1))
+
+            VStack(alignment: .leading, spacing: 2) {
+                GridText(name, .hero)
+                    .lineLimit(1)
+                Text(
+                    "\(pad(Int(saveFile.tid), 5)) · \(pad(Int(saveFile.sid), 5)) · gen\(saveFile.generation) · \(saveFile.gameName.lowercased())"
                 )
-                .frame(width: 60, height: 60)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundStyle(accentStore.accent.onAccent)
-                )
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(saveFile.otName)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Theme.textPrimary)
-
-                Text("\(String(saveFile.tid)) · \(String(saveFile.sid)) · Gen \(saveFile.generation)")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(Theme.textSecondary)
-
-                integrityPill
+                .font(Theme.mono(12))
+                .tracking(0.24)
+                .foregroundStyle(Theme.ink300)
             }
 
-            Spacer()
+            DottedLeader()
+            GridBadge(text: "Save integrity OK", color: Theme.green)
         }
-    }
-
-    private var integrityPill: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 10, weight: .semibold))
-            Text("Save integrity OK")
-                .font(.system(size: 11, weight: .semibold))
-        }
-        .foregroundStyle(Theme.legalText)
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(
-            Capsule().fill(Theme.legalDot.opacity(0.1))
-        )
-        .padding(.top, 2)
     }
 
     // MARK: Identity
 
-    private var identitySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("IDENTITY")
-
-            card {
-                row {
-                    rowLabel("OT Name")
-                    Spacer()
-                    EditableTextField(
-                        "OT Name",
-                        value: saveFile.otName,
-                        maxLength: saveFile.maxOTNameLength
-                    ) { newValue in
-                        saveFile.otName = newValue
-                        store.markDirty()
-                        refreshForm()
-                    }
-                    .labelsHidden()
+    private var identityPanel: some View {
+        panel(title: "Identity", qualifier: "OT", count: 4) {
+            row("OT Name") {
+                EditableTextField(
+                    "OT Name",
+                    value: saveFile.otName,
+                    maxLength: saveFile.maxOTNameLength,
+                    width: 120
+                ) { newValue in
+                    saveFile.otName = newValue
+                    store.markDirty()
+                    refreshForm()
                 }
-                divider
-
-                row {
-                    rowLabel("Gender")
-                    Spacer()
-                    genderSegmentedControl
+            }
+            divider
+            row("Gender") {
+                GridSegmented(
+                    options: [(value: 0, title: "Male"), (value: 1, title: "Female")],
+                    selection: genderBinding
+                )
+            }
+            divider
+            row("Trainer ID") {
+                EditableNumberField(label: "Trainer ID", value: Int(saveFile.tid), range: 0...65535, width: 120) { newValue in
+                    saveFile.tid = UInt16(newValue)
+                    store.markDirty()
+                    refreshForm()
                 }
-                divider
-
-                row {
-                    rowLabel("Trainer ID")
-                    Spacer()
-                    EditableNumberField(
-                        label: "Trainer ID",
-                        value: Int(saveFile.tid),
-                        range: 0...65535
-                    ) { newValue in
-                        saveFile.tid = UInt16(newValue)
-                        store.markDirty()
-                        refreshForm()
-                    }
-                    .labelsHidden()
-                    .monospacedDigit()
-                }
-                divider
-
-                row {
-                    rowLabel("Secret ID")
-                    Spacer()
-                    EditableNumberField(
-                        label: "Secret ID",
-                        value: Int(saveFile.sid),
-                        range: 0...65535
-                    ) { newValue in
-                        saveFile.sid = UInt16(newValue)
-                        store.markDirty()
-                        refreshForm()
-                    }
-                    .labelsHidden()
-                    .monospacedDigit()
+            }
+            divider
+            row("Secret ID") {
+                EditableNumberField(label: "Secret ID", value: Int(saveFile.sid), range: 0...65535, width: 120) { newValue in
+                    saveFile.sid = UInt16(newValue)
+                    store.markDirty()
+                    refreshForm()
                 }
             }
         }
     }
 
-    private var genderSegmentedControl: some View {
-        HStack(spacing: 2) {
-            genderSegment(title: "♂ Male", index: 0)
-            genderSegment(title: "♀ Female", index: 1)
-        }
-        .padding(2)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                .fill(Theme.bgElevated1)
+    private var genderBinding: Binding<Int> {
+        Binding(
+            get: { genderIndex },
+            set: { newValue in
+                genderIndex = newValue
+                saveFile.trainerGender = UInt8(newValue)
+                store.markDirty()
+            }
         )
-    }
-
-    private func genderSegment(title: String, index: Int) -> some View {
-        let isActive = genderIndex == index
-        return Button {
-            genderIndex = index
-            saveFile.trainerGender = UInt8(index)
-            store.markDirty()
-        } label: {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(isActive ? accentStore.accent.onAccent : Theme.textSecondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.Radius.control - 2, style: .continuous)
-                        .fill(isActive ? accentStore.accent.color : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Progress
 
-    private var progressSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("PROGRESS")
-
-            card {
-                row {
-                    rowLabel("Money")
-                    Spacer()
-                    HStack(spacing: 8) {
-                        Text("₽")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Theme.textTertiary)
-                        EditableNumberField(
-                            label: "Money",
-                            value: Int(saveFile.money),
-                            range: 0...saveFile.maxMoney
-                        ) { newValue in
-                            saveFile.money = UInt32(newValue)
-                            store.markDirty()
-                            refreshForm()
-                        }
-                        .labelsHidden()
-                        .monospacedDigit()
+    private var progressPanel: some View {
+        panel(title: "Progress", qualifier: "DATA", count: saveFile.hasPokedex ? 4 : 3) {
+            row("Money") {
+                HStack(spacing: 8) {
+                    Text("₽")
+                        .font(Theme.mono(13))
+                        .foregroundStyle(Theme.ink300)
+                    EditableNumberField(label: "Money", value: Int(saveFile.money), range: 0...saveFile.maxMoney, width: 120) { newValue in
+                        saveFile.money = UInt32(newValue)
+                        store.markDirty()
+                        refreshForm()
                     }
                 }
+            }
+            divider
+            row("Played Time") {
+                Text("\(saveFile.playedHours)h \(String(format: "%02d", saveFile.playedMinutes))m")
+                    .font(Theme.mono(13))
+                    .foregroundStyle(Theme.ink200)
+            }
+            if saveFile.hasPokedex {
                 divider
-
-                row {
-                    rowLabel("Played Time")
-                    Spacer()
-                    Text("\(saveFile.playedHours)h \(String(format: "%02d", saveFile.playedMinutes))m")
-                        .font(.system(size: 13, design: .monospaced))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.85))
-                }
-
-                if saveFile.hasPokedex {
-                    divider
-                    row {
-                        rowLabel("Pokédex")
-                        Spacer()
-                        pokedexProgress
+                row("Pokédex") {
+                    HStack(spacing: 10) {
+                        Text("\(saveFile.dexCaughtCount) | \(saveFile.maxSpeciesID)")
+                            .font(Theme.mono(13))
+                            .foregroundStyle(Theme.ink200)
+                        GridMeter(
+                            value: Double(saveFile.dexCaughtCount),
+                            maximum: Double(max(saveFile.maxSpeciesID, 1))
+                        )
+                        .frame(width: 80)
                     }
                 }
-                divider
-
-                row {
-                    rowLabel("Generation")
-                    Spacer()
-                    Text("Gen \(saveFile.generation)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.85))
-                }
+            }
+            divider
+            row("Generation") {
+                Text("gen\(saveFile.generation) · \(saveFile.gameName.lowercased())")
+                    .font(Theme.mono(13))
+                    .foregroundStyle(Theme.ink200)
             }
         }
     }
 
-    private var pokedexProgress: some View {
+    // MARK: Building blocks
+
+    private func panel<Content: View>(
+        title: String, qualifier: String, count: Int, @ViewBuilder content: () -> Content
+    ) -> some View {
+        GridPanel {
+            VStack(spacing: 0) {
+                SectionHeader(title, qualifier: qualifier, color: Theme.ink100) {
+                    Text(pad(count, 2))
+                        .font(Theme.mono(12))
+                        .foregroundStyle(Theme.ink300)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 36)
+                HRule(color: Theme.line300)
+                content()
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func row<Control: View>(_ label: String, @ViewBuilder control: () -> Control) -> some View {
         HStack(spacing: 8) {
-            Text("\(saveFile.dexCaughtCount) / \(saveFile.maxSpeciesID)")
-                .font(.system(size: 13, design: .monospaced))
-                .foregroundStyle(Theme.textSecondary.opacity(0.85))
-            ProgressView(value: Double(saveFile.dexCaughtCount), total: Double(max(saveFile.maxSpeciesID, 1)))
-                .progressViewStyle(.linear)
-                .tint(accentStore.accent.color)
-                .frame(width: 90)
+            GridText(label, .label, color: Theme.ink300)
+            DottedLeader()
+            control()
         }
-    }
-
-    // MARK: Shared row/card building blocks
-
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .bold))
-            .tracking(0.6)
-            .foregroundStyle(Theme.textTertiary)
-    }
-
-    @ViewBuilder
-    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .background(
-            RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous)
-                .fill(Theme.bgPanel)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.panel, style: .continuous)
-                .stroke(Theme.hairline, lineWidth: 0.5)
-        )
-    }
-
-    private func row<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 8) {
-            content()
-        }
-        .padding(.horizontal, 15)
-        .padding(.vertical, 12)
-    }
-
-    private func rowLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13))
-            .foregroundStyle(Theme.textSecondary)
+        .padding(.horizontal, 16)
+        .frame(height: 44)
     }
 
     private var divider: some View {
-        Rectangle()
-            .fill(Theme.hairline)
-            .frame(height: 0.5)
+        HRule(color: Theme.line400)
     }
 
     /// Remounts the form (via `refreshToken`) so edited fields pick up the new value from

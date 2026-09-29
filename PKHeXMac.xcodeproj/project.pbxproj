@@ -7,17 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		05BFD6E6800C4644397F41C8 /* GridComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 176FFD3C213470D0C3BD1D9D /* GridComponents.swift */; };
+		05EED25DAC32BF9E389B9FE4 /* OFL-Rajdhani.txt in Resources */ = {isa = PBXBuildFile; fileRef = EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */; };
 		071EFE8812DE993712573BC3 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
+		0C60F093C8944AE861CF0419 /* Rajdhani-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */; };
+		1AFE7B5E7D05AD92ADA86749 /* OFL-SpaceMono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */; };
+		1C4EB78695C4F5BEB44B7D4F /* SpaceMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5C99A2CCC50F76772B8CCE55 /* SpaceMono-Bold.ttf */; };
 		26E408D7A69E8B548C92F6AB /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */; };
 		290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; };
 		426DA9B6957298C1DF3031F9 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
 		455677238A49EB1E9CBD8625 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
+		4B52F326C225CEB19D11AA36 /* Rajdhani-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */; };
 		4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */; };
 		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
 		5EF44AB9D7E09E91D260D491 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321E64E26089C2F438E2FE1A /* DetailPanel.swift */; };
 		9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
 		A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A739EFF72563AF0D029D8E18 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */; };
+		AED2E18E42E21F5DD9CBA7F0 /* Rajdhani-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B83B486311F9CA557A76C5A4 /* Rajdhani-SemiBold.ttf */; };
 		B1AEAED12117644EA9B917F0 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299926E73B028F53F6DC025 /* BagView.swift */; };
 		B6B6253C86C4BAF5C1807365 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */; };
 		BC86B41DCDDBD9DE0A26E3A1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8FA2AE5C5C0BA89142F29F /* Theme.swift */; };
@@ -26,9 +33,11 @@
 		C8B470F8AD14A1D06B57316E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9182C6871188B2219630B85 /* ContentView.swift */; };
 		C8B6E6EB4864C26231BB1D0C /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */; };
 		CA384DA96B3DDD068799649C /* PKM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07CFAF47DCE7B0F0292C0AF /* PKM.swift */; };
+		CB60E59A5C25BFBBB3F0829C /* Rajdhani-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */; };
 		D29F0A094CA5AB9B8974C57B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */; };
 		D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */; };
 		DCA7897E522F421BC93848F0 /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */; };
+		E02B9F90946519499E577BA7 /* SpaceMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4551CF87BFA9007D81DC5CCA /* SpaceMono-Regular.ttf */; };
 		EB56E3C7171A204F28020791 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC6E0913AEBA97080A64120 /* Pickers.swift */; };
 		F5F31A4171692448212B8AA6 /* SaveFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE0AA02E3445D8A02271413 /* SaveFile.swift */; };
 /* End PBXBuildFile section */
@@ -59,25 +68,34 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Regular.ttf"; sourceTree = "<group>"; };
+		176FFD3C213470D0C3BD1D9D /* GridComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridComponents.swift; sourceTree = "<group>"; };
 		1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
 		2299926E73B028F53F6DC025 /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
 		22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragRegistry.swift; sourceTree = "<group>"; };
 		2E8FA2AE5C5C0BA89142F29F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		321E64E26089C2F438E2FE1A /* DetailPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailPanel.swift; sourceTree = "<group>"; };
+		4551CF87BFA9007D81DC5CCA /* SpaceMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SpaceMono-Regular.ttf"; sourceTree = "<group>"; };
 		4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKHeXMacApp.swift; sourceTree = "<group>"; };
 		4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusedSaveStore.swift; sourceTree = "<group>"; };
 		505571693819F220BFD40FE7 /* NativeString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeString.swift; sourceTree = "<group>"; };
+		5C99A2CCC50F76772B8CCE55 /* SpaceMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SpaceMono-Bold.ttf"; sourceTree = "<group>"; };
 		5EE0AA02E3445D8A02271413 /* SaveFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveFile.swift; sourceTree = "<group>"; };
+		6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Bold.ttf"; sourceTree = "<group>"; };
+		62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-SpaceMono.txt"; sourceTree = "<group>"; };
 		7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AB86BF7565C22F01133B76D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
+		A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Medium.ttf"; sourceTree = "<group>"; };
 		A831CF5D7FB2CAA3B64CB162 /* Bag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
 		B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = PKHeX.Interop.dylib; path = "PKHeX.Interop/bin/Release/net10.0/osx-arm64/publish/PKHeX.Interop.dylib"; sourceTree = "<group>"; };
 		B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B83B486311F9CA557A76C5A4 /* Rajdhani-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-SemiBold.ttf"; sourceTree = "<group>"; };
 		CBC6E0913AEBA97080A64120 /* Pickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pickers.swift; sourceTree = "<group>"; };
 		DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableField.swift; sourceTree = "<group>"; };
 		E07CFAF47DCE7B0F0292C0AF /* PKM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKM.swift; sourceTree = "<group>"; };
+		EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-Rajdhani.txt"; sourceTree = "<group>"; };
 		F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
 		F9182C6871188B2219630B85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -119,6 +137,7 @@
 		47A45610D4ABAA254D630700 = {
 			isa = PBXGroup;
 			children = (
+				DD09B2713C4E307D325011A8 /* Fonts */,
 				3D6F64218870FA07977FB061 /* PKHeXCore */,
 				61AA1368BAD535AEBDEDCB47 /* PKHeXSwiftUI */,
 				6B2D776BE1178B45488BC4FC /* Resources */,
@@ -138,6 +157,7 @@
 				22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */,
 				DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */,
 				4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */,
+				176FFD3C213470D0C3BD1D9D /* GridComponents.swift */,
 				CBC6E0913AEBA97080A64120 /* Pickers.swift */,
 				4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */,
 				9AB86BF7565C22F01133B76D /* SaveStore.swift */,
@@ -164,6 +184,22 @@
 				B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DD09B2713C4E307D325011A8 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */,
+				62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */,
+				6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */,
+				A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */,
+				04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */,
+				B83B486311F9CA557A76C5A4 /* Rajdhani-SemiBold.ttf */,
+				5C99A2CCC50F76772B8CCE55 /* SpaceMono-Bold.ttf */,
+				4551CF87BFA9007D81DC5CCA /* SpaceMono-Regular.ttf */,
+			);
+			name = Fonts;
+			path = PKHeXMac/Resources/Fonts;
 			sourceTree = "<group>";
 		};
 		EFC85DCB750313639E8ECEC4 /* Products */ = {
@@ -255,6 +291,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				B6B6253C86C4BAF5C1807365 /* Assets.xcassets in Resources */,
+				05EED25DAC32BF9E389B9FE4 /* OFL-Rajdhani.txt in Resources */,
+				1AFE7B5E7D05AD92ADA86749 /* OFL-SpaceMono.txt in Resources */,
+				0C60F093C8944AE861CF0419 /* Rajdhani-Bold.ttf in Resources */,
+				CB60E59A5C25BFBBB3F0829C /* Rajdhani-Medium.ttf in Resources */,
+				4B52F326C225CEB19D11AA36 /* Rajdhani-Regular.ttf in Resources */,
+				AED2E18E42E21F5DD9CBA7F0 /* Rajdhani-SemiBold.ttf in Resources */,
+				1C4EB78695C4F5BEB44B7D4F /* SpaceMono-Bold.ttf in Resources */,
+				E02B9F90946519499E577BA7 /* SpaceMono-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,6 +338,7 @@
 				4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */,
 				071EFE8812DE993712573BC3 /* EditableField.swift in Sources */,
 				C8B6E6EB4864C26231BB1D0C /* FocusedSaveStore.swift in Sources */,
+				05BFD6E6800C4644397F41C8 /* GridComponents.swift in Sources */,
 				D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */,
 				EB56E3C7171A204F28020791 /* Pickers.swift in Sources */,
 				BDDCC6E0719A9D600DEECEFB /* SaveStore.swift in Sources */,

@@ -52,12 +52,41 @@ final class SaveStore: ObservableObject {
     @Published var inspectedSlot: InspectedSlot?
     @Published var errorMessage: String?
     @Published private(set) var hasUnsavedChanges = false
+    /// Number of edits since the last load/save — shown in the status bar (`unsaved 003`).
+    @Published private(set) var changeCount = 0
+    /// Set right after a successful write: when it happened and whether a `.bak` was written.
+    @Published private(set) var lastWrite: WriteReceipt?
+    /// A deferred open request waiting on the "discard changes" dialog (GRID replaces the NSAlert).
+    @Published var pendingOpen: PendingOpen?
+    /// A release awaiting confirmation in the GRID red dialog (see `confirmBeforeReleasing`).
+    @Published var releaseRequest: ReleaseRequest?
     @Published private(set) var lastSaveFailed = false
     /// Set by Copy (⌘C); pasted (⌘V) into the currently inspected slot. Same-generation only —
     /// there's no cross-save/cross-generation conversion, so this is only ever populated/used
     /// within a single open save.
     @Published var copiedPKM: PKM?
     private var loadedURL: URL?
+
+    struct WriteReceipt: Equatable {
+        let date: Date
+        let backupWritten: Bool
+    }
+
+    struct ReleaseRequest {
+        let count: Int
+        let locationName: String
+        let perform: () -> Void
+    }
+
+    enum PendingOpen: Equatable {
+        case panel
+        case url(URL)
+    }
+
+    /// The open file's path with the home directory abbreviated to `~`, for the status bar.
+    var displayPath: String? {
+        loadedURL.map { ($0.path as NSString).abbreviatingWithTildeInPath }
+    }
     /// Set when the file at `loadedURL` has already been backed up this session (or turned out to
     /// already have a `.bak` sibling from a previous session) — so `save()` only ever backs up the
     /// pristine as-opened bytes once, not the file's own prior saved state.
@@ -67,26 +96,22 @@ final class SaveStore: ObservableObject {
     /// state and the Save button/menu item has something to act on.
     func markDirty() {
         hasUnsavedChanges = true
-    }
-
-    /// True if opening a different file should be blocked pending user confirmation, because doing
-    /// so would silently discard unsaved changes to the currently open save.
-    private func confirmDiscardingUnsavedChanges() -> Bool {
-        guard hasUnsavedChanges else { return true }
-        let alert = NSAlert()
-        alert.messageText = "You have unsaved changes"
-        alert.informativeText = "Opening a different save file will discard your unsaved changes to this one."
-        alert.addButton(withTitle: "Open Anyway")
-        alert.addButton(withTitle: "Cancel")
-        alert.alertStyle = .warning
-        return alert.runModal() == .alertFirstButtonReturn
+        changeCount += 1
+        lastWrite = nil
     }
 
     /// Prompts to open a different save file. If the currently open save has unsaved changes,
-    /// confirms first — opening a new file discards them, there being only one save open at a time.
+    /// asks first (via the GRID discard dialog) — opening a new file discards them, there being
+    /// only one save open at a time.
     func presentOpenPanel() {
-        guard confirmDiscardingUnsavedChanges() else { return }
+        guard !hasUnsavedChanges else {
+            pendingOpen = .panel
+            return
+        }
+        runOpenPanel()
+    }
 
+    private func runOpenPanel() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -99,8 +124,26 @@ final class SaveStore: ObservableObject {
     /// Same unsaved-changes guard as `presentOpenPanel`, since Finder can hand us a file at any time
     /// — including while a different save is already open with edits pending.
     func openFromFinder(_ url: URL) {
-        guard confirmDiscardingUnsavedChanges() else { return }
+        guard !hasUnsavedChanges else {
+            pendingOpen = .url(url)
+            return
+        }
         load(from: url)
+    }
+
+    /// The user confirmed discarding unsaved changes in the dialog.
+    func confirmPendingOpen() {
+        guard let pending = pendingOpen else { return }
+        pendingOpen = nil
+        // `load(from:)` resets the dirty state itself, so cancelling the open panel keeps the edits.
+        switch pending {
+        case .panel: runOpenPanel()
+        case .url(let url): load(from: url)
+        }
+    }
+
+    func cancelPendingOpen() {
+        pendingOpen = nil
     }
 
     func load(from url: URL) {
@@ -113,6 +156,8 @@ final class SaveStore: ObservableObject {
             inspectedSlot = nil
             copiedPKM = nil
             hasUnsavedChanges = false
+            changeCount = 0
+            lastWrite = nil
             lastSaveFailed = false
             hasBackedUpThisLoad = false
         } catch {
@@ -125,22 +170,25 @@ final class SaveStore: ObservableObject {
     /// `load(from:)` and only if "Back up save before writing" is on in Settings; a pre-existing
     /// `.bak` from an earlier session is left as-is rather than overwritten, so backups aren't
     /// silently replaced by a second run's pristine copy.
-    private func backUpIfNeeded() {
-        guard !hasBackedUpThisLoad, let loadedURL else { return }
+    @discardableResult
+    private func backUpIfNeeded() -> Bool {
+        guard !hasBackedUpThisLoad, let loadedURL else { return false }
         hasBackedUpThisLoad = true
-        guard UserDefaults.standard.object(forKey: "backupBeforeWriting") as? Bool ?? true else { return }
+        guard UserDefaults.standard.object(forKey: "backupBeforeWriting") as? Bool ?? true else { return false }
         let backupURL = loadedURL.appendingPathExtension("bak")
-        guard !FileManager.default.fileExists(atPath: backupURL.path) else { return }
-        try? FileManager.default.copyItem(at: loadedURL, to: backupURL)
+        guard !FileManager.default.fileExists(atPath: backupURL.path) else { return false }
+        return (try? FileManager.default.copyItem(at: loadedURL, to: backupURL)) != nil
     }
 
     func save() {
         guard let saveFile, let loadedURL else { return }
-        backUpIfNeeded()
+        let backedUp = backUpIfNeeded()
         do {
             let data = try saveFile.write()
             try data.write(to: loadedURL)
             hasUnsavedChanges = false
+            changeCount = 0
+            lastWrite = WriteReceipt(date: Date(), backupWritten: backedUp)
             lastSaveFailed = false
         } catch {
             errorMessage = "Couldn't save: \(error)"

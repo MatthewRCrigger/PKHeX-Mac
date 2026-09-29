@@ -1,13 +1,15 @@
 import PKHeXCore
 import SwiftUI
 
-/// Box grid + party roster + pinned party strip + multi-select mode.
-/// See design_handoff_circuit_redesign/README.md sections 2, 3, 9.
+/// Box grid + party roster + pinned party strip + multi-select mode (GRID spec §3, §4).
 struct BoxGridView: View {
     @EnvironmentObject private var store: SaveStore
-    @EnvironmentObject private var accentStore: AccentStore
     @EnvironmentObject private var dragRegistry: DragRegistry
+    @EnvironmentObject private var profileStore: PanelProfileStore
     let saveFile: SaveFile
+
+    @AppStorage("boxTileSize") private var boxTileSize = "M"
+    @AppStorage("showTileBadges") private var showTileBadges = true
 
     @State private var isSelecting = false
     @State private var selectedIndices: Set<Int> = []
@@ -31,8 +33,7 @@ struct BoxGridView: View {
                 boxView
             }
         }
-        .background(Theme.bgContent)
-        .navigationTitle(location.title)
+        .background(Theme.void)
         .onChange(of: store.selectedSidebarItem) {
             isSelecting = false
             selectedIndices.removeAll()
@@ -41,7 +42,7 @@ struct BoxGridView: View {
             SpeciesPickerSheet(saveFile: saveFile, target: target) { species in
                 choose(species: species, for: target)
             }
-            .environmentObject(accentStore)
+            .environmentObject(profileStore)
         }
         .background(slotCopyPasteShortcuts)
     }
@@ -70,103 +71,118 @@ struct BoxGridView: View {
 
     // MARK: - Box view
 
-    private var boxColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 8), count: 6) }
+    /// S = 8, M = 6, L = 5 columns, per the tile-size preference.
+    private var boxColumnCount: Int {
+        switch boxTileSize {
+        case "S": return 8
+        case "L": return 5
+        default: return 6
+        }
+    }
+
+    private var boxColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 6), count: boxColumnCount)
+    }
 
     @ViewBuilder
     private var boxView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                pinnedPartyStrip
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    pinnedPartyStrip
 
-                boxHeader
+                    boxHeader
 
-                LazyVGrid(columns: boxColumns, spacing: 8) {
-                    ForEach(0..<location.slotCount(in: saveFile), id: \.self) { slot in
-                        let pkm = location.slot(slot, in: saveFile)
-                        BoxTile(
-                            pkm: pkm,
-                            isSelected: store.inspectedSlot == InspectedSlot(location: location, index: slot) && !isSelecting,
-                            isSelecting: isSelecting,
-                            isChecked: selectedIndices.contains(slot),
-                            accent: accentStore.accent
-                        )
-                        .onTapGesture {
-                            handleTap(slot: slot, pkm: pkm)
+                    LazyVGrid(columns: boxColumns, spacing: 6) {
+                        ForEach(0..<location.slotCount(in: saveFile), id: \.self) { slot in
+                            let pkm = location.slot(slot, in: saveFile)
+                            BoxTile(
+                                pkm: pkm,
+                                slot: slot,
+                                isSelected: store.inspectedSlot == InspectedSlot(location: location, index: slot) && !isSelecting,
+                                isSelecting: isSelecting,
+                                isChecked: selectedIndices.contains(slot),
+                                showsCodes: showTileBadges
+                            )
+                            .onTapGesture {
+                                handleTap(slot: slot, pkm: pkm)
+                            }
+                            .contextMenu {
+                                slotContextMenu(location: location, slot: slot, pkm: pkm)
+                            }
+                            .dragSource(pkm, location: location, slot: slot, saveFile: saveFile, registry: dragRegistry)
+                            .dropTarget(location: location, slot: slot, saveFile: saveFile, store: store, registry: dragRegistry)
                         }
-                        .contextMenu {
-                            slotContextMenu(location: location, slot: slot, pkm: pkm)
-                        }
-                        .dragSource(pkm, location: location, slot: slot, saveFile: saveFile, registry: dragRegistry)
-                        .dropTarget(location: location, slot: slot, saveFile: saveFile, store: store, registry: dragRegistry)
                     }
+                    .padding(.horizontal, 20)
+
+                    legendRow
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 92)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
             }
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .overlay(alignment: .bottom) {
-            if !selectedIndices.isEmpty {
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            if isSelecting {
                 multiSelectActionBar
-                    .padding(.bottom, 20)
             }
         }
     }
 
     @ViewBuilder
     private var boxHeader: some View {
-        HStack(spacing: 12) {
-            Text(saveFile.boxName(boxIndex ?? 0))
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            Text("\(filledCount) / \(location.slotCount(in: saveFile))")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(Theme.textSecondary)
+        HStack(spacing: 10) {
+            GridText(saveFile.boxName(boxIndex ?? 0), .viewTitle)
+                .lineLimit(1)
 
-            Spacer()
+            if !isSelecting {
+                HStack(spacing: 6) {
+                    GridText("Box \(pad((boxIndex ?? 0) + 1, 2))", .label, color: Theme.ink300)
+                    GridText(".Storage", .label, color: Theme.ink300)
+                }
+                .fixedSize()
+            }
+
+            DottedLeader()
 
             if isSelecting {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 11, weight: .bold))
-                    Text("Selecting")
-                        .font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(accentStore.accent.onAccent)
-                .padding(.horizontal, 11)
-                .padding(.vertical, 4)
-                .background(accentStore.accent.color)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
-
-                Button("Select all") { selectAll() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 12))
-                    .foregroundStyle(accentStore.accent.bright)
-                Text("·").foregroundStyle(Theme.textTertiary)
-                Button("None") { selectedIndices.removeAll() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
+                GridBadge(text: "Selecting", color: Theme.amber, showsDot: false, solid: true)
+                GridButton("Select all", .ghost, size: .sm) { selectAll() }
+                GridButton("None", .ghost, size: .sm) { selectedIndices.removeAll() }
             }
 
-            Button {
+            Text("\(pad(filledCount)) | \(pad(location.slotCount(in: saveFile)))")
+                .font(Theme.mono(12))
+                .foregroundStyle(Theme.ink200)
+                .fixedSize()
+
+            GridButton(isSelecting ? "Done" : "Select", .secondary, size: .sm) {
                 isSelecting.toggle()
                 if !isSelecting { selectedIndices.removeAll() }
-            } label: {
-                Text(isSelecting ? "Done" : "Select")
-                    .font(.system(size: 12, weight: .medium))
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Theme.bgElevated2)
-            .foregroundStyle(Theme.textSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: 7))
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 10)
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+    }
+
+    private var legendRow: some View {
+        HStack(spacing: 14) {
+            HStack(spacing: 6) {
+                StatusDot(color: Theme.violet)
+                Text("shiny")
+            }
+            HStack(spacing: 6) {
+                StatusDot(color: Theme.red)
+                Text("illegal")
+            }
+            DottedLeader()
+            Text("right-click · copy / paste / delete")
+        }
+        .font(Theme.mono(12))
+        .foregroundStyle(Theme.ink300)
     }
 
     private var boxIndex: Int? {
@@ -234,98 +250,132 @@ struct BoxGridView: View {
         selectedIndices = Set((0..<location.slotCount(in: saveFile)).filter { location.slot($0, in: saveFile) != nil })
     }
 
+    // MARK: Multi-select action bar
+
+    /// Pinned bar: `003 SELECTED ··· MOVE TO ▾ · CLONE · EXPORT · RELEASE · CANCEL`.
     @ViewBuilder
     private var multiSelectActionBar: some View {
-        HStack(spacing: 6) {
+        let hasSelection = !selectedIndices.isEmpty
+        HStack(spacing: 8) {
             HStack(spacing: 8) {
-                Text("\(selectedIndices.count)")
-                    .font(.system(size: 12, weight: .heavy))
-                    .foregroundStyle(accentStore.accent.onAccent)
-                    .frame(width: 22, height: 22)
-                    .background(accentStore.accent.color)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
-                Text("selected")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
+                Text(pad(selectedIndices.count))
+                    .font(Theme.mono(13, bold: true))
+                    .foregroundStyle(Theme.amber)
+                GridText("Selected", .label, color: Theme.ink200)
             }
-            .padding(.trailing, 12)
-            .overlay(alignment: .trailing) {
-                Rectangle().fill(Theme.hairline).frame(width: 0.5)
-            }
+            DottedLeader()
 
-            actionBarButton("Move to \u{25BE}", systemImage: "arrow.up.arrow.down")
-                .disabled(true)
-                .help("Not yet available: moving Pokémon across boxes isn't wired up in this build.")
-            actionBarButton("Clone", systemImage: "square.on.square")
-                .disabled(true)
-                .help("Not yet available: cloning isn't wired up in this build.")
-            actionBarButton("Export", systemImage: "square.and.arrow.up")
+            Menu {
+                ForEach(otherBoxes, id: \.index) { box in
+                    Button("\(box.name) · \(pad(box.free)) free") { moveSelected(to: box.index) }
+                        .disabled(box.free == 0)
+                }
+            } label: {
+                Text("Move to \u{25BE}")
+            }
+            .menuStyle(.button)
+            .buttonStyle(GridButtonStyle(variant: .secondary, size: .sm))
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .disabled(!hasSelection)
+
+            GridButton("Clone", .secondary, size: .sm) { cloneSelected() }
+                .disabled(!hasSelection || freeSlotsHere == 0)
+                .help(freeSlotsHere == 0 ? "No empty slots in this box." : "Copy the selected Pokémon into empty slots in this box.")
+            GridButton("Export", .secondary, size: .sm) {}
                 .disabled(true)
                 .help("Not yet available: export isn't wired up in this build.")
-
-            Button {
-                releaseSelected()
-            } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: "trash")
-                    Text("Release")
-                }
-                .font(.system(size: 12.5, weight: .medium))
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Theme.danger)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 8)
-            .background(Theme.danger.opacity(0.14))
-            .clipShape(RoundedRectangle(cornerRadius: 9))
-
-            Button("Cancel") {
+            GridButton("Release", .danger, size: .sm) { releaseSelected() }
+                .disabled(!hasSelection)
+            GridButton("Cancel", .ghost, size: .sm) {
                 isSelecting = false
                 selectedIndices.removeAll()
             }
-            .buttonStyle(.plain)
-            .font(.system(size: 12.5))
-            .foregroundStyle(Theme.textSecondary)
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 10)
-        .padding(.vertical, 8)
-        .background(Theme.bgElevated2)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+        .padding(.horizontal, 20)
+        .frame(height: 52)
+        .background(Theme.void)
+        .overlay(alignment: .top) { HRule(color: Theme.line300) }
     }
 
-    @ViewBuilder
-    private func actionBarButton(_ title: String, systemImage: String) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: systemImage)
-            Text(title)
-        }
-        .font(.system(size: 12.5, weight: .medium))
-        .foregroundStyle(Theme.textPrimary.opacity(0.85))
-        .padding(.horizontal, 13)
-        .padding(.vertical, 8)
-        .background(Theme.bgElevated3)
-        .clipShape(RoundedRectangle(cornerRadius: 9))
+    private struct BoxChoice {
+        let index: Int
+        let name: String
+        let free: Int
     }
 
-    /// Clears every selected slot to empty. Multi-select is box-only (see `pinnedPartyStrip`/
-    /// `isPartyView`), so there's no party-slot-1 protection concern here the way there is for
-    /// `SaveStore.deleteInspected()`.
-    private func releaseSelected() {
-        guard case .box(let box) = location else { return }
-        for slot in selectedIndices {
-            saveFile.clearSlot(box: box, slot: slot)
+    private var otherBoxes: [BoxChoice] {
+        (0..<saveFile.boxCount).compactMap { index in
+            guard index != boxIndex else { return nil }
+            let free = saveFile.boxSlotCount - saveFile.boxOccupiedSlotCount(index)
+            return BoxChoice(index: index, name: "Box \(pad(index + 1, 2))", free: free)
         }
-        store.markDirty()
+    }
+
+    private var freeSlotsHere: Int {
+        saveFile.boxSlotCount - filledCount
+    }
+
+    /// Moves the selected Pokémon into the first empty slots of `target`, in order, stopping when
+    /// the target box is full.
+    private func moveSelected(to target: Int) {
+        guard case .box(let source) = location else { return }
+        var cursor = 0
+        var moved = 0
+        for slot in selectedIndices.sorted() {
+            guard let pkm = saveFile.slot(box: source, slot: slot) else { continue }
+            while cursor < saveFile.boxSlotCount, saveFile.slot(box: target, slot: cursor) != nil { cursor += 1 }
+            guard cursor < saveFile.boxSlotCount else { break }
+            saveFile.setSlot(pkm, box: target, slot: cursor)
+            saveFile.clearSlot(box: source, slot: slot)
+            moved += 1
+        }
+        if moved > 0 { store.markDirty() }
+        store.inspectedSlot = nil
         isSelecting = false
         selectedIndices.removeAll()
+    }
+
+    /// Copies each selected Pokémon into the next empty slot of the current box.
+    private func cloneSelected() {
+        guard case .box(let box) = location else { return }
+        var cursor = 0
+        var cloned = 0
+        for slot in selectedIndices.sorted() {
+            guard let pkm = saveFile.slot(box: box, slot: slot) else { continue }
+            while cursor < saveFile.boxSlotCount, saveFile.slot(box: box, slot: cursor) != nil { cursor += 1 }
+            guard cursor < saveFile.boxSlotCount else { break }
+            saveFile.setSlot(pkm, box: box, slot: cursor)
+            cloned += 1
+        }
+        if cloned > 0 { store.markDirty() }
+        selectedIndices.removeAll()
+    }
+
+    /// Clears every selected slot to empty, after a confirmation dialog when "Confirm before
+    /// releasing" is on. Multi-select is box-only (see `pinnedPartyStrip`/`isPartyView`), so there's
+    /// no party-slot-1 protection concern here the way there is for `SaveStore.deleteInspected()`.
+    private func releaseSelected() {
+        guard case .box(let box) = location, !selectedIndices.isEmpty else { return }
+        let slots = selectedIndices
+        let perform = {
+            for slot in slots {
+                saveFile.clearSlot(box: box, slot: slot)
+            }
+            store.markDirty()
+            store.inspectedSlot = nil
+            isSelecting = false
+            selectedIndices.removeAll()
+        }
+        if UserDefaults.standard.object(forKey: "confirmBeforeReleasing") as? Bool ?? true {
+            store.releaseRequest = SaveStore.ReleaseRequest(
+                count: slots.count,
+                locationName: "Box \(pad(box + 1, 2))",
+                perform: perform
+            )
+        } else {
+            perform()
+        }
     }
 
     private func choose(species: UInt16, for target: PickerTarget) {
@@ -341,79 +391,65 @@ struct BoxGridView: View {
         pickerTarget = nil
     }
 
+    // MARK: Pinned party strip
+
     @ViewBuilder
     private var pinnedPartyStrip: some View {
-        if !isPartyView {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("PARTY")
-                    .font(.system(size: 10.5, weight: .bold))
-                    .tracking(0.7)
-                    .foregroundStyle(Theme.textTertiary)
+        HStack(spacing: 6) {
+            GridText("Party", .label, color: Theme.ink300)
+                .padding(.trailing, 6)
 
-                HStack(spacing: 8) {
-                    ForEach(0..<6, id: \.self) { index in
-                        let pkm = saveFile.partySlot(index)
-                        MiniTile(pkm: pkm, accent: accentStore.accent)
-                            .frame(width: 52, height: 52)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(
-                                        store.inspectedSlot == InspectedSlot(location: .party, index: index)
-                                            ? accentStore.accent.color : Color.clear,
-                                        lineWidth: 2
-                                    )
-                            }
-                            .onTapGesture {
-                                // Inspect this party member (or empty slot) without navigating the
-                                // content pane away from whatever box is currently open.
-                                store.inspectedSlot = InspectedSlot(location: .party, index: index)
-                            }
-                            .contextMenu {
-                                slotContextMenu(location: .party, slot: index, pkm: pkm)
-                            }
-                            .dragSource(pkm, location: .party, slot: index, saveFile: saveFile, registry: dragRegistry)
-                            .dropTarget(location: .party, slot: index, saveFile: saveFile, store: store, registry: dragRegistry)
-                    }
-                    Spacer()
+            ForEach(0..<6, id: \.self) { index in
+                let pkm = saveFile.partySlot(index)
+                MiniTile(
+                    pkm: pkm,
+                    isSelected: store.inspectedSlot == InspectedSlot(location: .party, index: index)
+                )
+                .frame(width: 52, height: 52)
+                .onTapGesture {
+                    // Inspect this party member (or empty slot) without navigating the
+                    // content pane away from whatever box is currently open.
+                    store.inspectedSlot = InspectedSlot(location: .party, index: index)
                 }
+                .contextMenu {
+                    slotContextMenu(location: .party, slot: index, pkm: pkm)
+                }
+                .dragSource(pkm, location: .party, slot: index, saveFile: saveFile, registry: dragRegistry)
+                .dropTarget(location: .party, slot: index, saveFile: saveFile, store: store, registry: dragRegistry)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 14)
-            .padding(.bottom, 4)
+
+            DottedLeader()
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
     }
 
     // MARK: - Party view
 
-    /// Packs as many columns as fit at >=280pt each, so a narrow content pane falls back to a
-    /// single full-width column (room for the sprite, name, meta line, and type badges to render
-    /// without truncating) instead of always forcing 2 columns regardless of available width.
-    private var partyColumns: [GridItem] { [GridItem(.adaptive(minimum: 280, maximum: 400), spacing: 14)] }
+    /// Two columns when the pane is wide enough (>= 300 pt each), otherwise a single full-width
+    /// column so the sprite, name, meta line and type chips never truncate.
+    private var partyColumns: [GridItem] { [GridItem(.adaptive(minimum: 300, maximum: 480), spacing: 12)] }
 
     @ViewBuilder
     private var partyView: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Text("Party")
-                        .font(.system(size: 21, weight: .bold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("Your active team · click to inspect")
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Text("\(saveFile.partyCount) / 6")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(Theme.textSecondary)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
+                    GridText("Party", .viewTitle)
+                    GridText("Active", .label, color: Theme.ink300)
+                    GridText(".Team", .label, color: Theme.ink300)
+                    DottedLeader()
+                    Text("\(pad(saveFile.partyCount)) | 006")
+                        .font(Theme.mono(12))
+                        .foregroundStyle(Theme.ink200)
                 }
 
-                LazyVGrid(columns: partyColumns, spacing: 14) {
+                LazyVGrid(columns: partyColumns, spacing: 12) {
                     ForEach(0..<6, id: \.self) { index in
                         PartyCard(
                             pkm: saveFile.partySlot(index),
                             slotIndex: index,
-                            isSelected: store.inspectedSlot == InspectedSlot(location: .party, index: index),
-                            accent: accentStore.accent
+                            isSelected: store.inspectedSlot == InspectedSlot(location: .party, index: index)
                         )
                         .onTapGesture {
                             store.inspectedSlot = InspectedSlot(location: .party, index: index)
@@ -429,14 +465,6 @@ struct BoxGridView: View {
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(
-            RadialGradient(
-                colors: [Theme.bgPanel, Theme.bgContent],
-                center: UnitPoint(x: 0.15, y: 0),
-                startRadius: 0,
-                endRadius: 620
-            )
-        )
     }
 }
 
@@ -451,327 +479,282 @@ struct PickerTarget: Identifiable {
 
 private struct BoxTile: View {
     let pkm: PKM?
+    let slot: Int
     let isSelected: Bool
     let isSelecting: Bool
     let isChecked: Bool
-    let accent: AccentColor
+    let showsCodes: Bool
+
+    @State private var isHovering = false
+
+    private var isActive: Bool { isSelected || isChecked }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: Theme.Radius.tile)
-            .fill(pkm == nil ? Theme.bgTileEmpty : (isSelected ? Theme.bgElevated1 : Theme.bgTile))
-            .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                if let pkm {
-                    ZStack {
-                        ArtworkImage(pkm: pkm)
-                            .padding(6)
+        ZStack {
+            Rectangle().fill(fill)
 
-                        // type dots, bottom-left
-                        VStack {
+            if let pkm {
+                ArtworkImage(pkm: pkm)
+                    .grayscale(pkm.isEgg ? 1 : 0)
+                    .brightness(pkm.isEgg ? -0.4 : 0)
+                    .padding(showsCodes ? 12 : 8)
+                    .padding(.bottom, showsCodes ? 6 : 0)
+
+                // level, top-left (shifts right when the checkbox is showing)
+                VStack {
+                    HStack(spacing: 0) {
+                        Text("L\(pad(Int(pkm.level)))")
+                            .font(Theme.mono(12))
+                            .foregroundStyle(isActive ? Theme.amber : Theme.ink200)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .padding(.leading, isSelecting ? 20 : 0)
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .padding(3)
+
+                // state dot, top-right: illegal (red) wins over shiny (violet)
+                if let dot = stateDotColor(for: pkm) {
+                    VStack {
+                        HStack {
                             Spacer()
-                            HStack {
-                                HStack(spacing: 2) {
-                                    ForEach(pkm.types, id: \.self) { typeID in
-                                        Circle()
-                                            .fill(Theme.typeColor(PokemonNames.type(typeID)).fill)
-                                            .frame(width: 6, height: 6)
+                            StatusDot(color: dot)
+                        }
+                        Spacer()
+                    }
+                    .padding(5)
+                }
+
+                // type codes, bottom-center
+                if showsCodes {
+                    VStack {
+                        Spacer()
+                        Text(pkm.types.map { typeCode(typeID: $0) }.joined(separator: " "))
+                            .font(Theme.mono(12))
+                            .foregroundStyle(Theme.ink300)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.bottom, 2)
+                }
+
+                // multi-select checkbox, top-left
+                if isSelecting {
+                    VStack {
+                        HStack {
+                            Rectangle()
+                                .fill(isChecked ? Theme.amber : Theme.void)
+                                .frame(width: 14, height: 14)
+                                .overlay(
+                                    Rectangle().strokeBorder(isChecked ? Theme.amber : Theme.line200, lineWidth: 1)
+                                )
+                                .overlay {
+                                    if isChecked {
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 9, weight: .bold))
+                                            .foregroundStyle(Theme.inkInvert)
                                     }
                                 }
-                                Spacer()
-                            }
-                        }
-                        .padding(4)
-
-                        // level badge, bottom-right
-                        VStack {
                             Spacer()
-                            HStack {
-                                Spacer()
-                                Text("\(pkm.level)")
-                                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 3)
-                                    .background(Color.black.opacity(0.55))
-                                    .clipShape(RoundedRectangle(cornerRadius: 3))
-                            }
                         }
-                        .padding(3)
-
-                        // shiny star, top-right
-                        if pkm.isShiny {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    Text("★")
-                                        .font(.system(size: 9))
-                                        .foregroundStyle(Theme.shinyStar)
-                                }
-                                Spacer()
-                            }
-                            .padding(3)
-                        }
-
-                        // multi-select check circle, top-left
-                        if isSelecting {
-                            VStack {
-                                HStack {
-                                    Circle()
-                                        .fill(isChecked ? accent.color : Color.clear)
-                                        .overlay(
-                                            Circle().strokeBorder(isChecked ? Color.clear : Color.white.opacity(0.25), lineWidth: 1.5)
-                                        )
-                                        .overlay {
-                                            if isChecked {
-                                                Image(systemName: "checkmark")
-                                                    .font(.system(size: 8, weight: .heavy))
-                                                    .foregroundStyle(accent.onAccent)
-                                            }
-                                        }
-                                        .frame(width: 16, height: 16)
-                                    Spacer()
-                                }
-                                Spacer()
-                            }
-                            .padding(4)
-                        }
+                        Spacer()
                     }
-                } else {
-                    Text("+")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color.white.opacity(0.14))
+                    .padding(4)
                 }
+            } else {
+                Text(pad(slot + 1, 2))
+                    .font(Theme.mono(12))
+                    .foregroundStyle(Theme.ink400)
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.Radius.tile)
-                    .strokeBorder(
-                        pkm == nil ? Color.white.opacity(0.18) : (isSelected ? accent.color : Color.clear),
-                        style: pkm == nil ? StrokeStyle(lineWidth: 0.5, dash: [3, 3]) : StrokeStyle(lineWidth: 2)
-                    )
-            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .overlay { border }
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .animation(Theme.hoverAnimation, value: isHovering)
+    }
+
+    private var fill: Color {
+        if pkm != nil && isActive { return Theme.amberFill }
+        if pkm != nil { return isHovering ? Theme.surface3 : Theme.surface1 }
+        return isHovering ? Theme.surface3 : .clear
+    }
+
+    @ViewBuilder
+    private var border: some View {
+        if pkm == nil {
+            Rectangle().strokeBorder(
+                isHovering ? Theme.line200 : Theme.line300,
+                style: StrokeStyle(lineWidth: 1, dash: [2, 3])
+            )
+        } else if isActive {
+            Rectangle().strokeBorder(Theme.amber, lineWidth: 2)
+        } else {
+            Rectangle().strokeBorder(isHovering ? Theme.line200 : Theme.line300, lineWidth: 1)
+        }
+    }
+
+    private func stateDotColor(for pkm: PKM) -> Color? {
+        if !pkm.isLegal { return Theme.red }
+        if pkm.isShiny { return Theme.violet }
+        return nil
     }
 }
 
-/// 52x52 mini tile for the pinned party strip, reusing the same visual language as `BoxTile`
-/// at a smaller size.
+/// 52 x 52 tile for the pinned party strip: sprite, level bottom-right, dotted when empty.
 private struct MiniTile: View {
     let pkm: PKM?
-    let accent: AccentColor
+    let isSelected: Bool
+
+    @State private var isHovering = false
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(pkm == nil ? Theme.bgTileEmpty : Theme.bgTile)
-            .overlay {
-                if let pkm {
-                    ZStack {
-                        ArtworkImage(pkm: pkm)
-                            .padding(4)
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Text("\(pkm.level)")
-                                    .font(.system(size: 7.5, weight: .bold, design: .monospaced))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 2)
-                                    .background(Color.black.opacity(0.55))
-                                    .clipShape(RoundedRectangle(cornerRadius: 2))
-                            }
-                        }
-                        .padding(2)
-                        if pkm.isShiny {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    Text("★")
-                                        .font(.system(size: 7))
-                                        .foregroundStyle(Theme.shinyStar)
-                                }
-                                Spacer()
-                            }
-                            .padding(2)
-                        }
+        ZStack {
+            Rectangle().fill(pkm != nil && isSelected ? Theme.amberFill : (isHovering ? Theme.surface3 : (pkm != nil ? Theme.surface1 : .clear)))
+
+            if let pkm {
+                ArtworkImage(pkm: pkm)
+                    .frame(width: 40, height: 36)
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Text(pad(Int(pkm.level)))
+                            .font(Theme.mono(12))
+                            .foregroundStyle(isSelected ? Theme.amber : Theme.ink200)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                 }
+                .padding(2)
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(
-                        pkm == nil ? Color.white.opacity(0.18) : Color.clear,
-                        style: StrokeStyle(lineWidth: 0.5, dash: [2, 2])
-                    )
+        }
+        .overlay {
+            if pkm == nil {
+                Rectangle().strokeBorder(Theme.line300, style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+            } else if isSelected {
+                Rectangle().strokeBorder(Theme.amber, lineWidth: 2)
+            } else {
+                Rectangle().strokeBorder(isHovering ? Theme.line200 : Theme.line300, lineWidth: 1)
             }
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .animation(Theme.hoverAnimation, value: isHovering)
     }
 }
 
 // MARK: - Party card
 
 private struct PartyCard: View {
+    @EnvironmentObject private var profileStore: PanelProfileStore
     let pkm: PKM?
     let slotIndex: Int
     let isSelected: Bool
-    let accent: AccentColor
 
-    private var isFlagged: Bool { pkm.map { !$0.isLegal } ?? false }
+    @State private var isHovering = false
+
+    private var isActive: Bool { pkm != nil && isSelected }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            HStack {
-                if slotIndex == 0 {
-                    Text("LEAD")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(accent.onAccent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(accent.color)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                } else {
-                    Text(String(format: "%02d", slotIndex + 1))
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                Spacer()
-                if let pkm {
-                    legalityChip(isLegal: pkm.isLegal)
-                }
-            }
+        let p = profileStore.profile
+        VStack(alignment: .leading, spacing: 0) {
+            headRow
+                .padding(.horizontal, 14)
+                .frame(height: 36)
 
             if let pkm {
-                HStack(alignment: .top, spacing: 13) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 11)
-                            .fill(Theme.bgWell)
-                            .frame(width: 72, height: 64)
-                        ArtworkImage(pkm: pkm)
-                            .padding(8)
-                            .frame(width: 72, height: 64)
-                        if pkm.isShiny {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    Text("★")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(Theme.shinyStar)
-                                }
-                                Spacer()
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ZStack(alignment: .topTrailing) {
+                            Rectangle().fill(Theme.surface2)
+                            ArtworkImage(pkm: pkm)
+                                .padding(8)
+                            if pkm.isShiny {
+                                StatusDot(color: Theme.violet).padding(5)
                             }
-                            .frame(width: 72, height: 64)
-                            .padding(3)
                         }
-                    }
+                        .frame(width: 72, height: 64)
+                        .overlay(Rectangle().strokeBorder(Theme.line300, lineWidth: 1))
 
-                    VStack(alignment: .leading, spacing: 7) {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 5) {
                             Text(pkm.nickname.isEmpty ? pkm.speciesName : pkm.nickname)
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(Theme.textPrimary)
+                                .font(Theme.sans(20, .semibold))
+                                .foregroundStyle(Theme.ink100)
                                 .lineLimit(1)
                             Text(metaLine(for: pkm))
-                                .font(.system(size: 11.5, design: .monospaced))
-                                .foregroundStyle(Theme.textSecondary)
+                                .font(Theme.mono(12))
+                                .foregroundStyle(Theme.ink300)
                                 .lineLimit(1)
+                            TypeChips(typeIDs: pkm.types)
                         }
-                        HStack(spacing: 5) {
-                            ForEach(pkm.types, id: \.self) { typeID in
-                                TypeBadge(typeID: typeID)
-                            }
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
 
-                HStack(spacing: 9) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Theme.bgElevated3)
-                        .frame(width: 24, height: 24)
-                        .overlay {
-                            if pkm.heldItem != 0 {
-                                ItemIconImage(itemID: Int(pkm.heldItem))
-                                    .padding(3)
-                            }
-                        }
-                    Text(pkm.heldItem == 0 ? "No item" : pkm.heldItemName)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textPrimary.opacity(0.75))
-                    Spacer()
+                    HStack(spacing: 8) {
+                        GridText("Held", .label, color: Theme.ink300)
+                        DottedLeader()
+                        Text(pkm.heldItem == 0 ? "none" : pkm.heldItemName)
+                            .font(Theme.sans(14, .medium))
+                            .foregroundStyle(pkm.heldItem == 0 ? Theme.ink300 : Theme.ink100)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 32)
+                    .background(Theme.surface2)
+                    .overlay(Rectangle().strokeBorder(Theme.line300, lineWidth: 1))
                 }
-                .padding(.horizontal, 11)
-                .padding(.vertical, 8)
-                .background(Theme.bgWell)
-                .clipShape(RoundedRectangle(cornerRadius: 9))
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
             } else {
-                VStack {
-                    Spacer()
-                    Text("+")
-                        .font(.system(size: 22))
-                        .foregroundStyle(Color.white.opacity(0.18))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, minHeight: 100)
+                GridText("+ Empty · Add", .label, color: Theme.ink300)
+                    .frame(maxWidth: .infinity, minHeight: 100)
             }
         }
-        .padding(15)
-        .background(pkm != nil && isSelected ? Theme.bgElevated1 : Theme.bgPanel)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .background(isActive ? Theme.amberFill : (isHovering ? Theme.surface3 : Theme.surface1))
+        .clipShape(RoundedRectangle(cornerRadius: p.outerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(
-                    borderColor,
-                    lineWidth: (isSelected || isFlagged) ? 1.5 : 0.5
-                )
+            if pkm == nil {
+                RoundedRectangle(cornerRadius: p.outerRadius, style: .continuous)
+                    .strokeBorder(Theme.line300, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+            } else {
+                RoundedRectangle(cornerRadius: p.outerRadius, style: .continuous)
+                    .strokeBorder(isActive ? Theme.amber : (isHovering ? Theme.line200 : Theme.line300), lineWidth: p.borderWidth)
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .animation(Theme.hoverAnimation, value: isHovering)
+    }
+
+    private var headRow: some View {
+        HStack(spacing: 8) {
+            Text(slotIndex == 0 ? "01 · lead" : pad(slotIndex + 1, 2))
+                .font(Theme.mono(12))
+                .foregroundStyle(isActive ? Theme.amber : Theme.ink300)
+            DottedLeader()
+            if let pkm {
+                if pkm.isLegal {
+                    GridBadge(text: "Legal", color: Theme.green)
+                } else {
+                    GridBadge(text: "\(pad(pkm.legalityReasons.count, 2)) issues", color: Theme.red)
+                }
+            }
         }
     }
-
-    private var borderColor: Color {
-        if isSelected { return accent.color }
-        if isFlagged { return Theme.warnIcon.opacity(0.5) }
-        return Theme.hairline
-    }
-
-    @ViewBuilder
-    private func legalityChip(isLegal: Bool) -> some View {
-        Text(isLegal ? "Legal" : "\(issueCount) issue\(issueCount == 1 ? "" : "s")")
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(isLegal ? Theme.legalText : Theme.warnText)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(isLegal ? Theme.legalFill : Theme.warnFill)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(isLegal ? Theme.legalBorder : Theme.warnBorder, lineWidth: 0.5)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-    }
-
-    private var issueCount: Int { pkm?.legalityReasons.count ?? 0 }
 
     private func metaLine(for pkm: PKM) -> String {
-        let genderSymbol: String
+        var parts = ["L\(pad(Int(pkm.level)))"]
         switch pkm.gender {
-        case 0: genderSymbol = "♂"
-        case 1: genderSymbol = "♀"
-        default: genderSymbol = ""
+        case 0: parts.append("m")
+        case 1: parts.append("f")
+        default: break
         }
-        var parts = ["Lv \(pkm.level)", pkm.natureName]
-        if !genderSymbol.isEmpty { parts.append(genderSymbol) }
+        parts.append(pkm.natureName.lowercased())
         return parts.joined(separator: " · ")
-    }
-}
-
-/// Small type-name pill, e.g. "FIRE" / "GROUND", colored via `Theme.typeColor`.
-struct TypeBadge: View {
-    let typeID: UInt8
-
-    var body: some View {
-        let name = PokemonNames.type(typeID).uppercased()
-        let colors = Theme.typeColor(name)
-        Text(name)
-            .font(.system(size: 9.5, weight: .bold))
-            .foregroundStyle(colors.textOnFill)
-            .fixedSize()
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .background(colors.fill)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }
 

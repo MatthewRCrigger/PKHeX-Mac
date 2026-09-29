@@ -39,7 +39,7 @@ struct SlotDragSource {
 /// App-wide (not per-window) registry mapping a `SlotDragToken.id` to its live `SlotDragSource`,
 /// for the duration of a single drag gesture. SwiftUI's `.draggable`/`.dropDestination` only pass
 /// the `Transferable` value itself across a drop, so the live save/slot reference this needs has to
-/// travel out-of-band — shared via `@EnvironmentObject` the same way `AccentStore` is shared across
+/// travel out-of-band — shared via `@EnvironmentObject` the same way `PanelProfileStore` is shared across
 /// every window.
 @MainActor
 final class DragRegistry: ObservableObject {

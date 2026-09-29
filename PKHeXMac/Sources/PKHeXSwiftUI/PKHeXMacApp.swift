@@ -2,14 +2,18 @@ import SwiftUI
 
 @main
 struct PKHeXMacApp: App {
-    // Shared across every window (like AccentStore) — SaveStore is deliberately NOT here, since
+    // Shared across every window (like PanelProfileStore) — SaveStore is deliberately NOT here, since
     // each window needs its own independently-loaded save. See DragRegistry's docs for why
     // cross-window drag-and-drop needs an app-wide coordinator despite that per-window split.
-    @StateObject private var accentStore = AccentStore()
+    @StateObject private var profileStore = PanelProfileStore()
     @StateObject private var dragRegistry = DragRegistry()
     @Environment(\.openWindow) private var openWindow
     @FocusedValue(\.saveStore) private var focusedStore
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    init() {
+        Theme.registerFonts()
+    }
 
     var body: some Scene {
         // `id: "save"` + a fresh SaveStore per resolved scene is what gives every new window (via
@@ -17,20 +21,22 @@ struct PKHeXMacApp: App {
         // independent save — opening a file in one window never affects another's.
         WindowGroup(id: "save") {
             SaveWindow()
-                .environmentObject(accentStore)
+                .environmentObject(profileStore)
                 .environmentObject(dragRegistry)
-                .tint(accentStore.accent.color)
+                .tint(Theme.amber)
                 .preferredColorScheme(.dark)
-                // Sidebar (186) + content min (420) + inspector (336) = 942 — the window can
-                // never be resized narrower than what the fixed-width sidebar/inspector panes and
-                // the content pane's own min width require (see ContentView's HStack layout).
-                .frame(minWidth: 942, minHeight: 600)
+                // Sidebar (200) + content min (420) + inspector (340) + frame chrome — the window
+                // can never be resized narrower than what the fixed-width sidebar/inspector panes
+                // and the content pane's own min width require (see ContentView's HStack layout).
+                .frame(minWidth: 990, minHeight: 640)
                 .onAppear {
                     // Wired here (rather than at struct init) since `openWindow` only becomes
                     // valid once resolved from a real scene's environment.
                     appDelegate.openNewWindow = { openWindow(id: "save") }
                 }
         }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 1180, height: 760)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Window") { openWindow(id: "save") }
@@ -48,7 +54,7 @@ struct PKHeXMacApp: App {
 
         Settings {
             SettingsView()
-                .environmentObject(accentStore)
+                .environmentObject(profileStore)
                 .preferredColorScheme(.dark)
         }
     }

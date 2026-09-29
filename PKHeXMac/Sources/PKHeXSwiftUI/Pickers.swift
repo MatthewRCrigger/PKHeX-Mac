@@ -1,13 +1,61 @@
 import PKHeXCore
 import SwiftUI
 
-// MARK: - Species picker (§6)
+// GRID picker sheets. Every sheet is a `PickerShell` (double frame, header, search, column header,
+// rows, footer hint). Rows are `PickerRowStyle` buttons; data is mono, names are Rajdhani.
+
+// MARK: - Shared row pieces
+
+/// Amber mono `current` marker shown on the row that matches the value being replaced.
+private struct CurrentTag: View {
+    var body: some View {
+        Text("current").font(Theme.mono(12)).foregroundStyle(Theme.amber)
+    }
+}
+
+/// Name text in the GRID row style (Rajdhani 16/500).
+private struct RowName: View {
+    let text: String
+    var color: Color = Theme.ink100
+    var body: some View {
+        Text(text).font(Theme.sans(16, .medium)).foregroundStyle(color).lineLimit(1)
+    }
+}
+
+/// Mono data cell with a fixed width.
+private struct MonoCell: View {
+    let text: String
+    var width: CGFloat
+    var alignment: Alignment = .leading
+    var color: Color = Theme.ink200
+    var body: some View {
+        Text(text)
+            .font(Theme.mono(12))
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .frame(width: width, alignment: alignment)
+    }
+}
+
+/// 1 pt `line-300` bordered `surface-2` well for sprites and icons.
+private struct SpriteWell<Content: View>: View {
+    var width: CGFloat = 40
+    var height: CGFloat = 36
+    @ViewBuilder var content: Content
+    var body: some View {
+        ZStack { content.padding(2) }
+            .frame(width: width, height: height)
+            .background(Theme.surface2)
+            .overlay(Rectangle().strokeBorder(Theme.line300, lineWidth: 1))
+    }
+}
+
+// MARK: - Species picker
 
 /// Modal sheet for choosing a species to fill an empty box/party slot. Opened by tapping an
 /// empty tile/card in `BoxGridView`. Choosing a result creates a legal blank template of that
 /// species via `SaveFile.createBlankPKM` and inserts it into the target slot.
 struct SpeciesPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let saveFile: SaveFile
@@ -25,85 +73,44 @@ struct SpeciesPickerSheet: View {
         }
     }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 14) {
-                HStack(spacing: 10) {
-                    Text("Add Pokémon")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("to \(target.location.title) · slot \(target.slot + 1)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 24, height: 24)
-                            .background(Theme.bgElevated2)
-                            .clipShape(RoundedRectangle(cornerRadius: 7))
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(accentStore.accent.color)
-                    TextField("Search species or #dex…", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                    Text("\(results.count) results")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(Theme.bgContent)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(accentStore.accent.color, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.id) { entry in
-                        SpeciesRow(id: entry.id, name: entry.name, saveFile: saveFile)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onChoose(entry.id)
-                            }
-                    }
-                }
-                .padding(8)
-
-                if results.isEmpty {
-                    Text("No species match \u{201c}\(query)\u{201d}.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(30)
-                }
-            }
-
-            Text("New entries start from a legal blank template.")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(Theme.hairline).frame(height: 0.5)
-                }
+    private static func contextText(_ target: PickerTarget) -> String {
+        let place: String
+        switch target.location {
+        case .party: place = "party"
+        case .box(let index): place = "box\(pad(index + 1, 2))"
         }
-        .frame(width: 560, height: 520)
-        .background(Theme.bgTile)
+        return "\(place) · slot \(pad(target.slot + 1, 2))"
+    }
+
+    var body: some View {
+        let shown = results
+        PickerShell(
+            title: "Add", qualifier: "pokemon",
+            context: Self.contextText(target),
+            searchPrompt: "search species or #dex", searchText: $query, resultCount: shown.count,
+            footerHint: "new entries start from a legal blank template",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Color.clear.frame(width: 40, height: 1)
+                    Text("no.").frame(width: 44, alignment: .leading)
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("type").frame(width: 96, alignment: .trailing)
+                }
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.id) { entry in
+                        Button { onChoose(entry.id) } label: {
+                            SpeciesRow(id: entry.id, name: entry.name, saveFile: saveFile)
+                        }
+                        .buttonStyle(PickerRowStyle())
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -113,41 +120,24 @@ private struct SpeciesRow: View {
     let saveFile: SaveFile
 
     // Types and the sprite file name can only be discovered by creating a real PKM of this
-    // species (there is no species->types or species->sprite lookup independent of a PKM
-    // instance). We create one lazily, only for rows that are actually rendered/visible, read
-    // off what we need, and discard the instance immediately — it's never inserted anywhere.
+    // species. We create one lazily for rows that are actually rendered, read off what we need,
+    // and discard it immediately.
     @State private var types: [UInt8] = []
     @State private var spriteFileName: String?
 
     var body: some View {
-        HStack(spacing: 13) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Theme.bgContent)
-                    .frame(width: 44, height: 40)
-                if let spriteFileName {
-                    SpriteImage(fileName: spriteFileName)
-                        .padding(4)
-                        .frame(width: 44, height: 40)
-                }
+        HStack(spacing: 8) {
+            SpriteWell {
+                if let spriteFileName { SpriteImage(fileName: spriteFileName) }
             }
-            Text(String(format: "#%03d", id))
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(Theme.textTertiary)
-                .frame(width: 40, alignment: .leading)
-            Text(name)
-                .font(.system(size: 13.5, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            Spacer()
-            HStack(spacing: 5) {
-                ForEach(types, id: \.self) { typeID in
-                    TypeBadge(typeID: typeID)
-                }
+            MonoCell(text: "#\(pad(Int(id)))", width: 44, color: Theme.ink300)
+            RowName(text: name).frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 4) {
+                ForEach(types, id: \.self) { GridChip(text: typeCode(typeID: $0)) }
             }
+            .frame(width: 96, alignment: .trailing)
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 9)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.vertical, 4)
         .onAppear {
             guard spriteFileName == nil, let blank = saveFile.createBlankPKM(species: id) else { return }
             types = blank.types
@@ -156,12 +146,11 @@ private struct SpeciesRow: View {
     }
 }
 
-// MARK: - Move editor (§7)
+// MARK: - Move editor
 
 /// Modal sheet for replacing one of a Pokémon's four moves. Opened by tapping a move row in
 /// `DetailPanel`'s Moves tab.
 struct MoveEditorSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
@@ -188,247 +177,145 @@ struct MoveEditorSheet: View {
         }
     }
 
-    private var currentMoveName: String {
-        let current = pkm.move(slotIndex)
-        return current == 0 ? "—" : PokemonNames.move(current)
+    var body: some View {
+        let shown = results
+        PickerShell(
+            title: "Move \(pad(slotIndex + 1, 2))", qualifier: "replace",
+            context: pkm.speciesName.lowercased(),
+            searchPrompt: "search moves", searchText: $query, resultCount: shown.count,
+            footerHint: "pp resets to max on replace",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("type").frame(width: 48, alignment: .leading)
+                    Text("cat").frame(width: 36, alignment: .leading)
+                    Text("pwr").frame(width: 36, alignment: .trailing)
+                    Text("acc").frame(width: 36, alignment: .trailing)
+                    Text("pp").frame(width: 56, alignment: .trailing)
+                }
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.self) { moveID in
+                        Button { onChoose(moveID) } label: {
+                            MoveRow(moveID: moveID, pkm: pkm, slotIndex: slotIndex)
+                        }
+                        .buttonStyle(PickerRowStyle())
+                    }
+                }
+            }
+        )
     }
+}
+
+private struct MoveRow: View {
+    let moveID: UInt16
+    let pkm: PKM
+    let slotIndex: Int
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 14) {
-                HStack(spacing: 10) {
-                    Text("Change move \(slotIndex + 1)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("\(pkm.speciesName) · replacing \(currentMoveName)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 24, height: 24)
-                            .background(Theme.bgElevated2)
-                            .clipShape(RoundedRectangle(cornerRadius: 7))
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(accentStore.accent.color)
-                    TextField("Search moves…", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                    Text("\(results.count) moves")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(Theme.bgContent)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(accentStore.accent.color, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                // Column header. PKHeX.Core (a save editor, not a battle simulator) doesn't ship
-                // base power/accuracy/category data for moves, so those columns aren't shown —
-                // only Type (real data) and PP.
-                HStack(spacing: 12) {
-                    Text("MOVE").frame(width: 168, alignment: .leading)
-                    Text("TYPE").frame(width: 70, alignment: .leading)
-                    Text("PP").frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .font(.system(size: 10, weight: .bold))
-                .tracking(0.4)
-                .foregroundStyle(Theme.textTertiary)
-                .padding(.horizontal, 6)
+        HStack(spacing: 8) {
+            HStack(spacing: 8) {
+                RowName(text: moveID == 0 ? "—" : PokemonNames.move(moveID))
+                if moveID == pkm.move(slotIndex) { CurrentTag() }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.self) { moveID in
-                        MoveRow(moveID: moveID, pkm: pkm, slotIndex: slotIndex)
-                            .contentShape(Rectangle())
-                            .onTapGesture { onChoose(moveID) }
-                    }
-                }
-                .padding(8)
-
-                if results.isEmpty {
-                    Text("No moves match \u{201c}\(query)\u{201d}.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(30)
+            Group {
+                if moveID != 0 {
+                    GridChip(text: typeCode(typeID: pkm.moveType(moveID)))
+                } else {
+                    Color.clear
                 }
             }
+            .frame(width: 48, alignment: .leading)
+
+            // PKHeX.Core doesn't ship category/power/accuracy data for moves.
+            MonoCell(text: "—", width: 36, color: Theme.ink300)
+            MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
+            MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
+            MonoCell(text: ppText, width: 56, alignment: .trailing)
         }
-        .frame(width: 600, height: 540)
-        .background(Theme.bgTile)
+    }
+
+    private var ppText: String {
+        guard moveID != 0 else { return "—" }
+        if moveID == pkm.move(slotIndex) {
+            return "\(pkm.movePP(slotIndex))/\(pkm.movePPMax(slotIndex))"
+        }
+        return "\(pkm.moveBasePP(moveID))/\(pkm.moveBasePP(moveID))"
     }
 }
 
 // MARK: - Nature picker
 
-/// Modal sheet for choosing a Pokémon's nature via the increased/decreased-stat grid (row =
-/// increased stat, column = decreased stat, diagonal = neutral). Opened by tapping the Nature
-/// card in `DetailPanel`'s Summary tab.
+/// Modal sheet for choosing a Pokémon's nature. Lists all 25 with the boosted and reduced stat.
 ///
-/// The grid is built from PKHeX.Core's real nature/stat-amp data
-/// (vendor/PKHeX/PKHeX.Core/Editing/NatureAmp.cs's `Table`), not hardcoded — each cell's nature is
-/// derived from which stat is actually amplified/reduced for that nature, cross-checked against
-/// well-known nature facts (Adamant = +Atk/-SpAtk, Timid = +Speed/-Atk, Jolly = +Speed/-SpAtk,
-/// Modest = +SpAtk/-Atk, Bold = +Def/-Atk — all confirmed to match). Building the grid this way
-/// (from real up/down stat pairs) rather than from raw nature-ID arithmetic matters for getting
-/// the 5 neutral (diagonal) natures — Hardy/Docile/Serious/Bashful/Quirky — in the right cells.
+/// Nature IDs are `up*5 + dn` (PKHeX.Core's `NatureAmp.CreateNatureFromAmps`); equal up/down
+/// indices are the five neutral natures.
 struct NaturePickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
     let onChoose: (UInt8) -> Void
 
-    private static let statLabels = ["Attack", "Defense", "Sp. Atk", "Sp. Def", "Speed"]
-
-    /// nature[up][dn] = nature ID for "increase `up`, decrease `dn`" (up == dn is neutral).
-    /// Values are `up*5 + dn`, matching PKHeX.Core's `NatureAmp.CreateNatureFromAmps`.
-    private static let natureID: [[UInt8]] = (0..<5).map { up in
-        (0..<5).map { dn in UInt8(up * 5 + dn) }
-    }
-
-    private var currentUpDn: (up: Int, dn: Int)? {
-        let n = Int(pkm.nature)
-        guard n >= 0, n < 25 else { return nil }
-        return (n / 5, n % 5)
-    }
+    private static let statCodes = ["ATK", "DEF", "SPA", "SPD", "SPE"]
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Text("Change Nature")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(pkm.speciesName) · currently \(pkm.natureName)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 24, height: 24)
-                        .background(Theme.bgElevated2)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+        PickerShell(
+            title: "Nature", qualifier: "set",
+            context: "\(pkm.speciesName.lowercased()) · \(pkm.natureName.lowercased())",
+            footerHint: "+10% / −10% applied to stats",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("+10%").frame(width: 64, alignment: .leading)
+                    Text("−10%").frame(width: 64, alignment: .leading)
                 }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
-
-            VStack(spacing: 0) {
-                gridHeaderRow
-                ForEach(0..<5, id: \.self) { up in
-                    gridRow(up: up)
+            },
+            content: {
+                ForEach(0..<25, id: \.self) { index in
+                    let id = UInt8(index)
+                    let up = index / 5
+                    let dn = index % 5
+                    let neutral = up == dn
+                    Button { onChoose(id) } label: {
+                        HStack(spacing: 8) {
+                            HStack(spacing: 8) {
+                                RowName(text: PokemonNames.nature(id))
+                                if id == pkm.nature { CurrentTag() }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            MonoCell(text: neutral ? "—" : "+\(Self.statCodes[up])", width: 64,
+                                     color: neutral ? Theme.ink300 : Theme.ink100)
+                            MonoCell(text: neutral ? "—" : "−\(Self.statCodes[dn])", width: 64,
+                                     color: neutral ? Theme.ink300 : Theme.ink100)
+                        }
+                    }
+                    .buttonStyle(PickerRowStyle())
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 16)
-
-            Text("Rows raise a stat 10%; columns lower a stat 10%. Diagonal natures are neutral.")
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .overlay(alignment: .top) {
-                    Rectangle().fill(Theme.hairline).frame(height: 0.5)
-                }
-        }
-        .frame(width: 620)
-        .background(Theme.bgTile)
-    }
-
-    private var gridHeaderRow: some View {
-        HStack(spacing: 4) {
-            Color.clear.frame(width: 88, height: 1)
-            ForEach(0..<5, id: \.self) { dn in
-                Text("↓ \(Self.statLabels[dn])")
-                    .font(.system(size: 10.5, weight: .semibold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.bottom, 6)
-    }
-
-    private func gridRow(up: Int) -> some View {
-        HStack(spacing: 4) {
-            Text("↑ \(Self.statLabels[up])")
-                .font(.system(size: 10.5, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 88, alignment: .leading)
-
-            ForEach(0..<5, id: \.self) { dn in
-                let nature = Self.natureID[up][dn]
-                let isNeutral = up == dn
-                let isSelected = currentUpDn.map { $0.up == up && $0.dn == dn } ?? false
-                Button {
-                    onChoose(nature)
-                } label: {
-                    Text(PokemonNames.nature(nature))
-                        .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-                        .foregroundStyle(isSelected ? accentStore.accent.onAccent : Theme.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(
-                            isSelected
-                                ? accentStore.accent.color
-                                : (isNeutral ? Theme.bgElevated3 : Theme.bgElevated1)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 7)
-                                .strokeBorder(isSelected ? accentStore.accent.color : Color.clear, lineWidth: 1.5)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.bottom, 4)
+        )
     }
 }
 
 // MARK: - Ability picker
 
 /// Modal sheet for choosing a Pokémon's ability from its species/form's slots (Ability 1,
-/// Ability 2, Hidden Ability — not every slot exists for every species/generation). Opened by
-/// tapping the Ability card in `DetailPanel`'s Summary tab. Small enough (0-3 options) to show as
-/// a plain vertical list of labeled rows rather than the search-filtered list pattern used by
-/// `HeldItemPickerSheet`.
+/// Ability 2, Hidden Ability — not every slot exists for every species/generation).
 struct AbilityPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
     let onChoose: (Int) -> Void
 
-    private static let slotLabels = ["Ability 1", "Ability 2", "Hidden Ability"]
-
-    /// Slots to display, collapsing duplicates: e.g. a species with only one ability defined has
-    /// Ability 1 and Ability 2 pointing at the same ability ID, so only the first is shown. The
-    /// selection still writes the original slot index the duplicate represents.
+    /// Slots to display, collapsing duplicates: a species with one ability defined has Ability 1
+    /// and Ability 2 pointing at the same ID, so only the first is shown. The selection still
+    /// writes the original slot index the duplicate represents.
     private var slots: [(index: Int, id: UInt16, name: String, description: String)] {
         var seen = Set<UInt16>()
         return (0..<pkm.abilityCount).compactMap { index in
@@ -439,182 +326,106 @@ struct AbilityPickerSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Text("Change Ability")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(pkm.speciesName) · currently \(pkm.abilityName)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 24, height: 24)
-                        .background(Theme.bgElevated2)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+        let shown = slots
+        PickerShell(
+            title: "Ability", qualifier: "set",
+            context: "\(pkm.speciesName.lowercased()) · \(pkm.abilityName.lowercased())",
+            footerHint: "only this species' slots are listed",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("slot").frame(width: 96, alignment: .leading)
                 }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
-
-            VStack(spacing: 6) {
-                ForEach(slots, id: \.index) { slot in
-                    let isSelected = slot.id == pkm.ability
-                    Button {
-                        onChoose(slot.index)
-                    } label: {
-                        HStack(alignment: .top, spacing: 10) {
-                            Text(Self.slotLabels[slot.index])
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(isSelected ? accentStore.accent.onAccent.opacity(0.8) : Theme.textSecondary)
-                                .frame(width: 110, alignment: .leading)
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(slot.name)
-                                    .font(.system(size: 13.5, weight: .semibold))
-                                    .foregroundStyle(isSelected ? accentStore.accent.onAccent : Theme.textPrimary)
-                                if !slot.description.isEmpty {
-                                    Text(slot.description)
-                                        .font(.system(size: 11.5))
-                                        .foregroundStyle(isSelected ? accentStore.accent.onAccent.opacity(0.85) : Theme.textSecondary)
-                                        .fixedSize(horizontal: false, vertical: true)
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.index) { slot in
+                        Button { onChoose(slot.index) } label: {
+                            HStack(alignment: .top, spacing: 8) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 8) {
+                                        RowName(text: slot.name)
+                                        if slot.id == pkm.ability { CurrentTag() }
+                                    }
+                                    if !slot.description.isEmpty {
+                                        Text(slot.description)
+                                            .font(Theme.sans(14, .regular))
+                                            .foregroundStyle(Theme.ink300)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                MonoCell(
+                                    text: slot.index >= 2 ? "hidden" : "ability \(slot.index + 1)",
+                                    width: 96,
+                                    color: slot.index >= 2 ? Theme.violet : Theme.ink200
+                                )
                             }
-
-                            Spacer()
-                            if isSelected {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(accentStore.accent.onAccent)
-                            }
+                            .padding(.vertical, 6)
                         }
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 11)
-                        .background(isSelected ? accentStore.accent.color : Theme.bgElevated1)
-                        .clipShape(RoundedRectangle(cornerRadius: 9))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 9)
-                                .strokeBorder(isSelected ? accentStore.accent.color : Color.clear, lineWidth: 1.5)
-                        )
+                        .buttonStyle(PickerRowStyle())
                     }
-                    .buttonStyle(.plain)
-                }
-
-                if slots.isEmpty {
-                    Text("This Pokémon's format has no selectable abilities.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(.vertical, 20)
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 18)
-        }
-        .frame(width: 480)
-        .background(Theme.bgTile)
+        )
     }
 }
 
-// MARK: - Ball picker (§8)
+// MARK: - Ball picker
 
-/// Modal sheet for choosing which Poké Ball a Pokémon was caught in. Opened by tapping the Ball
-/// row in `DetailPanel`'s Summary tab. Only reachable when `PKM.supportsBall` is true (Gen 3+);
-/// small enough (38 values) to show as a plain grid rather than the search-filtered list pattern
-/// used by `SpeciesPickerSheet`/`MoveEditorSheet`.
+/// Modal sheet for choosing which Poké Ball a Pokémon was caught in. Only reachable when
+/// `PKM.supportsBall` is true (Gen 3+).
 struct BallPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
     let onChoose: (UInt8) -> Void
 
-    private let columns = [GridItem(.adaptive(minimum: 96, maximum: 120), spacing: 8)]
-
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Text("Change Ball")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(pkm.speciesName) · currently \(pkm.ballName)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 24, height: 24)
-                        .background(Theme.bgElevated2)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+        PickerShell(
+            title: "Ball", qualifier: "set",
+            context: "\(pkm.speciesName.lowercased()) · \(pkm.ballName.lowercased())",
+            footerHint: "legality re-checks on assign",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Color.clear.frame(width: 32, height: 1)
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("note").frame(width: 96, alignment: .trailing)
                 }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
-
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(UInt8(0)...37, id: \.self) { ballID in
-                        BallOptionCell(ballID: ballID, isSelected: ballID == pkm.ball)
-                            .contentShape(Rectangle())
-                            .onTapGesture { onChoose(ballID) }
+            },
+            content: {
+                ForEach(UInt8(0)...37, id: \.self) { ballID in
+                    Button { onChoose(ballID) } label: {
+                        HStack(spacing: 8) {
+                            SpriteWell(width: 32, height: 32) {
+                                BallIcon(ball: ballID)
+                            }
+                            RowName(text: PokemonNames.ball(ballID))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            if ballID == pkm.ball {
+                                CurrentTag()
+                            } else {
+                                MonoCell(text: "#\(pad(Int(ballID), 2))", width: 96, alignment: .trailing, color: Theme.ink300)
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
+                    .buttonStyle(PickerRowStyle())
                 }
-                .padding(12)
             }
-        }
-        .frame(width: 520, height: 480)
-        .background(Theme.bgTile)
-    }
-}
-
-private struct BallOptionCell: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
-    let ballID: UInt8
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 6) {
-            BallIcon(ball: ballID)
-                .frame(width: 32, height: 32)
-            Text(PokemonNames.ball(ballID))
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(Theme.textPrimary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 6)
-        .background(isSelected ? Theme.bgElevated3 : Theme.bgElevated1)
-        .overlay(
-            RoundedRectangle(cornerRadius: 9)
-                .strokeBorder(isSelected ? accentStore.accent.color : Color.clear, lineWidth: 1.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 9))
     }
 }
 
 // MARK: - Held item picker
 
-/// Modal sheet for choosing a Pokémon's held item. Opened by tapping the Held Item card in
-/// `DetailPanel`'s Summary tab. Every item id 1...`PKM.maxItemID` is offered (there's no "legal
-/// held items" analyzer the way there is for moves), filtered by a search field like
-/// `SpeciesPickerSheet`. Choosing "None" (id 0) clears the held item.
+/// Modal sheet for choosing a Pokémon's held item. Every item id 1...`PKM.maxItemID` is offered,
+/// filtered by a search field. Choosing "None" (id 0) clears the held item.
 struct HeldItemPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
@@ -631,121 +442,61 @@ struct HeldItemPickerSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 14) {
-                HStack(spacing: 10) {
-                    Text("Change held item")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("\(pkm.speciesName) · currently \(pkm.heldItem == 0 ? "None" : pkm.heldItemName)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 24, height: 24)
-                            .background(Theme.bgElevated2)
-                            .clipShape(RoundedRectangle(cornerRadius: 7))
-                    }
-                    .buttonStyle(.plain)
+        let shown = results
+        PickerShell(
+            title: "Held", qualifier: "item",
+            context: "\(pkm.speciesName.lowercased()) · \(pkm.heldItem == 0 ? "none" : pkm.heldItemName.lowercased())",
+            searchPrompt: "search items", searchText: $query, resultCount: shown.count,
+            footerHint: "legality re-checks on assign",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Color.clear.frame(width: 34, height: 1)
+                    Text("name").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("current").frame(width: 64, alignment: .trailing)
                 }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(accentStore.accent.color)
-                    TextField("Search items…", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                    Text("\(results.count) results")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(Theme.bgContent)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(accentStore.accent.color, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.id) { entry in
-                        HeldItemRow(id: entry.id, name: entry.name, isSelected: entry.id == pkm.heldItem)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onChoose(entry.id)
-                            }
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.id) { entry in
+                        Button { onChoose(entry.id) } label: {
+                            HeldItemRow(id: entry.id, name: entry.name, isSelected: entry.id == pkm.heldItem)
+                        }
+                        .buttonStyle(PickerRowStyle())
                     }
                 }
-                .padding(8)
-
-                if results.isEmpty {
-                    Text("No items match \u{201c}\(query)\u{201d}.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(30)
-                }
             }
-        }
-        .frame(width: 560, height: 520)
-        .background(Theme.bgTile)
+        )
     }
 }
 
 private struct HeldItemRow: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
     let id: UInt16
     let name: String
     let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 13) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Theme.bgContent)
-                    .frame(width: 34, height: 34)
-                if id != 0 {
-                    ItemIconImage(itemID: Int(id))
-                        .padding(4)
-                        .frame(width: 34, height: 34)
-                }
+        HStack(spacing: 8) {
+            SpriteWell(width: 34, height: 34) {
+                if id != 0 { ItemIconImage(itemID: Int(id)) }
             }
-            Text(name)
-                .font(.system(size: 13.5, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            Spacer()
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(accentStore.accent.color)
+            RowName(text: name).frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if isSelected { CurrentTag() } else { Color.clear }
             }
+            .frame(width: 64, alignment: .trailing)
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 8)
-        .background(isSelected ? accentStore.accent.soft : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.vertical, 4)
     }
 }
 
 // MARK: - Met/Egg location picker
 
-/// Modal sheet for choosing a Met or Egg Location. Opened by tapping the Met/Egg Location card in
-/// `DetailPanel`'s Met tab. Options come from `PKM.locationOptions(egg:)`, which mirrors
-/// PKHeX.WinForms' location combo contents exactly (version+context partitioned) — this sheet just
-/// presents that list with search, like `HeldItemPickerSheet`.
+/// Modal sheet for choosing a Met or Egg Location. Options come from `PKM.locationOptions(egg:)`,
+/// which mirrors PKHeX.WinForms' location combo contents (version + context partitioned).
 struct LocationPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
@@ -765,111 +516,44 @@ struct LocationPickerSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 14) {
-                HStack(spacing: 10) {
-                    Text(egg ? "Change Egg Location" : "Change Met Location")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("\(pkm.speciesName) · currently \(currentLocation == 0 ? "—" : currentName)")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 24, height: 24)
-                            .background(Theme.bgElevated2)
-                            .clipShape(RoundedRectangle(cornerRadius: 7))
-                    }
-                    .buttonStyle(.plain)
+        let shown = results
+        PickerShell(
+            title: egg ? "Egg" : "Met", qualifier: "location",
+            context: "\(pkm.speciesName.lowercased()) · \(currentLocation == 0 ? "—" : currentName.lowercased())",
+            searchPrompt: "search locations", searchText: $query, resultCount: shown.count,
+            footerHint: "partitioned by game version",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("no.").frame(width: 56, alignment: .leading)
+                    Text("location").frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 13))
-                        .foregroundStyle(accentStore.accent.color)
-                    TextField("Search locations…", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14))
-                    Text("\(results.count) results")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 10)
-                .background(Theme.bgContent)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(accentStore.accent.color, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.id) { entry in
-                        LocationRow(name: entry.name, isSelected: entry.id == currentLocation)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onChoose(entry.id)
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.id) { entry in
+                        Button { onChoose(entry.id) } label: {
+                            HStack(spacing: 8) {
+                                MonoCell(text: pad(Int(entry.id), 3), width: 56, color: Theme.ink300)
+                                RowName(text: entry.name).frame(maxWidth: .infinity, alignment: .leading)
+                                if entry.id == currentLocation { CurrentTag() }
                             }
+                        }
+                        .buttonStyle(PickerRowStyle())
                     }
                 }
-                .padding(8)
-
-                if results.isEmpty {
-                    Text("No locations match \u{201c}\(query)\u{201d}.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(30)
-                }
             }
-        }
-        .frame(width: 560, height: 520)
-        .background(Theme.bgTile)
-    }
-}
-
-private struct LocationRow: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
-    let name: String
-    let isSelected: Bool
-
-    var body: some View {
-        HStack(spacing: 13) {
-            Text(name)
-                .font(.system(size: 13.5, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            Spacer()
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(accentStore.accent.color)
-            }
-        }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 9)
-        .background(isSelected ? accentStore.accent.soft : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        )
     }
 }
 
 // MARK: - Met/Egg date picker
 
-/// Small popover with a graphical `DatePicker` — used by the Met Date and Egg Date cards in
-/// `DetailPanel`'s Met tab. Small enough to be a popover (like `StatusPickerPopover`) rather than a
-/// full sheet. Includes a "Clear" action since an unset date is a valid, meaningful state (not
-/// every format tracks these, and even those that do allow zeroed/absent dates).
+/// Small popover with a graphical `DatePicker` — used by the Met Date and Egg Date cells in
+/// `DetailPanel`'s Met tab. Includes a "Clear" action since an unset date is a valid state.
 struct DatePickerPopover: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
     let components: DateComponents?
     let onChoose: (DateComponents?) -> Void
 
@@ -887,33 +571,28 @@ struct DatePickerPopover: View {
             DatePicker("", selection: $selection, in: Date(timeIntervalSince1970: 946684800)...Date(timeIntervalSince1970: 4102358400), displayedComponents: .date)
                 .datePickerStyle(.graphical)
                 .labelsHidden()
-                .accentColor(accentStore.accent.color)
+                .tint(Theme.amber)
+                .font(Theme.mono(12))
                 .onChange(of: selection) { _, newValue in
                     let calendar = Calendar(identifier: .gregorian)
                     onChoose(calendar.dateComponents([.year, .month, .day], from: newValue))
                 }
 
-            Button("Clear date") {
+            GridButton("Clear date", .secondary, size: .sm) {
                 onChoose(nil)
             }
-            .buttonStyle(.plain)
-            .font(.system(size: 11.5, weight: .medium))
-            .foregroundStyle(Theme.textSecondary)
         }
         .padding(12)
+        .background(Theme.surface1)
+        .overlay(Rectangle().strokeBorder(Theme.line100, lineWidth: 1))
     }
 }
 
 // MARK: - Memory picker
 
-/// Modal sheet for choosing and configuring a Memory (OT or HT depending on `target`). Opened by
-/// tapping the OT/HT Memory card in `DetailPanel`'s Trainer tab. Two steps in one sheet: pick a
-/// memory ID from a searchable list (like `HeldItemPickerSheet`), then configure its
-/// Intensity/Feeling/Variable inline — a `MemoryArgType`-appropriate picker/stepper is shown for
-/// Variable (e.g. a location list for "General Location" memories, a species list for "caught
-/// {species}" memories) since that field means something different per memory ID.
+/// Modal sheet for choosing and configuring a Memory (OT or HT depending on `target`). Two steps in
+/// one sheet: pick a memory ID from a searchable list, then configure Intensity/Feeling/Variable.
 struct MemoryPickerSheet: View {
-    @EnvironmentObject private var accentStore: AccentStore
     @Environment(\.dismiss) private var dismiss
 
     let pkm: PKM
@@ -934,125 +613,70 @@ struct MemoryPickerSheet: View {
         return all.filter { $0.line.lowercased().contains(lowered) }
     }
 
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Text(target == .originalTrainer ? "OT Memory" : "HT Memory")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text(pkm.speciesName)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 24, height: 24)
-                        .background(Theme.bgElevated2)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 14)
+    private var titleText: String { target == .originalTrainer ? "OT Memory" : "HT Memory" }
 
-            if let memory = selectedMemory ?? (currentMemory != 0 ? currentMemory : nil) {
-                MemoryDetailView(pkm: pkm, target: target, memoryID: memory, onBack: {
-                    selectedMemory = nil
-                }, onCommit: onCommit)
-            } else {
-                memoryListView
-            }
+    var body: some View {
+        if let memory = selectedMemory ?? (currentMemory != 0 ? currentMemory : nil) {
+            PickerShell(
+                title: titleText, qualifier: "edit",
+                context: pkm.speciesName.lowercased(),
+                footerHint: "intensity, feeling and variable are stored with the memory",
+                onClose: { dismiss() },
+                content: {
+                    MemoryDetailView(pkm: pkm, target: target, memoryID: memory, onBack: {
+                        selectedMemory = nil
+                    }, onCommit: onCommit)
+                    .id(memory)
+                }
+            )
+        } else {
+            memoryList
         }
-        .frame(width: 560, height: 520)
-        .background(Theme.bgTile)
     }
 
-    private var memoryListView: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13))
-                    .foregroundStyle(accentStore.accent.color)
-                TextField("Search memories…", text: $query)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 14))
-                Text("\(results.count) results")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(Theme.textTertiary)
-            }
-            .padding(.horizontal, 13)
-            .padding(.vertical, 10)
-            .background(Theme.bgContent)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(accentStore.accent.color, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .padding(.horizontal, 18)
-
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(results, id: \.id) { entry in
-                        MemoryRow(line: entry.line, isSelected: entry.id == currentMemory)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedMemory = entry.id
+    private var memoryList: some View {
+        let shown = results
+        return PickerShell(
+            title: titleText, qualifier: "set",
+            context: pkm.speciesName.lowercased(),
+            searchPrompt: "search memories", searchText: $query, resultCount: shown.count,
+            footerHint: "then set intensity, feeling and variable",
+            onClose: { dismiss() },
+            columns: {
+                PickerColumnHeader {
+                    Text("id").frame(width: 40, alignment: .leading)
+                    Text("memory").frame(maxWidth: .infinity, alignment: .leading)
+                }
+            },
+            content: {
+                if shown.isEmpty {
+                    PickerEmptyState()
+                } else {
+                    ForEach(shown, id: \.id) { entry in
+                        Button { selectedMemory = entry.id } label: {
+                            HStack(spacing: 8) {
+                                MonoCell(text: pad(Int(entry.id), 3), width: 40, color: Theme.ink300)
+                                Text(entry.line)
+                                    .font(Theme.sans(16, .medium))
+                                    .foregroundStyle(Theme.ink100)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if entry.id == currentMemory { CurrentTag() }
                             }
+                            .padding(.vertical, 6)
+                        }
+                        .buttonStyle(PickerRowStyle())
                     }
                 }
-                .padding(8)
-
-                if results.isEmpty {
-                    Text("No memories match \u{201c}\(query)\u{201d}.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textTertiary)
-                        .padding(30)
-                }
             }
-        }
-        .padding(.top, 10)
-    }
-}
-
-private struct MemoryRow: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
-    let line: String
-    let isSelected: Bool
-
-    var body: some View {
-        HStack(spacing: 13) {
-            Text(line)
-                .font(.system(size: 12.5, weight: isSelected ? .semibold : .regular))
-                .foregroundStyle(Theme.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.leading)
-            Spacer()
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(accentStore.accent.color)
-            }
-        }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 9)
-        .background(isSelected ? accentStore.accent.soft : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        )
     }
 }
 
 /// Second step of `MemoryPickerSheet`: configure Intensity/Feeling/Variable for the chosen memory
-/// ID, then commit. `Variable`'s picker depends on `PKM.memoryVariableArgType`, since the same
-/// numeric field means a location, species, move, or item id depending on which memory this is.
+/// ID, then commit. `Variable`'s meaning depends on `PKM.memoryVariableArgType`.
 private struct MemoryDetailView: View {
-    @EnvironmentObject private var accentStore: AccentStore
-    @Environment(\.dismiss) private var dismiss
-
     let pkm: PKM
     let target: MemoryTarget
     let memoryID: UInt8
@@ -1084,130 +708,95 @@ private struct MemoryDetailView: View {
 
     private var argType: UInt8 { pkm.memoryVariableArgType(memoryID) }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Button {
-                onBack()
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("Choose a different memory")
-                        .font(.system(size: 11.5, weight: .medium))
-                }
-                .foregroundStyle(Theme.textSecondary)
-            }
-            .buttonStyle(.plain)
+    private var variableName: String {
+        let name = pkm.memoryVariableName(memoryID, variable: variable)
+        return name.isEmpty ? "#\(variable)" : name
+    }
 
-            Text(memoryID == 0 ? "No memory" : pkm.memoryLine(memoryID))
-                .font(.system(size: 13))
-                .foregroundStyle(Theme.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+    private var variableBinding: Binding<Int> {
+        Binding(
+            get: { Int(variable) },
+            set: { variable = UInt16(max(0, min($0, 65535))) }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Preview well.
+            VStack(alignment: .leading, spacing: 6) {
+                GridText("preview", .label, color: Theme.ink300)
+                Text(memoryID == 0 ? "No memory" : pkm.memoryLine(memoryID))
+                    .font(Theme.sans(16, .medium))
+                    .foregroundStyle(Theme.ink100)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.surface2)
+            .overlay(Rectangle().strokeBorder(Theme.line300, lineWidth: 1))
 
             if memoryID != 0 {
-                HStack(spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("INTENSITY")
-                            .font(.system(size: 10.5, weight: .bold))
-                            .foregroundStyle(Theme.textTertiary)
-                        Stepper("\(intensity)", value: $intensity, in: Int(pkm.memoryMinimumIntensity(memoryID))...7)
-                            .font(.system(size: 13, design: .monospaced))
+                VStack(spacing: 0) {
+                    detailRow("intensity", note: nil) {
+                        GridStepper(
+                            value: $intensity,
+                            range: Int(pkm.memoryMinimumIntensity(memoryID))...7,
+                            digits: 1
+                        )
                     }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("FEELING")
-                            .font(.system(size: 10.5, weight: .bold))
-                            .foregroundStyle(Theme.textTertiary)
-                        Stepper("\(feeling)", value: $feeling, in: 0...23)
-                            .font(.system(size: 13, design: .monospaced))
+                    detailRow("feeling", note: nil) {
+                        GridStepper(value: $feeling, range: 0...23, digits: 2)
                     }
-                }
-
-                if argType != 0 {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("VARIABLE")
-                            .font(.system(size: 10.5, weight: .bold))
-                            .foregroundStyle(Theme.textTertiary)
-                        Text(pkm.memoryVariableName(memoryID, variable: variable).isEmpty ? "#\(variable)" : pkm.memoryVariableName(memoryID, variable: variable))
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                        Stepper("Variable: \(variable)", value: Binding(
-                            get: { Int(variable) },
-                            set: { variable = UInt16(max(0, min($0, 65535))) }
-                        ), in: 0...65535)
-                        .labelsHidden()
+                    if argType != 0 {
+                        detailRow("variable", note: variableName) {
+                            GridStepper(value: variableBinding, range: 0...65535, digits: 5)
+                        }
                     }
                 }
+                .overlay(alignment: .top) { HRule(color: Theme.line400) }
             }
 
-            Spacer()
-
-            Button("Save") {
-                if target == .originalTrainer {
-                    pkm.originalTrainerMemory = memoryID
-                    pkm.originalTrainerMemoryIntensity = UInt8(intensity)
-                    pkm.originalTrainerMemoryFeeling = UInt8(feeling)
-                    pkm.originalTrainerMemoryVariable = variable
-                } else {
-                    pkm.handlingTrainerMemory = memoryID
-                    pkm.handlingTrainerMemoryIntensity = UInt8(intensity)
-                    pkm.handlingTrainerMemoryFeeling = UInt8(feeling)
-                    pkm.handlingTrainerMemoryVariable = variable
-                }
-                onCommit()
+            HStack(spacing: 8) {
+                GridButton("◄ Choose a different memory", .ghost, action: onBack)
+                Spacer()
+                GridButton("Save", .primary, action: save)
             }
-            .buttonStyle(.plain)
-            .font(.system(size: 12.5, weight: .semibold))
-            .foregroundStyle(accentStore.accent.onAccent)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(accentStore.accent.color)
-            .clipShape(RoundedRectangle(cornerRadius: 9))
+            .padding(.top, 4)
         }
-        .padding(18)
-    }
-}
-
-private struct MoveRow: View {
-    @EnvironmentObject private var accentStore: AccentStore
-
-    let moveID: UInt16
-    let pkm: PKM
-    let slotIndex: Int
-
-    var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 9) {
-                Circle()
-                    .fill(Color.white.opacity(0.25))
-                    .frame(width: 9, height: 9)
-                Text(moveID == 0 ? "—" : PokemonNames.move(moveID))
-                    .font(.system(size: 13.5, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            .frame(width: 168, alignment: .leading)
-
-            HStack {
-                if moveID != 0 {
-                    TypeBadge(typeID: pkm.moveType(moveID))
-                }
-            }
-            .frame(width: 70, alignment: .leading)
-
-            Text(ppText)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(accentStore.accent.bright)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(16)
     }
 
-    private var ppText: String {
-        guard moveID != 0 else { return "—" }
-        if moveID == pkm.move(slotIndex) {
-            return "\(pkm.movePP(slotIndex))/\(pkm.movePPMax(slotIndex))"
+    private func detailRow<Control: View>(_ label: String, note: String?, @ViewBuilder control: () -> Control) -> some View {
+        HStack(spacing: 8) {
+            GridText(label, .label, color: Theme.ink300)
+                .frame(width: 96, alignment: .leading)
+            if let note {
+                Text(note)
+                    .font(Theme.sans(16, .medium))
+                    .foregroundStyle(Theme.ink200)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Spacer(minLength: 0)
+            }
+            control()
         }
-        return "\(pkm.moveBasePP(moveID))/\(pkm.moveBasePP(moveID))"
+        .frame(minHeight: 44)
+        .overlay(alignment: .bottom) { HRule(color: Theme.line400) }
+    }
+
+    private func save() {
+        if target == .originalTrainer {
+            pkm.originalTrainerMemory = memoryID
+            pkm.originalTrainerMemoryIntensity = UInt8(intensity)
+            pkm.originalTrainerMemoryFeeling = UInt8(feeling)
+            pkm.originalTrainerMemoryVariable = variable
+        } else {
+            pkm.handlingTrainerMemory = memoryID
+            pkm.handlingTrainerMemoryIntensity = UInt8(intensity)
+            pkm.handlingTrainerMemoryFeeling = UInt8(feeling)
+            pkm.handlingTrainerMemoryVariable = variable
+        }
+        onCommit()
     }
 }

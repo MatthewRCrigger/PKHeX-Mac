@@ -18,6 +18,7 @@ targets:
     sources:
       - path: PKHeXMac/Sources/PKHeXSwiftUI
       - path: PKHeXMac/Resources/Assets.xcassets
+      - path: PKHeXMac/Resources/Fonts
     dependencies:
       - target: PKHeXCore
         embed: true

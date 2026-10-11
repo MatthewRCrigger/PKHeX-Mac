@@ -366,6 +366,22 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					00B2F18343704A584A73A76B = {
+						DevelopmentTeam = QY69D89784;
+						ProvisioningStyle = Automatic;
+					};
+					13C7152AC10BB71007C20EA1 = {
+						DevelopmentTeam = QY69D89784;
+						ProvisioningStyle = Automatic;
+					};
+					B4002FA974FE467D75895891 = {
+						DevelopmentTeam = QY69D89784;
+						ProvisioningStyle = Automatic;
+					};
+					B4B665A66CC50D77996D3ADD = {
+						DevelopmentTeam = QY69D89784;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 28D59AAF1D248697158688E2 /* Build configuration list for PBXProject "PKHeXMac" */;
@@ -740,8 +756,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = QY69D89784;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -798,8 +816,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = QY69D89784;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;

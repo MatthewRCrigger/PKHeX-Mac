@@ -11,6 +11,8 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEVELOPMENT_TEAM: QY69D89784
+    CODE_SIGN_STYLE: Automatic
 
 targets:
   PKHeXMac:
@@ -216,3 +218,21 @@ targets:
     info:
       path: PKHeXMac/PKHeXCore-iOS-Info.plist
       properties: {}
+
+schemes:
+  PKHeXMac:
+    build:
+      targets:
+        PKHeXMac: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  PKHeXiOS:
+    build:
+      targets:
+        PKHeXiOS: all
+    run:
+      config: Debug
+    archive:
+      config: Release

@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import PKHeXCore
 import SwiftUI
 
@@ -65,7 +65,20 @@ final class SaveStore: ObservableObject {
     /// there's no cross-save/cross-generation conversion, so this is only ever populated/used
     /// within a single open save.
     @Published var copiedPKM: PKM?
-    private var loadedURL: URL?
+    /// iOS only: drives the `.fileImporter` that stands in for `NSOpenPanel` (see `ContentView`).
+    @Published var isShowingFileImporter = false
+    private var loadedURL: URL? {
+        didSet {
+            // Files picked outside the app's sandbox (Files, iCloud Drive, external storage) are
+            // only readable/writable while their security scope is held, so hold it for as long as
+            // the save stays open. A no-op for URLs that don't need one.
+            if oldValue != loadedURL {
+                if let oldValue, holdsSecurityScope { oldValue.stopAccessingSecurityScopedResource() }
+                holdsSecurityScope = loadedURL?.startAccessingSecurityScopedResource() ?? false
+            }
+        }
+    }
+    private var holdsSecurityScope = false
 
     struct WriteReceipt: Equatable {
         let date: Date
@@ -112,12 +125,16 @@ final class SaveStore: ObservableObject {
     }
 
     private func runOpenPanel() {
+        #if os(iOS)
+        isShowingFileImporter = true
+        #else
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.title = "Open Save File"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         load(from: url)
+        #endif
     }
 
     /// Opens a file handed to us by the OS (double-click, Open With, drag onto the Dock icon).
@@ -147,6 +164,10 @@ final class SaveStore: ObservableObject {
     }
 
     func load(from url: URL) {
+        // Picked/opened-in-place files need their security scope just to be read; `loadedURL`
+        // takes over holding it once the load succeeds.
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
             let data = try Data(contentsOf: url)
             let newSaveFile = try SaveFile(data: data)

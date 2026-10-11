@@ -58,7 +58,7 @@ struct CommitField: View {
                 if text != newValue { draft = text }
             }
             .onSubmit { commit() }
-            .onExitCommand {
+            .onExitCommandIfAvailable {
                 draft = value
                 isFocused = false
             }

@@ -1,4 +1,3 @@
-import AppKit
 import PKHeXCore
 import SwiftUI
 import UniformTypeIdentifiers
@@ -63,7 +62,13 @@ struct ContentView: View {
 
             DialogHost()
         }
+        #if os(macOS)
         .background(WindowConfigurator())
+        #else
+        .fileImporter(isPresented: $store.isShowingFileImporter, allowedContentTypes: [.data]) { result in
+            if case .success(let url) = result { store.load(from: url) }
+        }
+        #endif
     }
 }
 
@@ -76,6 +81,7 @@ extension SaveFile {
 
 // MARK: - Window chrome
 
+#if os(macOS)
 /// Configures the hosting `NSWindow` for GRID's own chrome: transparent title bar, black
 /// background, native traffic lights hidden (the title strip draws outlined ones that drive the
 /// same window actions).
@@ -108,18 +114,24 @@ private struct WindowDragArea: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
+#endif
+
 /// 36 pt title bar: outlined traffic lights, centered wordmark, ghost settings button.
 private struct TitleStrip: View {
     var body: some View {
         ZStack {
+            #if os(macOS)
             WindowDragArea()
+            #endif
 
             Wordmark(size: 14, tracking: 3.92)
 
             HStack {
+                #if os(macOS)
                 TrafficLights()
+                #endif
                 Spacer()
-                SettingsLink {
+                SettingsButton {
                     Image(systemName: "gearshape")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundStyle(Theme.ink200)
@@ -133,6 +145,26 @@ private struct TitleStrip: View {
             .padding(.horizontal, 12)
         }
         .frame(height: 36)
+    }
+}
+
+/// The Settings window on macOS; a sheet on iOS, which has no app Settings scene.
+private struct SettingsButton<Label: View>: View {
+    @ViewBuilder var label: Label
+    #if os(iOS)
+    @State private var isPresented = false
+    #endif
+
+    var body: some View {
+        #if os(macOS)
+        SettingsLink { label }
+        #else
+        Button { isPresented = true } label: { label }
+            .sheet(isPresented: $isPresented) {
+                SettingsView()
+                    .preferredColorScheme(.dark)
+            }
+        #endif
     }
 }
 
@@ -151,6 +183,7 @@ struct Wordmark: View {
     }
 }
 
+#if os(macOS)
 /// Three 12 pt outline circles standing in for the (hidden) native window buttons.
 private struct TrafficLights: View {
     @State private var window: NSWindow?
@@ -199,6 +232,8 @@ private struct WindowFinder: NSViewRepresentable {
         }
     }
 }
+
+#endif
 
 // MARK: - Sidebar
 

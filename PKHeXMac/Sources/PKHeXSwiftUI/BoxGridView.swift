@@ -762,8 +762,8 @@ struct SpriteImage: View {
     let fileName: String
 
     var body: some View {
-        if let nsImage = NSImage(named: fileName) {
-            Image(nsImage: nsImage)
+        if let nsImage = PlatformImage.asset(fileName) {
+            Image(platformImage: nsImage)
                 .resizable()
                 .interpolation(.none)
                 .aspectRatio(contentMode: .fit)
@@ -780,8 +780,8 @@ struct BallIcon: View {
     let ball: UInt8
 
     var body: some View {
-        if let nsImage = NSImage(named: "_ball\(ball)") {
-            Image(nsImage: nsImage)
+        if let nsImage = PlatformImage.asset("_ball\(ball)") {
+            Image(platformImage: nsImage)
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
@@ -802,7 +802,7 @@ struct ArtworkImage: View {
 
     var body: some View {
         if let nsImage = Self.resolvedImage(for: pkm) {
-            Image(nsImage: nsImage)
+            Image(platformImage: nsImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
         } else {
@@ -814,19 +814,19 @@ struct ArtworkImage: View {
     /// same name with any "-"-prefixed form/gender suffix stripped down to "a_<species>"; then
     /// the older sprite set's name (which has its own species/shiny fallback already baked into
     /// how it's generated) as a last resort.
-    private static func resolvedImage(for pkm: PKM) -> NSImage? {
+    private static func resolvedImage(for pkm: PKM) -> PlatformImage? {
         let artwork = pkm.artworkFileName
-        if let image = NSImage(named: artwork) { return image }
+        if let image = PlatformImage.asset(artwork) { return image }
 
         if artwork.hasSuffix("s") {
             let withoutShiny = String(artwork.dropLast())
-            if let image = NSImage(named: withoutShiny) { return image }
+            if let image = PlatformImage.asset(withoutShiny) { return image }
         }
 
         let bareSpecies = "a_\(pkm.species)"
-        if let image = NSImage(named: bareSpecies) { return image }
+        if let image = PlatformImage.asset(bareSpecies) { return image }
 
-        return NSImage(named: pkm.spriteFileName)
+        return PlatformImage.asset(pkm.spriteFileName)
     }
 }
 
@@ -848,8 +848,8 @@ struct StatusIcon: View {
     }
 
     var body: some View {
-        if let assetName, let nsImage = NSImage(named: assetName) {
-            Image(nsImage: nsImage)
+        if let assetName, let nsImage = PlatformImage.asset(assetName) {
+            Image(platformImage: nsImage)
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
@@ -866,8 +866,8 @@ struct ItemIconImage: View {
     let itemID: Int
 
     var body: some View {
-        if let nsImage = NSImage(named: "bitem_\(itemID)") ?? NSImage(named: "bitem_unk") {
-            Image(nsImage: nsImage)
+        if let nsImage = PlatformImage.asset("bitem_\(itemID)") ?? PlatformImage.asset("bitem_unk") {
+            Image(platformImage: nsImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
         } else {

@@ -9,7 +9,9 @@ struct PKHeXMacApp: App {
     @StateObject private var dragRegistry = DragRegistry()
     @Environment(\.openWindow) private var openWindow
     @FocusedValue(\.saveStore) private var focusedStore
+    #if os(macOS)
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
 
     init() {
         Theme.registerFonts()
@@ -28,15 +30,19 @@ struct PKHeXMacApp: App {
                 // Sidebar (200) + content min (420) + inspector (340) + frame chrome — the window
                 // can never be resized narrower than what the fixed-width sidebar/inspector panes
                 // and the content pane's own min width require (see ContentView's HStack layout).
+                #if os(macOS)
                 .frame(minWidth: 990, minHeight: 640)
                 .onAppear {
                     // Wired here (rather than at struct init) since `openWindow` only becomes
                     // valid once resolved from a real scene's environment.
                     appDelegate.openNewWindow = { openWindow(id: "save") }
                 }
+                #endif
         }
+        #if os(macOS)
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1180, height: 760)
+        #endif
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Window") { openWindow(id: "save") }
@@ -52,11 +58,13 @@ struct PKHeXMacApp: App {
             }
         }
 
+        #if os(macOS)
         Settings {
             SettingsView()
                 .environmentObject(profileStore)
                 .preferredColorScheme(.dark)
         }
+        #endif
     }
 }
 

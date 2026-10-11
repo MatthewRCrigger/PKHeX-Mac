@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.pkhexmac
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
 
 settings:
   base:
@@ -94,4 +95,124 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks"
     info:
       path: PKHeXMac/PKHeXCore-Info.plist
+      properties: {}
+
+  # iOS / iPadOS build. Same SwiftUI sources as the Mac app (platform differences are behind
+  # `#if os(macOS)`), linked against an ios-arm64 / iossimulator-arm64 NativeAOT build of
+  # PKHeX.Interop. That publish needs the .NET `ios` workload (`dotnet workload install ios`).
+  PKHeXiOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: PKHeXMac/Sources/PKHeXSwiftUI
+        excludes:
+          - AppDelegate.swift
+      - path: PKHeXMac/Resources/Assets.xcassets
+      - path: PKHeXMac/Resources/Fonts
+    dependencies:
+      - target: PKHeXCore_iOS
+        embed: true
+    postCompileScripts:
+      - name: Embed PKHeX.Interop.dylib
+        script: |
+          set -e
+          DEST="$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH"
+          mkdir -p "$DEST"
+          cp -f "$PKHEX_INTEROP_DIR/PKHeX.Interop.dylib" "$DEST/"
+          if [ -n "$EXPANDED_CODE_SIGN_IDENTITY" ]; then
+            codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --timestamp=none "$DEST/PKHeX.Interop.dylib"
+          fi
+        outputFiles:
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/PKHeX.Interop.dylib
+    settings:
+      base:
+        PRODUCT_NAME: PKHeX
+        PRODUCT_BUNDLE_IDENTIFIER: com.pkhexmac.PKHeXiOS
+        TARGETED_DEVICE_FAMILY: "1,2"
+        "PKHEX_INTEROP_DIR[sdk=iphoneos*]": $(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish
+        "PKHEX_INTEROP_DIR[sdk=iphonesimulator*]": $(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish
+        ARCHS: arm64
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
+        SWIFT_INCLUDE_PATHS: "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include"
+        HEADER_SEARCH_PATHS: "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include"
+        ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: PKHeXMac/iOS-Info.plist
+      properties:
+        CFBundleDisplayName: PKHeX
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        # Saves are edited in place wherever they live (Files, iCloud Drive, a USB stick), and the
+        # app's own Documents folder is visible in Files for dropping saves in.
+        LSSupportsOpeningDocumentsInPlace: true
+        UIFileSharingEnabled: true
+        UISupportsDocumentBrowser: false
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Pokémon Save File
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.pkhexmac.savefile
+              - public.data
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.pkhexmac.savefile
+            UTTypeDescription: Pokémon Save File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - sav
+                - dsv
+                - dat
+                - bin
+                - gci
+                - bin2
+                - srm
+                - rvsave
+                - main
+
+  PKHeXCore_iOS:
+    type: framework
+    platform: iOS
+    sources:
+      - path: PKHeXMac/Sources/PKHeXCore
+    preBuildScripts:
+      - name: Publish PKHeX.Interop (NativeAOT, iOS)
+        script: |
+          set -e
+          if [ "$PLATFORM_NAME" = "iphoneos" ]; then RID=ios-arm64; else RID=iossimulator-arm64; fi
+          /usr/bin/env -i \
+            HOME="$HOME" \
+            PATH="$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin" \
+            dotnet publish "$SRCROOT/PKHeX.Interop/PKHeX.Interop.csproj" -c Release -r "$RID" \
+              -p:NativeLib=Shared -p:PublishAotUsingRuntimePack=true
+        alwaysOutOfDate: true
+    settings:
+      base:
+        PRODUCT_NAME: PKHeXCore
+        PRODUCT_MODULE_NAME: PKHeXCore
+        PRODUCT_BUNDLE_IDENTIFIER: com.pkhexmac.PKHeXCore
+        DEFINES_MODULE: YES
+        ARCHS: arm64
+        "PKHEX_INTEROP_DIR[sdk=iphoneos*]": $(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish
+        "PKHEX_INTEROP_DIR[sdk=iphonesimulator*]": $(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish
+        OTHER_LDFLAGS: "$(inherited) $(PKHEX_INTEROP_DIR)/PKHeX.Interop.dylib"
+        SWIFT_INCLUDE_PATHS: "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include"
+        HEADER_SEARCH_PATHS: "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @loader_path/Frameworks"
+    info:
+      path: PKHeXMac/PKHeXCore-iOS-Info.plist
       properties: {}

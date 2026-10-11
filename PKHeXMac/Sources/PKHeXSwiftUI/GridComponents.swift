@@ -897,11 +897,13 @@ struct GridScrim<Content: View>: View {
 extension Color {
     /// Blends toward black by `amount` (0–1). Used for the "one step darker" pressed state.
     func mix(black amount: Double) -> Color {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        #if os(macOS)
         let ns = NSColor(self).usingColorSpace(.deviceRGB) ?? NSColor(self)
-        return Color(
-            red: ns.redComponent * (1 - amount),
-            green: ns.greenComponent * (1 - amount),
-            blue: ns.blueComponent * (1 - amount)
-        )
+        ns.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #else
+        UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #endif
+        return Color(red: red * (1 - amount), green: green * (1 - amount), blue: blue * (1 - amount))
     }
 }

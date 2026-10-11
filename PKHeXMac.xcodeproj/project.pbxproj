@@ -11,35 +11,66 @@
 		05EED25DAC32BF9E389B9FE4 /* OFL-Rajdhani.txt in Resources */ = {isa = PBXBuildFile; fileRef = EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */; };
 		071EFE8812DE993712573BC3 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
 		0C60F093C8944AE861CF0419 /* Rajdhani-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */; };
+		0E29BB6883178C54ED543DC7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */; };
+		11711CADED94DBEE901823A7 /* PlatformCompat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17547516422F60BBD464214B /* PlatformCompat.swift */; };
+		16B66882674E5D56F5CCBA50 /* Rajdhani-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */; };
 		1AFE7B5E7D05AD92ADA86749 /* OFL-SpaceMono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */; };
 		1C4EB78695C4F5BEB44B7D4F /* SpaceMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5C99A2CCC50F76772B8CCE55 /* SpaceMono-Bold.ttf */; };
+		1F395BBC7E581673BCFCD59F /* OFL-SpaceMono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */; };
+		234120E86DD807CD3BDF988F /* SpaceMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5C99A2CCC50F76772B8CCE55 /* SpaceMono-Bold.ttf */; };
 		26E408D7A69E8B548C92F6AB /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */; };
 		290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; };
+		3E1C748E1B11042E89C20715 /* Rajdhani-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */; };
+		403B6ED3E403F2349BDF9587 /* PlatformCompat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17547516422F60BBD464214B /* PlatformCompat.swift */; };
+		421664F924F64C444F9C1C17 /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB86BF7565C22F01133B76D /* SaveStore.swift */; };
+		42694FFED0B5CB54FE0041FE /* Rajdhani-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B83B486311F9CA557A76C5A4 /* Rajdhani-SemiBold.ttf */; };
 		426DA9B6957298C1DF3031F9 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
 		455677238A49EB1E9CBD8625 /* PKHeX.Interop.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; };
 		4B52F326C225CEB19D11AA36 /* Rajdhani-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */; };
 		4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */; };
 		5461EC4E0E39C78924417872 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
+		59C2294403ADC5D793F27789 /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
 		5EF44AB9D7E09E91D260D491 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321E64E26089C2F438E2FE1A /* DetailPanel.swift */; };
+		5F469994B9E720C44B8C99C5 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
+		602916888F003F04CAAECE9A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8FA2AE5C5C0BA89142F29F /* Theme.swift */; };
+		6055560CA71C4A2AB3FCB0FC /* Rajdhani-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */; };
+		662B89D37B534103324D834A /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299926E73B028F53F6DC025 /* BagView.swift */; };
+		89C82C54B7E32A9474AF0D80 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC6E0913AEBA97080A64120 /* Pickers.swift */; };
+		8E00DB850611EF9B9539E2BF /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */; };
+		959128A86D355705178C2B69 /* TrainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */; };
 		9A9F61E9EA0A4D20B368A33F /* NativeString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505571693819F220BFD40FE7 /* NativeString.swift */; };
+		9D739E03BB3064B976ABC647 /* DragRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */; };
+		A4C57A8AF1BE64333ED7DD08 /* DetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 321E64E26089C2F438E2FE1A /* DetailPanel.swift */; };
 		A4DEBE252D18D8163948AB61 /* PKHeXCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A739EFF72563AF0D029D8E18 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */; };
+		AA33524B39F96382C4DA0530 /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */; };
 		AED2E18E42E21F5DD9CBA7F0 /* Rajdhani-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B83B486311F9CA557A76C5A4 /* Rajdhani-SemiBold.ttf */; };
 		B1AEAED12117644EA9B917F0 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299926E73B028F53F6DC025 /* BagView.swift */; };
 		B6B6253C86C4BAF5C1807365 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */; };
+		BB557D11E97D493717E15766 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */; };
 		BC86B41DCDDBD9DE0A26E3A1 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8FA2AE5C5C0BA89142F29F /* Theme.swift */; };
 		BCBBB8F73D8748F63CB08297 /* PKHeX.Interop.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B2BDFAF5F99B0D8CBEE9966F /* PKHeX.Interop.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BDDCC6E0719A9D600DEECEFB /* SaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB86BF7565C22F01133B76D /* SaveStore.swift */; };
+		C04D41491B3AE2A492BEAF92 /* SpaceMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4551CF87BFA9007D81DC5CCA /* SpaceMono-Regular.ttf */; };
+		C2B13CBB47F9FE32F7D5A2FE /* PKM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07CFAF47DCE7B0F0292C0AF /* PKM.swift */; };
+		C845B462F255AEE4D5B29864 /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */; };
 		C8B470F8AD14A1D06B57316E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9182C6871188B2219630B85 /* ContentView.swift */; };
 		C8B6E6EB4864C26231BB1D0C /* FocusedSaveStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EA7ECAFF4C2361CCD0B704C /* FocusedSaveStore.swift */; };
 		CA384DA96B3DDD068799649C /* PKM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07CFAF47DCE7B0F0292C0AF /* PKM.swift */; };
 		CB60E59A5C25BFBBB3F0829C /* Rajdhani-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */; };
+		CB751EF542A13EEF51583A9D /* OFL-Rajdhani.txt in Resources */ = {isa = PBXBuildFile; fileRef = EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */; };
 		D29F0A094CA5AB9B8974C57B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */; };
+		D4757FC0E4B08A7837B60F5B /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = A831CF5D7FB2CAA3B64CB162 /* Bag.swift */; };
 		D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */; };
+		D71BF3778694CFFE0A1E2C7E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9182C6871188B2219630B85 /* ContentView.swift */; };
 		DCA7897E522F421BC93848F0 /* BoxGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */; };
 		E02B9F90946519499E577BA7 /* SpaceMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4551CF87BFA9007D81DC5CCA /* SpaceMono-Regular.ttf */; };
+		E1CD65347929F95A0B5AAE81 /* PKHeXCore_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2FC6A2D1A802D2E605BC471 /* PKHeXCore_iOS.framework */; };
+		E8800EA404539012BAD794C2 /* PKHeXCore_iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F2FC6A2D1A802D2E605BC471 /* PKHeXCore_iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EB56E3C7171A204F28020791 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC6E0913AEBA97080A64120 /* Pickers.swift */; };
+		ED0364C6A19DD0756C96C49F /* SaveFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE0AA02E3445D8A02271413 /* SaveFile.swift */; };
 		F5F31A4171692448212B8AA6 /* SaveFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE0AA02E3445D8A02271413 /* SaveFile.swift */; };
+		F9DF8BCC6CE53154C9A21788 /* GridComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 176FFD3C213470D0C3BD1D9D /* GridComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,9 +81,27 @@
 			remoteGlobalIDString = 00B2F18343704A584A73A76B;
 			remoteInfo = PKHeXCore;
 		};
+		7C6F1AEDFA56EF9CFCEFED11 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D36C2714B505588995D78BD7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4002FA974FE467D75895891;
+			remoteInfo = PKHeXCore_iOS;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		1B5169F3A88014A28928557C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				E8800EA404539012BAD794C2 /* PKHeXCore_iOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A528CC88CF19847D5868CE3A /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -69,6 +118,7 @@
 
 /* Begin PBXFileReference section */
 		04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Regular.ttf"; sourceTree = "<group>"; };
+		17547516422F60BBD464214B /* PlatformCompat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformCompat.swift; sourceTree = "<group>"; };
 		176FFD3C213470D0C3BD1D9D /* GridComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridComponents.swift; sourceTree = "<group>"; };
 		1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F4B23DE1541F4D64DCFA2A8 /* TrainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainerView.swift; sourceTree = "<group>"; };
@@ -86,6 +136,7 @@
 		62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-SpaceMono.txt"; sourceTree = "<group>"; };
 		7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		95992B8AD1F2A2AB78EFF6A5 /* PKHeXiOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PKHeXiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AB86BF7565C22F01133B76D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
 		A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Medium.ttf"; sourceTree = "<group>"; };
 		A831CF5D7FB2CAA3B64CB162 /* Bag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
@@ -96,6 +147,7 @@
 		DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableField.swift; sourceTree = "<group>"; };
 		E07CFAF47DCE7B0F0292C0AF /* PKM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PKM.swift; sourceTree = "<group>"; };
 		EB2F83E3BB6A336A718CCDD2 /* OFL-Rajdhani.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-Rajdhani.txt"; sourceTree = "<group>"; };
+		F2FC6A2D1A802D2E605BC471 /* PKHeXCore_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PKHeXCore_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxGridView.swift; sourceTree = "<group>"; };
 		F9182C6871188B2219630B85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FAD43EE6AEC827B7D34BD3A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -116,6 +168,14 @@
 			files = (
 				290DB32E23F267A0736DDDCF /* PKHeXCore.framework in Frameworks */,
 				455677238A49EB1E9CBD8625 /* PKHeX.Interop.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E28AE93BA99D19226D0D70E0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1CD65347929F95A0B5AAE81 /* PKHeXCore_iOS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +220,7 @@
 				176FFD3C213470D0C3BD1D9D /* GridComponents.swift */,
 				CBC6E0913AEBA97080A64120 /* Pickers.swift */,
 				4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */,
+				17547516422F60BBD464214B /* PlatformCompat.swift */,
 				9AB86BF7565C22F01133B76D /* SaveStore.swift */,
 				B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */,
 				2E8FA2AE5C5C0BA89142F29F /* Theme.swift */,
@@ -205,7 +266,9 @@
 		EFC85DCB750313639E8ECEC4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				F2FC6A2D1A802D2E605BC471 /* PKHeXCore_iOS.framework */,
 				1945A9C68B7A86A49CF5F21A /* PKHeXCore.framework */,
+				95992B8AD1F2A2AB78EFF6A5 /* PKHeXiOS.app */,
 				896719DCDF7BAE3936C320B5 /* PKHeXMac.app */,
 			);
 			name = Products;
@@ -254,6 +317,46 @@
 			productReference = 896719DCDF7BAE3936C320B5 /* PKHeXMac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B4002FA974FE467D75895891 /* PKHeXCore_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA299998BF6837B4CC6200DA /* Build configuration list for PBXNativeTarget "PKHeXCore_iOS" */;
+			buildPhases = (
+				CAC0EC04AE618D8335635D74 /* Publish PKHeX.Interop (NativeAOT, iOS) */,
+				173CE1A8F523ED5AD7CE09BF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PKHeXCore_iOS;
+			packageProductDependencies = (
+			);
+			productName = PKHeXCore_iOS;
+			productReference = F2FC6A2D1A802D2E605BC471 /* PKHeXCore_iOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		B4B665A66CC50D77996D3ADD /* PKHeXiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2B4978D8023320F4DEC6B274 /* Build configuration list for PBXNativeTarget "PKHeXiOS" */;
+			buildPhases = (
+				493AF5FCBC34E3FA42714DA1 /* Sources */,
+				CC1AC4EB935B27F8CC89E376 /* Embed PKHeX.Interop.dylib */,
+				AF8203E9FB22571112E4F902 /* Resources */,
+				E28AE93BA99D19226D0D70E0 /* Frameworks */,
+				1B5169F3A88014A28928557C /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0CBBD1AC4FBC9B7FAB1A19D3 /* PBXTargetDependency */,
+			);
+			name = PKHeXiOS;
+			packageProductDependencies = (
+			);
+			productName = PKHeXiOS;
+			productReference = 95992B8AD1F2A2AB78EFF6A5 /* PKHeXiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -279,8 +382,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				00B2F18343704A584A73A76B /* PKHeXCore */,
 				13C7152AC10BB71007C20EA1 /* PKHeXMac */,
+				00B2F18343704A584A73A76B /* PKHeXCore */,
+				B4B665A66CC50D77996D3ADD /* PKHeXiOS */,
+				B4002FA974FE467D75895891 /* PKHeXCore_iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -299,6 +404,22 @@
 				AED2E18E42E21F5DD9CBA7F0 /* Rajdhani-SemiBold.ttf in Resources */,
 				1C4EB78695C4F5BEB44B7D4F /* SpaceMono-Bold.ttf in Resources */,
 				E02B9F90946519499E577BA7 /* SpaceMono-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF8203E9FB22571112E4F902 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB557D11E97D493717E15766 /* Assets.xcassets in Resources */,
+				CB751EF542A13EEF51583A9D /* OFL-Rajdhani.txt in Resources */,
+				1F395BBC7E581673BCFCD59F /* OFL-SpaceMono.txt in Resources */,
+				16B66882674E5D56F5CCBA50 /* Rajdhani-Bold.ttf in Resources */,
+				3E1C748E1B11042E89C20715 /* Rajdhani-Medium.ttf in Resources */,
+				6055560CA71C4A2AB3FCB0FC /* Rajdhani-Regular.ttf in Resources */,
+				42694FFED0B5CB54FE0041FE /* Rajdhani-SemiBold.ttf in Resources */,
+				234120E86DD807CD3BDF988F /* SpaceMono-Bold.ttf in Resources */,
+				C04D41491B3AE2A492BEAF92 /* SpaceMono-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,9 +444,57 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n/usr/bin/env -i \\\n  HOME=\"$HOME\" \\\n  PATH=\"$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin\" \\\n  dotnet publish \"$SRCROOT/PKHeX.Interop/PKHeX.Interop.csproj\" -c Release -r osx-arm64\n";
 		};
+		CAC0EC04AE618D8335635D74 /* Publish PKHeX.Interop (NativeAOT, iOS) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Publish PKHeX.Interop (NativeAOT, iOS)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nif [ \"$PLATFORM_NAME\" = \"iphoneos\" ]; then RID=ios-arm64; else RID=iossimulator-arm64; fi\n/usr/bin/env -i \\\n  HOME=\"$HOME\" \\\n  PATH=\"$HOME/.dotnet:/usr/bin:/bin:/usr/sbin:/sbin\" \\\n  dotnet publish \"$SRCROOT/PKHeX.Interop/PKHeX.Interop.csproj\" -c Release -r \"$RID\" \\\n    -p:NativeLib=Shared -p:PublishAotUsingRuntimePack=true\n";
+		};
+		CC1AC4EB935B27F8CC89E376 /* Embed PKHeX.Interop.dylib */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed PKHeX.Interop.dylib";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/PKHeX.Interop.dylib",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nDEST=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH\"\nmkdir -p \"$DEST\"\ncp -f \"$PKHEX_INTEROP_DIR/PKHeX.Interop.dylib\" \"$DEST/\"\nif [ -n \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n  codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --timestamp=none \"$DEST/PKHeX.Interop.dylib\"\nfi\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		173CE1A8F523ED5AD7CE09BF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D4757FC0E4B08A7837B60F5B /* Bag.swift in Sources */,
+				59C2294403ADC5D793F27789 /* NativeString.swift in Sources */,
+				C2B13CBB47F9FE32F7D5A2FE /* PKM.swift in Sources */,
+				ED0364C6A19DD0756C96C49F /* SaveFile.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		392A8562FEA6EF94F70D5710 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -341,10 +510,33 @@
 				05BFD6E6800C4644397F41C8 /* GridComponents.swift in Sources */,
 				D5CA1031B8027C6E4ABF3501 /* PKHeXMacApp.swift in Sources */,
 				EB56E3C7171A204F28020791 /* Pickers.swift in Sources */,
+				11711CADED94DBEE901823A7 /* PlatformCompat.swift in Sources */,
 				BDDCC6E0719A9D600DEECEFB /* SaveStore.swift in Sources */,
 				D29F0A094CA5AB9B8974C57B /* SettingsView.swift in Sources */,
 				BC86B41DCDDBD9DE0A26E3A1 /* Theme.swift in Sources */,
 				26E408D7A69E8B548C92F6AB /* TrainerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		493AF5FCBC34E3FA42714DA1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				662B89D37B534103324D834A /* BagView.swift in Sources */,
+				AA33524B39F96382C4DA0530 /* BoxGridView.swift in Sources */,
+				D71BF3778694CFFE0A1E2C7E /* ContentView.swift in Sources */,
+				A4C57A8AF1BE64333ED7DD08 /* DetailPanel.swift in Sources */,
+				9D739E03BB3064B976ABC647 /* DragRegistry.swift in Sources */,
+				5F469994B9E720C44B8C99C5 /* EditableField.swift in Sources */,
+				C845B462F255AEE4D5B29864 /* FocusedSaveStore.swift in Sources */,
+				F9DF8BCC6CE53154C9A21788 /* GridComponents.swift in Sources */,
+				8E00DB850611EF9B9539E2BF /* PKHeXMacApp.swift in Sources */,
+				89C82C54B7E32A9474AF0D80 /* Pickers.swift in Sources */,
+				403B6ED3E403F2349BDF9587 /* PlatformCompat.swift in Sources */,
+				421664F924F64C444F9C1C17 /* SaveStore.swift in Sources */,
+				0E29BB6883178C54ED543DC7 /* SettingsView.swift in Sources */,
+				602916888F003F04CAAECE9A /* Theme.swift in Sources */,
+				959128A86D355705178C2B69 /* TrainerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -362,6 +554,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		0CBBD1AC4FBC9B7FAB1A19D3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4002FA974FE467D75895891 /* PKHeXCore_iOS */;
+			targetProxy = 7C6F1AEDFA56EF9CFCEFED11 /* PBXContainerItemProxy */;
+		};
 		280EDC89044FB0819A85FABC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 00B2F18343704A584A73A76B /* PKHeXCore */;
@@ -370,6 +567,54 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0942E40645735D7FC39C05EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				INFOPLIST_FILE = "PKHeXMac/PKHeXCore-iOS-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited) $(PKHEX_INTEROP_DIR)/PKHeX.Interop.dylib";
+				"PKHEX_INTEROP_DIR[sdk=iphoneos*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish";
+				"PKHEX_INTEROP_DIR[sdk=iphonesimulator*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pkhexmac.PKHeXCore;
+				PRODUCT_MODULE_NAME = PKHeXCore;
+				PRODUCT_NAME = PKHeXCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		30BB971773F447EBAF1BA4CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				INFOPLIST_FILE = "PKHeXMac/iOS-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"PKHEX_INTEROP_DIR[sdk=iphoneos*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish";
+				"PKHEX_INTEROP_DIR[sdk=iphonesimulator*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pkhexmac.PKHeXiOS;
+				PRODUCT_NAME = PKHeX;
+				SDKROOT = iphoneos;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		31F4D4863F045ABF2D1203AE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -442,6 +687,26 @@
 			};
 			name = Release;
 		};
+		8004BE00A8FD7FAEBB89D049 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				INFOPLIST_FILE = "PKHeXMac/iOS-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"PKHEX_INTEROP_DIR[sdk=iphoneos*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish";
+				"PKHEX_INTEROP_DIR[sdk=iphonesimulator*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pkhexmac.PKHeXiOS;
+				PRODUCT_NAME = PKHeX;
+				SDKROOT = iphoneos;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		B2F09B5A357E5F4126616C9D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -489,11 +754,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -553,17 +818,45 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
+		};
+		D43AACC7BB2938609BA099F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				INFOPLIST_FILE = "PKHeXMac/PKHeXCore-iOS-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited) $(PKHEX_INTEROP_DIR)/PKHeX.Interop.dylib";
+				"PKHEX_INTEROP_DIR[sdk=iphoneos*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/ios-arm64/publish";
+				"PKHEX_INTEROP_DIR[sdk=iphonesimulator*]" = "$(SRCROOT)/PKHeX.Interop/bin/Release/net10.0/iossimulator-arm64/publish";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pkhexmac.PKHeXCore;
+				PRODUCT_MODULE_NAME = PKHeXCore;
+				PRODUCT_NAME = PKHeXCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_INCLUDE_PATHS = "$(inherited) $(SRCROOT)/PKHeXMac/Sources/CPKHeXNative/include";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
 		};
 		DE247670F6EBFB4CA2119A3B /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -602,6 +895,24 @@
 			buildConfigurations = (
 				CC8F50073E9BAECA3066F1C1 /* Debug */,
 				B2F09B5A357E5F4126616C9D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2B4978D8023320F4DEC6B274 /* Build configuration list for PBXNativeTarget "PKHeXiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				30BB971773F447EBAF1BA4CC /* Debug */,
+				8004BE00A8FD7FAEBB89D049 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AA299998BF6837B4CC6200DA /* Build configuration list for PBXNativeTarget "PKHeXCore_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0942E40645735D7FC39C05EE /* Debug */,
+				D43AACC7BB2938609BA099F2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

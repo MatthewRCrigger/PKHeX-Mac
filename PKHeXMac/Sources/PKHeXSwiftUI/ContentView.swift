@@ -23,29 +23,29 @@ struct ContentView: View {
         ZStack {
             Theme.void.ignoresSafeArea()
 
-            GridFrame {
-                VStack(spacing: 0) {
-                    TitleStrip(onToggleSidebar: isCompact && store.saveFile != nil
-                        ? { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen.toggle() } }
-                        : nil)
-                    HRule(color: Theme.line300)
+            // No perimeter frame: the window edge is the boundary. Structure comes from
+            // the panels inside; the double frame is reserved for dialogs and sheets.
+            VStack(spacing: 0) {
+                #if os(iOS)
+                TitleStrip(onToggleSidebar: isCompact && store.saveFile != nil
+                    ? { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen.toggle() } }
+                    : nil)
+                #endif
 
-                    if let saveFile = store.saveFile {
-                        if isCompact {
-                            compactLayout(saveFile)
-                        } else {
-                            regularLayout(saveFile)
-                        }
+                if let saveFile = store.saveFile {
+                    if isCompact {
+                        compactLayout(saveFile)
                     } else {
-                        EmptyStateView()
+                        regularLayout(saveFile)
                     }
-
-                    HRule(color: Theme.line300)
-                    StatusBar()
+                } else {
+                    EmptyStateView()
                 }
-                .background(Theme.void)
+
+                HRule(color: Theme.line300)
+                StatusBar()
             }
-            .padding(4)
+            .background(Theme.void)
 
             DialogHost()
         }
@@ -55,7 +55,7 @@ struct ContentView: View {
             withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen = false }
         }
         #if os(macOS)
-        .background(WindowConfigurator())
+        .padding(.top, 12)
         #else
         .fileImporter(isPresented: $store.isShowingFileImporter, allowedContentTypes: [.data]) { result in
             if case .success(let url) = result { store.load(from: url) }
@@ -74,27 +74,33 @@ struct ContentView: View {
     // `defaults`). A plain HStack has no NSSplitView anywhere in it: nothing to drag,
     // nothing for AppKit to persist, so this entire class of stuck state is impossible.
     private func regularLayout(_ saveFile: SaveFile) -> some View {
-        HStack(spacing: 0) {
-            BoxSidebar(saveFile: saveFile)
+        HStack(spacing: 12) {
+            GridPanel { BoxSidebar(saveFile: saveFile) }
                 .frame(width: 200)
 
-            VRule(color: Theme.line300)
-
-            contentPane(saveFile)
-                .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
+            GridPanel {
+                contentPane(saveFile)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
 
             if case .slots = store.selectedSidebarItem {
-                VRule(color: Theme.line300)
-                DetailPanel(saveFile: saveFile)
+                GridPanel { DetailPanel(saveFile: saveFile) }
                     .frame(width: 340)
             }
         }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
     }
 
     private func compactLayout(_ saveFile: SaveFile) -> some View {
         ZStack(alignment: .leading) {
-            contentPane(saveFile)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            GridPanel {
+                contentPane(saveFile)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
 
             if isSidebarOpen {
                 Color.black.opacity(0.6)
@@ -153,58 +159,16 @@ extension SaveFile {
 
 // MARK: - Window chrome
 
-#if os(macOS)
-/// Configures the hosting `NSWindow` for GRID's own chrome: transparent title bar, black
-/// background, native traffic lights hidden (the title strip draws outlined ones that drive the
-/// same window actions).
-private struct WindowConfigurator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            guard let window = view.window else { return }
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            window.backgroundColor = .black
-            window.isMovableByWindowBackground = false
-            for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
-                window.standardWindowButton(button)?.isHidden = true
-            }
-        }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-/// A view that lets the window be dragged by mouse-down anywhere on it.
-private struct WindowDragArea: NSViewRepresentable {
-    private final class DragView: NSView {
-        override var mouseDownCanMoveWindow: Bool { true }
-    }
-
-    func makeNSView(context: Context) -> NSView { DragView() }
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-#endif
-
-/// 36 pt title bar: outlined traffic lights, centered wordmark, ghost settings button.
+/// iOS-only 36 pt header: centered wordmark, ghost settings button. macOS uses the native title bar.
 private struct TitleStrip: View {
     /// Set in the compact layout, where the sidebar is a drawer this button opens.
     var onToggleSidebar: (() -> Void)?
 
     var body: some View {
         ZStack {
-            #if os(macOS)
-            WindowDragArea()
-            #endif
-
             Wordmark(size: 14, tracking: 3.92)
 
             HStack {
-                #if os(macOS)
-                TrafficLights()
-                #endif
                 if let onToggleSidebar {
                     Button(action: onToggleSidebar) {
                         Image(systemName: "sidebar.left")
@@ -216,16 +180,6 @@ private struct TitleStrip: View {
                     .buttonStyle(.plain)
                 }
                 Spacer()
-                SettingsButton {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundStyle(Theme.ink200)
-                        .frame(width: 28, height: 28)
-                        .hoverFill()
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("Settings (⌘,)")
             }
             .padding(.horizontal, 12)
         }
@@ -253,72 +207,21 @@ private struct SettingsButton<Label: View>: View {
     }
 }
 
-/// "PKHEX MAC": amber "PKHEX" and ink "MAC", Rajdhani 600 with wide tracking.
+/// "PKHEX-GRID": amber "PKHEX" and ink "-GRID", Rajdhani 600 with wide tracking.
 struct Wordmark: View {
     var size: CGFloat
     var tracking: CGFloat
 
     var body: some View {
         (
-            Text("PKHEX ").foregroundColor(Theme.amber)
-            + Text("MAC").foregroundColor(Theme.ink100)
+            Text("PKHEX").foregroundColor(Theme.amber)
+            + Text("-GRID").foregroundColor(Theme.ink100)
         )
         .font(Theme.sans(size, .semibold))
         .tracking(tracking)
     }
 }
 
-#if os(macOS)
-/// Three 12 pt outline circles standing in for the (hidden) native window buttons.
-private struct TrafficLights: View {
-    @State private var window: NSWindow?
-    @State private var isHovering = false
-
-    var body: some View {
-        HStack(spacing: 8) {
-            light(color: Theme.line200, symbol: "xmark") { window?.performClose(nil) }
-            light(color: Theme.line300, symbol: "minus") { window?.miniaturize(nil) }
-            light(color: Theme.line300, symbol: "plus") { window?.zoom(nil) }
-        }
-        .onHover { isHovering = $0 }
-        .background(WindowFinder(window: $window))
-    }
-
-    private func light(color: Color, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Circle()
-                .strokeBorder(color, lineWidth: 1)
-                .frame(width: 12, height: 12)
-                .overlay {
-                    if isHovering {
-                        Image(systemName: symbol)
-                            .font(.system(size: 6, weight: .bold))
-                            .foregroundStyle(color)
-                    }
-                }
-        }
-        .buttonStyle(.plain)
-        .focusEffectDisabled()
-    }
-}
-
-private struct WindowFinder: NSViewRepresentable {
-    @Binding var window: NSWindow?
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { window = view.window }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            if window !== nsView.window { window = nsView.window }
-        }
-    }
-}
-
-#endif
 
 // MARK: - Sidebar
 
@@ -502,6 +405,16 @@ private struct StatusBar: View {
                 DottedLeader()
                 Text("gen 1–7")
             }
+            separator
+            SettingsButton {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11, weight: .regular))
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Settings (⌘,)")
+            .accessibilityLabel("Settings")
         }
         .font(Theme.mono(12))
         .foregroundStyle(Theme.ink300)

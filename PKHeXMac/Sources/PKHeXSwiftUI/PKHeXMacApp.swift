@@ -40,7 +40,6 @@ struct PKHeXMacApp: App {
                 #endif
         }
         #if os(macOS)
-        .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1180, height: 760)
         #endif
         .commands {

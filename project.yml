@@ -42,7 +42,7 @@ targets:
     info:
       path: PKHeXMac/Info.plist
       properties:
-        CFBundleDisplayName: PKHeXMac
+        CFBundleDisplayName: PKHeX-GRID
         NSHumanReadableCopyright: ""
         # Declared here rather than hand-edited into Info.plist: xcodegen regenerates that file
         # from this block, so anything only in the plist is silently dropped on the next generate.
@@ -140,7 +140,7 @@ targets:
     info:
       path: PKHeXMac/iOS-Info.plist
       properties:
-        CFBundleDisplayName: PKHeX
+        CFBundleDisplayName: PKHeX-GRID
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UIRequiresFullScreen: false

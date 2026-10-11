@@ -25,18 +25,29 @@ struct BagView: View {
     let saveFile: SaveFile
     @StateObject private var bagStore = BagStore()
     @State private var refreshToken = 0
+    @Environment(\.isCompactLayout) private var isCompact
 
     var body: some View {
         Group {
             if let bag = bagStore.bag {
-                HStack(spacing: 0) {
-                    PouchListView(
-                        pouches: bag.pouches,
-                        selectedIndex: $bagStore.selectedPouchIndex
-                    )
-                    .frame(width: 196)
+                // Compact widths (iPhone) stack a horizontal pocket strip over the pouch instead
+                // of the 196 pt side rail, which would leave the item list ~200 pt wide.
+                let layout = isCompact
+                    ? AnyLayout(VStackLayout(spacing: 0))
+                    : AnyLayout(HStackLayout(spacing: 0))
+                layout {
+                    if isCompact {
+                        PouchStrip(pouches: bag.pouches, selectedIndex: $bagStore.selectedPouchIndex)
+                        HRule(color: Theme.line300)
+                    } else {
+                        PouchListView(
+                            pouches: bag.pouches,
+                            selectedIndex: $bagStore.selectedPouchIndex
+                        )
+                        .frame(width: 196)
 
-                    VRule(color: Theme.line300)
+                        VRule(color: Theme.line300)
+                    }
 
                     if bagStore.selectedPouchIndex < bag.pouches.count {
                         PouchView(
@@ -82,6 +93,30 @@ private struct PouchListView: View {
                     ) {
                         selectedIndex = index
                     }
+                }
+            }
+        }
+        .background(Theme.void)
+    }
+}
+
+/// Compact-width stand-in for `PouchListView`: the same rows, laid out as a scrolling tab strip.
+private struct PouchStrip: View {
+    let pouches: [Pouch]
+    @Binding var selectedIndex: Int
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(Array(pouches.enumerated()), id: \.offset) { index, pouch in
+                    PouchRailRow(
+                        name: pouch.type.displayName,
+                        count: pouch.occupiedSlotCount,
+                        isActive: index == selectedIndex
+                    ) {
+                        selectedIndex = index
+                    }
+                    .fixedSize()
                 }
             }
         }

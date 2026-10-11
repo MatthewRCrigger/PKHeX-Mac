@@ -48,6 +48,14 @@ struct DetailPanel: View {
         refreshToken += 1
     }
 
+    private var emptySlotHint: String {
+        #if os(iOS)
+        store.copiedPKM != nil ? "Long-press the slot to paste or add a Pokémon." : "Long-press the slot to add a Pokémon."
+        #else
+        store.copiedPKM != nil ? "⌘V to paste, or right-click to add a Pokémon." : "Right-click to add a Pokémon."
+        #endif
+    }
+
     var body: some View {
         Group {
             if let pkm {
@@ -74,7 +82,7 @@ struct DetailPanel: View {
             } else if store.inspectedSlot != nil {
                 VStack(spacing: 8) {
                     GridText("Empty slot", .label, color: Theme.ink300)
-                    Text(store.copiedPKM != nil ? "⌘V to paste, or right-click to add a Pokémon." : "Right-click to add a Pokémon.")
+                    Text(emptySlotHint)
                         .font(Theme.sans(14, .regular))
                         .foregroundStyle(Theme.ink300)
                 }

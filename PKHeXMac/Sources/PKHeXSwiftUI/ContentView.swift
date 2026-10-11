@@ -4,6 +4,20 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject private var store: SaveStore
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+    @State private var isSidebarOpen = false
+
+    /// iPhone (and iPad slide-over/narrow split view): too narrow for sidebar + content + inspector
+    /// side by side, so the sidebar becomes a drawer and the inspector a sheet.
+    private var isCompact: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         ZStack {
@@ -11,43 +25,16 @@ struct ContentView: View {
 
             GridFrame {
                 VStack(spacing: 0) {
-                    TitleStrip()
+                    TitleStrip(onToggleSidebar: isCompact && store.saveFile != nil
+                        ? { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen.toggle() } }
+                        : nil)
                     HRule(color: Theme.line300)
 
                     if let saveFile = store.saveFile {
-                        // A plain HStack, not NavigationSplitView. NavigationSplitView is backed by a real
-                        // NSSplitViewController on macOS, which owns its dividers' draggability itself —
-                        // no SwiftUI-side width constraint actually disables dragging, only hints at a
-                        // preferred size. Worse, NSSplitViewController auto-persists dragged frame sizes
-                        // via AppKit's own window-identifier-derived autosave, so a user who drags the
-                        // sidebar to zero width gets that collapsed state restored on every future launch
-                        // with no in-app way back (confirmed: this happened twice in testing, and the fix
-                        // both times was manually deleting "NSSplitView Subview Frames..." keys from
-                        // `defaults`). A plain HStack has no NSSplitView anywhere in it: nothing to drag,
-                        // nothing for AppKit to persist, so this entire class of stuck state is impossible.
-                        HStack(spacing: 0) {
-                            BoxSidebar(saveFile: saveFile)
-                                .frame(width: 200)
-
-                            VRule(color: Theme.line300)
-
-                            Group {
-                                switch store.selectedSidebarItem {
-                                case .trainer:
-                                    TrainerView(saveFile: saveFile)
-                                case .bag:
-                                    BagView(saveFile: saveFile)
-                                case .slots:
-                                    BoxGridView(saveFile: saveFile)
-                                }
-                            }
-                            .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
-
-                            if case .slots = store.selectedSidebarItem {
-                                VRule(color: Theme.line300)
-                                DetailPanel(saveFile: saveFile)
-                                    .frame(width: 340)
-                            }
+                        if isCompact {
+                            compactLayout(saveFile)
+                        } else {
+                            regularLayout(saveFile)
                         }
                     } else {
                         EmptyStateView()
@@ -62,6 +49,11 @@ struct ContentView: View {
 
             DialogHost()
         }
+        .environment(\.isCompactLayout, isCompact)
+        .onChange(of: store.selectedSidebarItem) { _, _ in
+            store.inspectedSlot = nil
+            withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen = false }
+        }
         #if os(macOS)
         .background(WindowConfigurator())
         #else
@@ -69,6 +61,86 @@ struct ContentView: View {
             if case .success(let url) = result { store.load(from: url) }
         }
         #endif
+    }
+
+    // A plain HStack, not NavigationSplitView. NavigationSplitView is backed by a real
+    // NSSplitViewController on macOS, which owns its dividers' draggability itself —
+    // no SwiftUI-side width constraint actually disables dragging, only hints at a
+    // preferred size. Worse, NSSplitViewController auto-persists dragged frame sizes
+    // via AppKit's own window-identifier-derived autosave, so a user who drags the
+    // sidebar to zero width gets that collapsed state restored on every future launch
+    // with no in-app way back (confirmed: this happened twice in testing, and the fix
+    // both times was manually deleting "NSSplitView Subview Frames..." keys from
+    // `defaults`). A plain HStack has no NSSplitView anywhere in it: nothing to drag,
+    // nothing for AppKit to persist, so this entire class of stuck state is impossible.
+    private func regularLayout(_ saveFile: SaveFile) -> some View {
+        HStack(spacing: 0) {
+            BoxSidebar(saveFile: saveFile)
+                .frame(width: 200)
+
+            VRule(color: Theme.line300)
+
+            contentPane(saveFile)
+                .frame(minWidth: 420, maxWidth: .infinity, maxHeight: .infinity)
+
+            if case .slots = store.selectedSidebarItem {
+                VRule(color: Theme.line300)
+                DetailPanel(saveFile: saveFile)
+                    .frame(width: 340)
+            }
+        }
+    }
+
+    private func compactLayout(_ saveFile: SaveFile) -> some View {
+        ZStack(alignment: .leading) {
+            contentPane(saveFile)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if isSidebarOpen {
+                Color.black.opacity(0.6)
+                    .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen = false } }
+                    .transition(.opacity)
+
+                HStack(spacing: 0) {
+                    BoxSidebar(saveFile: saveFile)
+                        .frame(width: 260)
+                    VRule(color: Theme.line300)
+                }
+                .transition(.move(edge: .leading))
+            }
+        }
+        .clipped()
+        .sheet(isPresented: isInspectorPresented) {
+            DetailPanel(saveFile: saveFile)
+                .background(Theme.void)
+                .preferredColorScheme(.dark)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.void)
+        }
+    }
+
+    @ViewBuilder
+    private func contentPane(_ saveFile: SaveFile) -> some View {
+        switch store.selectedSidebarItem {
+        case .trainer:
+            TrainerView(saveFile: saveFile)
+        case .bag:
+            BagView(saveFile: saveFile)
+        case .slots:
+            BoxGridView(saveFile: saveFile)
+        }
+    }
+
+    /// The compact inspector sheet is up whenever a slot is inspected on a box/party page.
+    private var isInspectorPresented: Binding<Bool> {
+        Binding(
+            get: {
+                guard store.inspectedSlot != nil, case .slots = store.selectedSidebarItem else { return false }
+                return true
+            },
+            set: { if !$0 { store.inspectedSlot = nil } }
+        )
     }
 }
 
@@ -118,6 +190,9 @@ private struct WindowDragArea: NSViewRepresentable {
 
 /// 36 pt title bar: outlined traffic lights, centered wordmark, ghost settings button.
 private struct TitleStrip: View {
+    /// Set in the compact layout, where the sidebar is a drawer this button opens.
+    var onToggleSidebar: (() -> Void)?
+
     var body: some View {
         ZStack {
             #if os(macOS)
@@ -130,6 +205,16 @@ private struct TitleStrip: View {
                 #if os(macOS)
                 TrafficLights()
                 #endif
+                if let onToggleSidebar {
+                    Button(action: onToggleSidebar) {
+                        Image(systemName: "sidebar.left")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundStyle(Theme.ink200)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
                 Spacer()
                 SettingsButton {
                     Image(systemName: "gearshape")
@@ -307,7 +392,6 @@ private struct BoxSidebar: View {
             SidebarFooter()
         }
         .background(Theme.void)
-        .onChange(of: store.selectedSidebarItem) { _, _ in store.inspectedSlot = nil }
     }
 }
 
@@ -388,6 +472,7 @@ private struct SidebarFooter: View {
 /// 28 pt mono status line: path ··· clipboard · generation · box · save state.
 private struct StatusBar: View {
     @EnvironmentObject private var store: SaveStore
+    @Environment(\.isCompactLayout) private var isCompact
 
     var body: some View {
         HStack(spacing: 10) {
@@ -402,9 +487,11 @@ private struct StatusBar: View {
                         .lineLimit(1)
                     separator
                 }
-                Text("gen\(saveFile.generation) · \(saveFile.gameName.lowercased())")
-                    .lineLimit(1)
-                if let location = boxSummary(saveFile) {
+                if !isCompact {
+                    Text("gen\(saveFile.generation) · \(saveFile.gameName.lowercased())")
+                        .lineLimit(1)
+                }
+                if !isCompact, let location = boxSummary(saveFile) {
                     separator
                     Text(location)
                 }
@@ -566,8 +653,10 @@ private struct DropZone: View {
                 }
                 .keyboardShortcut("o", modifiers: .command)
 
+                #if os(macOS)
                 KeyCap(label: "⌘")
                 KeyCap(label: "O")
+                #endif
             }
         }
         .frame(maxWidth: .infinity)

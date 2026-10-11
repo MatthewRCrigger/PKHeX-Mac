@@ -42,3 +42,10 @@ extension View {
         #endif
     }
 }
+
+extension EnvironmentValues {
+    /// True on compact-width iOS layouts (iPhone, narrow iPad multitasking), where `ContentView`
+    /// swaps the three-column layout for a sidebar drawer and an inspector sheet. Always false on
+    /// macOS. Set once by `ContentView`; views below read it to stack what would sit side by side.
+    @Entry var isCompactLayout = false
+}

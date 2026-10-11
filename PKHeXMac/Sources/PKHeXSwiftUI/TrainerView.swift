@@ -3,6 +3,7 @@ import SwiftUI
 
 struct TrainerView: View {
     @EnvironmentObject private var store: SaveStore
+    @Environment(\.isCompactLayout) private var isCompact
     let saveFile: SaveFile
 
     @State private var genderIndex = 0
@@ -12,12 +13,15 @@ struct TrainerView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                HStack(alignment: .top, spacing: 12) {
+                let panels = isCompact
+                    ? AnyLayout(VStackLayout(spacing: 12))
+                    : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+                panels {
                     identityPanel
                     progressPanel
                 }
             }
-            .padding(20)
+            .padding(isCompact ? 12 : 20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -48,10 +52,19 @@ struct TrainerView: View {
                 .font(Theme.mono(12))
                 .tracking(0.24)
                 .foregroundStyle(Theme.ink300)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+                if isCompact {
+                    GridBadge(text: "Save integrity OK", color: Theme.green)
+                        .padding(.top, 6)
+                }
             }
 
-            DottedLeader()
-            GridBadge(text: "Save integrity OK", color: Theme.green)
+            if !isCompact {
+                DottedLeader()
+                GridBadge(text: "Save integrity OK", color: Theme.green)
+            }
         }
     }
 

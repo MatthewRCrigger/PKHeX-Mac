@@ -6,6 +6,7 @@ struct BoxGridView: View {
     @EnvironmentObject private var store: SaveStore
     @EnvironmentObject private var dragRegistry: DragRegistry
     @EnvironmentObject private var profileStore: PanelProfileStore
+    @Environment(\.isCompactLayout) private var isCompact
     let saveFile: SaveFile
 
     @AppStorage("boxTileSize") private var boxTileSize = "M"
@@ -114,10 +115,10 @@ struct BoxGridView: View {
                             .dropTarget(location: location, slot: slot, saveFile: saveFile, store: store, registry: dragRegistry)
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, horizontalPadding)
 
                     legendRow
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, horizontalPadding)
                         .padding(.top, 12)
                         .padding(.bottom, 16)
                 }
@@ -131,13 +132,17 @@ struct BoxGridView: View {
         }
     }
 
+    /// Edge inset for the box page's rows; tighter on iPhone so six tiles stay a usable size.
+    private var horizontalPadding: CGFloat { isCompact ? 12 : 20 }
+
     @ViewBuilder
     private var boxHeader: some View {
         HStack(spacing: 10) {
             GridText(saveFile.boxName(boxIndex ?? 0), .viewTitle)
                 .lineLimit(1)
+                .layoutPriority(1)
 
-            if !isSelecting {
+            if !isSelecting && !isCompact {
                 HStack(spacing: 6) {
                     GridText("Box \(pad((boxIndex ?? 0) + 1, 2))", .label, color: Theme.ink300)
                     GridText(".Storage", .label, color: Theme.ink300)
@@ -148,7 +153,9 @@ struct BoxGridView: View {
             DottedLeader()
 
             if isSelecting {
-                GridBadge(text: "Selecting", color: Theme.amber, showsDot: false, solid: true)
+                if !isCompact {
+                    GridBadge(text: "Selecting", color: Theme.amber, showsDot: false, solid: true)
+                }
                 GridButton("Select all", .ghost, size: .sm) { selectAll() }
                 GridButton("None", .ghost, size: .sm) { selectedIndices.removeAll() }
             }
@@ -162,8 +169,9 @@ struct BoxGridView: View {
                 isSelecting.toggle()
                 if !isSelecting { selectedIndices.removeAll() }
             }
+            .fixedSize()
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, horizontalPadding)
         .padding(.top, 14)
         .padding(.bottom, 12)
     }
@@ -179,7 +187,13 @@ struct BoxGridView: View {
                 Text("illegal")
             }
             DottedLeader()
+            #if os(iOS)
+            Text("long-press for actions")
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            #else
             Text("right-click · copy / paste / delete")
+            #endif
         }
         .font(Theme.mono(12))
         .foregroundStyle(Theme.ink300)
@@ -282,17 +296,24 @@ struct BoxGridView: View {
             GridButton("Clone", .secondary, size: .sm) { cloneSelected() }
                 .disabled(!hasSelection || freeSlotsHere == 0)
                 .help(freeSlotsHere == 0 ? "No empty slots in this box." : "Copy the selected Pokémon into empty slots in this box.")
-            GridButton("Export", .secondary, size: .sm) {}
-                .disabled(true)
-                .help("Not yet available: export isn't wired up in this build.")
+            // On iPhone, Export (not wired up yet) and Cancel (the header's Done does the same)
+            // are dropped so the bar fits one row.
+            if !isCompact {
+                GridButton("Export", .secondary, size: .sm) {}
+                    .disabled(true)
+                    .help("Not yet available: export isn't wired up in this build.")
+            }
             GridButton("Release", .danger, size: .sm) { releaseSelected() }
                 .disabled(!hasSelection)
-            GridButton("Cancel", .ghost, size: .sm) {
-                isSelecting = false
-                selectedIndices.removeAll()
+                .fixedSize()
+            if !isCompact {
+                GridButton("Cancel", .ghost, size: .sm) {
+                    isSelecting = false
+                    selectedIndices.removeAll()
+                }
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, horizontalPadding)
         .frame(height: 52)
         .background(Theme.void)
         .overlay(alignment: .top) { HRule(color: Theme.line300) }
@@ -396,8 +417,10 @@ struct BoxGridView: View {
     @ViewBuilder
     private var pinnedPartyStrip: some View {
         HStack(spacing: 6) {
-            GridText("Party", .label, color: Theme.ink300)
-                .padding(.trailing, 6)
+            if !isCompact {
+                GridText("Party", .label, color: Theme.ink300)
+                    .padding(.trailing, 6)
+            }
 
             ForEach(0..<6, id: \.self) { index in
                 let pkm = saveFile.partySlot(index)
@@ -405,7 +428,9 @@ struct BoxGridView: View {
                     pkm: pkm,
                     isSelected: store.inspectedSlot == InspectedSlot(location: .party, index: index)
                 )
-                .frame(width: 52, height: 52)
+                // Fixed 52 pt on iPad/Mac; on iPhone the six tiles share the row and shrink to fit.
+                .frame(maxWidth: 52, maxHeight: 52)
+                .aspectRatio(1, contentMode: .fit)
                 .onTapGesture {
                     // Inspect this party member (or empty slot) without navigating the
                     // content pane away from whatever box is currently open.
@@ -418,9 +443,11 @@ struct BoxGridView: View {
                 .dropTarget(location: .party, slot: index, saveFile: saveFile, store: store, registry: dragRegistry)
             }
 
-            DottedLeader()
+            if !isCompact {
+                DottedLeader()
+            }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, horizontalPadding)
         .padding(.top, 14)
     }
 

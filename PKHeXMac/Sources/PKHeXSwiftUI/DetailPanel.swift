@@ -815,7 +815,10 @@ struct DetailPanel: View {
     private func handlingTrainerSection(for pkm: PKM) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeader("Handling trainer") {
-                currentHandlerToggle(for: pkm)
+                // Gen 1–5 formats don't store the current handler (PKHeX.Core's setter is a no-op).
+                if pkm.format >= 6 {
+                    currentHandlerToggle(for: pkm)
+                }
             }
 
             if !pkm.hasHandlingTrainer {

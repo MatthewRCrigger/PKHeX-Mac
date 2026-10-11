@@ -51,11 +51,27 @@ public static class PkmExports
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_nature")]
     public static byte PkmGetNature(long handle) => (byte)(HandleTable.Get<PKM>(handle)?.Nature ?? 0);
 
+    /// Gen 3/4 formats derive Nature from the PID (their Nature setter is a no-op), so those get a
+    /// re-rolled PID with the requested nature, as PKHeX.WinForms does; shininess is kept.
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_nature")]
     public static void PkmSetNature(long handle, byte nature)
     {
-        if (HandleTable.Get<PKM>(handle) is { } pk)
+        if (HandleTable.Get<PKM>(handle) is not { } pk || pk.Nature == (Nature)nature)
+            return;
+        if (pk.Format is 3 or 4)
+            RerollPID(pk, () => pk.SetPIDNature((Nature)nature));
+        else
             pk.Nature = (Nature)nature;
+    }
+
+    /// Runs a PKHeX.Core PID re-roll (which always lands on a non-shiny PID), then restores
+    /// shininess if the Pokémon was shiny before.
+    private static void RerollPID(PKM pk, Action reroll)
+    {
+        var wasShiny = pk.IsShiny;
+        reroll();
+        if (wasShiny)
+            pk.SetShiny();
     }
 
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_ball")]
@@ -74,8 +90,12 @@ public static class PkmExports
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_set_gender")]
     public static void PkmSetGender(long handle, byte gender)
     {
-        if (HandleTable.Get<PKM>(handle) is { } pk)
-            pk.Gender = gender;
+        if (HandleTable.Get<PKM>(handle) is not { } pk || pk.Gender == gender)
+            return;
+        pk.Gender = gender;
+        // Gen 3/4 tie gender to the PID (Gen 3's Gender setter is a no-op), so re-roll it to match.
+        if (pk.Format is 3 or 4)
+            RerollPID(pk, () => pk.SetPIDGender(gender));
     }
 
     [UnmanagedCallersOnly(EntryPoint = "pkhex_pkm_get_is_shiny")]
@@ -221,7 +241,8 @@ public static class PkmExports
             return;
         if ((uint)index >= pk.PersonalInfo.AbilityCount)
             return;
-        pk.SetAbilityIndex(index);
+        // Gen 3–5 re-roll the PID here, which would otherwise drop shininess.
+        RerollPID(pk, () => pk.SetAbilityIndex(index));
     }
 
     // --- Met/Egg info ---

@@ -12,6 +12,7 @@
 		071EFE8812DE993712573BC3 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
 		0C60F093C8944AE861CF0419 /* Rajdhani-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */; };
 		0E29BB6883178C54ED543DC7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA7D6B2C8D38FD91DC04F7 /* SettingsView.swift */; };
+		106F8CE06809539962534F5E /* CompactNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCA698AFAB1BE739811A518 /* CompactNavigation.swift */; };
 		11711CADED94DBEE901823A7 /* PlatformCompat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17547516422F60BBD464214B /* PlatformCompat.swift */; };
 		16B66882674E5D56F5CCBA50 /* Rajdhani-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6048D786AD3A4654C62D47F1 /* Rajdhani-Bold.ttf */; };
 		1AFE7B5E7D05AD92ADA86749 /* OFL-SpaceMono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */; };
@@ -34,6 +35,7 @@
 		5F469994B9E720C44B8C99C5 /* EditableField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2EBCB9C79A7F4EA2B5762F /* EditableField.swift */; };
 		602916888F003F04CAAECE9A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8FA2AE5C5C0BA89142F29F /* Theme.swift */; };
 		6055560CA71C4A2AB3FCB0FC /* Rajdhani-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 04D21F7F011FE66414AC4169 /* Rajdhani-Regular.ttf */; };
+		64091C5EE00F02369153AD70 /* CompactNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCA698AFAB1BE739811A518 /* CompactNavigation.swift */; };
 		662B89D37B534103324D834A /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2299926E73B028F53F6DC025 /* BagView.swift */; };
 		89C82C54B7E32A9474AF0D80 /* Pickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBC6E0913AEBA97080A64120 /* Pickers.swift */; };
 		8E00DB850611EF9B9539E2BF /* PKHeXMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A68AC61974C4F0111231025 /* PKHeXMacApp.swift */; };
@@ -136,6 +138,7 @@
 		62CEE51789A589584B36FE82 /* OFL-SpaceMono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-SpaceMono.txt"; sourceTree = "<group>"; };
 		7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		896719DCDF7BAE3936C320B5 /* PKHeXMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PKHeXMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8CCA698AFAB1BE739811A518 /* CompactNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactNavigation.swift; sourceTree = "<group>"; };
 		95992B8AD1F2A2AB78EFF6A5 /* PKHeXiOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PKHeXiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AB86BF7565C22F01133B76D /* SaveStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveStore.swift; sourceTree = "<group>"; };
 		A68595942C1E393E4FC7AE84 /* Rajdhani-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rajdhani-Medium.ttf"; sourceTree = "<group>"; };
@@ -212,6 +215,7 @@
 				7B40A4A792EE60C1AC086CCF /* AppDelegate.swift */,
 				2299926E73B028F53F6DC025 /* BagView.swift */,
 				F6F6BD538C71E8AD16F80234 /* BoxGridView.swift */,
+				8CCA698AFAB1BE739811A518 /* CompactNavigation.swift */,
 				F9182C6871188B2219630B85 /* ContentView.swift */,
 				321E64E26089C2F438E2FE1A /* DetailPanel.swift */,
 				22CBBD81715AA9F69375E7D2 /* DragRegistry.swift */,
@@ -518,6 +522,7 @@
 				A739EFF72563AF0D029D8E18 /* AppDelegate.swift in Sources */,
 				B1AEAED12117644EA9B917F0 /* BagView.swift in Sources */,
 				DCA7897E522F421BC93848F0 /* BoxGridView.swift in Sources */,
+				64091C5EE00F02369153AD70 /* CompactNavigation.swift in Sources */,
 				C8B470F8AD14A1D06B57316E /* ContentView.swift in Sources */,
 				5EF44AB9D7E09E91D260D491 /* DetailPanel.swift in Sources */,
 				4FC24F9733D5409B27A527A5 /* DragRegistry.swift in Sources */,
@@ -540,6 +545,7 @@
 			files = (
 				662B89D37B534103324D834A /* BagView.swift in Sources */,
 				AA33524B39F96382C4DA0530 /* BoxGridView.swift in Sources */,
+				106F8CE06809539962534F5E /* CompactNavigation.swift in Sources */,
 				D71BF3778694CFFE0A1E2C7E /* ContentView.swift in Sources */,
 				A4C57A8AF1BE64333ED7DD08 /* DetailPanel.swift in Sources */,
 				9D739E03BB3064B976ABC647 /* DragRegistry.swift in Sources */,

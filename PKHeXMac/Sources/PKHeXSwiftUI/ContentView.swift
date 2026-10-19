@@ -7,10 +7,9 @@ struct ContentView: View {
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
-    @State private var isSidebarOpen = false
 
     /// iPhone (and iPad slide-over/narrow split view): too narrow for sidebar + content + inspector
-    /// side by side, so the sidebar becomes a drawer and the inspector a sheet.
+    /// side by side, so the sidebar becomes a bottom dock and the inspector a sheet.
     private var isCompact: Bool {
         #if os(iOS)
         horizontalSizeClass == .compact
@@ -27,8 +26,8 @@ struct ContentView: View {
             // the panels inside; the double frame is reserved for dialogs and sheets.
             VStack(spacing: 0) {
                 #if os(iOS)
-                TitleStrip(onToggleSidebar: isCompact && store.saveFile != nil
-                    ? { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen.toggle() } }
+                TitleStrip(onOpenSave: isCompact && store.saveFile != nil
+                    ? { store.presentOpenPanel() }
                     : nil)
                 #endif
 
@@ -44,6 +43,12 @@ struct ContentView: View {
 
                 HRule(color: Theme.line300)
                 StatusBar()
+
+                #if os(iOS)
+                if isCompact, let saveFile = store.saveFile {
+                    NavDock(saveFile: saveFile)
+                }
+                #endif
             }
             .background(Theme.void)
 
@@ -52,7 +57,6 @@ struct ContentView: View {
         .environment(\.isCompactLayout, isCompact)
         .onChange(of: store.selectedSidebarItem) { _, _ in
             store.inspectedSlot = nil
-            withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen = false }
         }
         #if os(macOS)
         .padding(.top, 12)
@@ -94,28 +98,12 @@ struct ContentView: View {
     }
 
     private func compactLayout(_ saveFile: SaveFile) -> some View {
-        ZStack(alignment: .leading) {
-            GridPanel {
-                contentPane(saveFile)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
-
-            if isSidebarOpen {
-                Color.black.opacity(0.6)
-                    .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { isSidebarOpen = false } }
-                    .transition(.opacity)
-
-                HStack(spacing: 0) {
-                    BoxSidebar(saveFile: saveFile)
-                        .frame(width: 260)
-                    VRule(color: Theme.line300)
-                }
-                .transition(.move(edge: .leading))
-            }
+        GridPanel {
+            contentPane(saveFile)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .clipped()
+        .padding(.horizontal, 12)
+        .padding(.bottom, 12)
         .sheet(isPresented: isInspectorPresented) {
             DetailPanel(saveFile: saveFile)
                 .background(Theme.void)
@@ -159,25 +147,26 @@ extension SaveFile {
 
 // MARK: - Window chrome
 
-/// iOS-only 36 pt header: centered wordmark, ghost settings button. macOS uses the native title bar.
+/// iOS-only 36 pt header: centered wordmark. macOS uses the native title bar.
 private struct TitleStrip: View {
-    /// Set in the compact layout, where the sidebar is a drawer this button opens.
-    var onToggleSidebar: (() -> Void)?
+    /// Set in the compact layout, which has no sidebar footer to hold the Open button.
+    var onOpenSave: (() -> Void)?
 
     var body: some View {
         ZStack {
             Wordmark(size: 14, tracking: 3.92)
 
             HStack {
-                if let onToggleSidebar {
-                    Button(action: onToggleSidebar) {
-                        Image(systemName: "sidebar.left")
+                if let onOpenSave {
+                    Button(action: onOpenSave) {
+                        Image(systemName: "folder")
                             .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(Theme.ink200)
                             .frame(width: 28, height: 28)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Open a different save file")
                 }
                 Spacer()
             }

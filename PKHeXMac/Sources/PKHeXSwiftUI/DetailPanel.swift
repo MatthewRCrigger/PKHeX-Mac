@@ -519,6 +519,8 @@ struct DetailPanel: View {
                     commit(pkm)
                     isStatusPickerPresented = false
                 }
+                // Stay a popover on iPhone instead of adapting into a full-height sheet.
+                .presentationCompactAdaptation(.popover)
             }
         } else {
             GridCell("STATUS", value: "—", isDisabled: true)

@@ -24,6 +24,18 @@ struct SettingsView: View {
     }
 
     @State private var selectedCategory: Category = .appearance
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// iPhone: no room for the side rail, so categories become a scrolling strip above the content.
+    private var isCompact: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         GridFrame {
@@ -36,18 +48,31 @@ struct SettingsView: View {
                 .frame(height: 36)
                 HRule(color: Theme.line300)
 
-                HStack(spacing: 0) {
-                    rail
-                        .frame(width: 180)
-                    VRule(color: Theme.line300)
+                if isCompact {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(Category.allCases) { category in
+                                categoryRow(category, isFixedWidth: false)
+                            }
+                        }
+                    }
+                    HRule(color: Theme.line300)
                     content
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    HStack(spacing: 0) {
+                        rail
+                            .frame(width: 180)
+                        VRule(color: Theme.line300)
+                        content
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
             }
             .background(Theme.void)
         }
         .padding(4)
-        .frame(width: 760, height: 560)
+        .modalFrame(width: 760, height: 560)
         .background(Theme.void)
     }
 
@@ -67,7 +92,7 @@ struct SettingsView: View {
         }
     }
 
-    private func categoryRow(_ category: Category) -> some View {
+    private func categoryRow(_ category: Category, isFixedWidth: Bool = true) -> some View {
         let isActive = selectedCategory == category
         return Button {
             selectedCategory = category
@@ -81,7 +106,7 @@ struct SettingsView: View {
                     .tracking(1.68)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                Spacer()
+                if isFixedWidth { Spacer() }
             }
             .foregroundStyle(isActive ? Theme.inkInvert : Theme.ink200)
             .padding(.horizontal, 12)
@@ -115,6 +140,9 @@ struct SettingsView: View {
 
 private struct AppearanceSettingsView: View {
     @EnvironmentObject private var profileStore: PanelProfileStore
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     // UI prefs (persisted; consumed by the box grid).
     @AppStorage("reflectShinyPalette") private var reflectShinyPalette = true
@@ -145,7 +173,7 @@ private struct AppearanceSettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader("Panel", qualifier: "Profile")
 
-            HStack(spacing: 12) {
+            profileCardLayout {
                 ForEach(PanelProfile.allCases) { option in
                     ProfileCard(option: option, isSelected: profileStore.profile == option) {
                         profileStore.profile = option
@@ -158,6 +186,14 @@ private struct AppearanceSettingsView: View {
                 .foregroundStyle(Theme.ink300)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    /// Cards side by side; stacked on iPhone, where three across leaves each too narrow to read.
+    private var profileCardLayout: AnyLayout {
+        #if os(iOS)
+        if horizontalSizeClass == .compact { return AnyLayout(VStackLayout(spacing: 12)) }
+        #endif
+        return AnyLayout(HStackLayout(spacing: 12))
     }
 
     // MARK: Display

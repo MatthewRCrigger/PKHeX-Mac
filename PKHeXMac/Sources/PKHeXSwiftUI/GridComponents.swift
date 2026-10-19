@@ -712,7 +712,7 @@ struct PickerShell<Columns: View, Content: View>: View {
             }
             .background(Theme.surface1)
         }
-        .frame(width: 600, height: 560)
+        .modalFrame(width: 600, height: 560)
         .background(Theme.void)
         .presentationBackground(Theme.void)
     }
@@ -734,9 +734,11 @@ struct PickerShell<Columns: View, Content: View>: View {
 
     private var footer: some View {
         HStack {
-            Text(footerHint).font(Theme.mono(12)).foregroundStyle(Theme.ink300)
+            Text(footerHint).font(Theme.mono(12)).foregroundStyle(Theme.ink300).lineLimit(1)
             Spacer()
+            #if os(macOS)
             Text("esc · close").font(Theme.mono(12)).foregroundStyle(Theme.ink300)
+            #endif
         }
         .padding(.horizontal, 16)
         .frame(height: 28)
@@ -804,7 +806,11 @@ struct PickerSearchField: View {
         .frame(height: 36)
         .background(Theme.surface2)
         .overlay(Rectangle().strokeBorder(Theme.cyan, lineWidth: 1))
+        // Type-to-filter on macOS. On iOS the keyboard would cover half the list before the user
+        // has decided whether to search or scroll, so focus waits for a tap.
+        #if os(macOS)
         .onAppear { isFocused = true }
+        #endif
     }
 }
 
@@ -840,7 +846,7 @@ struct PickerEmptyState: View {
     }
 }
 
-/// Red or neutral double-frame dialog (440 wide) shown over a scrim by `GridDialogHost`.
+/// Red or neutral double-frame dialog (440 wide, narrower on small screens) shown over a scrim by `GridDialogHost`.
 struct GridDialog<Actions: View>: View {
     let title: String
     var qualifier: String?
@@ -873,8 +879,9 @@ struct GridDialog<Actions: View>: View {
             .padding(20)
             .background(Theme.surface1)
         }
-        .frame(width: 440)
+        .frame(maxWidth: 440)
         .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 16)
     }
 }
 

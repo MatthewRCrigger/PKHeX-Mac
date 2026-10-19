@@ -43,6 +43,22 @@ extension View {
     }
 }
 
+extension View {
+    /// Sizes a modal sheet's content. macOS sheets size to their content, so they get the fixed
+    /// design size. iOS sheets are sized by the system (full width on iPhone, a form sheet on iPad)
+    /// and a fixed size overflows them, so there the content fills the sheet instead, inset enough
+    /// that the double frame clears the sheet's and screen's rounded corners.
+    @ViewBuilder
+    func modalFrame(width: CGFloat, height: CGFloat) -> some View {
+        #if os(macOS)
+        frame(width: width, height: height)
+        #else
+        padding(8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        #endif
+    }
+}
+
 extension EnvironmentValues {
     /// True on compact-width iOS layouts (iPhone, narrow iPad multitasking), where `ContentView`
     /// swaps the three-column layout for a sidebar drawer and an inspector sheet. Always false on

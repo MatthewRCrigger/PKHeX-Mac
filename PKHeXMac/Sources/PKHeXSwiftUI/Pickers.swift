@@ -158,6 +158,19 @@ struct MoveEditorSheet: View {
     let onChoose: (UInt16) -> Void
 
     @State private var query = ""
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// Category/power/accuracy columns are dropped on iPhone so the move name keeps room; they
+    /// only ever show `—` (see `MoveRow`).
+    private var showsDataColumns: Bool {
+        #if os(iOS)
+        horizontalSizeClass != .compact
+        #else
+        true
+        #endif
+    }
 
     private var candidateMoves: [UInt16] {
         var options = Set(pkm.legalMoves)
@@ -189,9 +202,11 @@ struct MoveEditorSheet: View {
                 PickerColumnHeader {
                     Text("name").frame(maxWidth: .infinity, alignment: .leading)
                     Text("type").frame(width: 48, alignment: .leading)
-                    Text("cat").frame(width: 36, alignment: .leading)
-                    Text("pwr").frame(width: 36, alignment: .trailing)
-                    Text("acc").frame(width: 36, alignment: .trailing)
+                    if showsDataColumns {
+                        Text("cat").frame(width: 36, alignment: .leading)
+                        Text("pwr").frame(width: 36, alignment: .trailing)
+                        Text("acc").frame(width: 36, alignment: .trailing)
+                    }
                     Text("pp").frame(width: 56, alignment: .trailing)
                 }
             },
@@ -201,7 +216,7 @@ struct MoveEditorSheet: View {
                 } else {
                     ForEach(shown, id: \.self) { moveID in
                         Button { onChoose(moveID) } label: {
-                            MoveRow(moveID: moveID, pkm: pkm, slotIndex: slotIndex)
+                            MoveRow(moveID: moveID, pkm: pkm, slotIndex: slotIndex, showsDataColumns: showsDataColumns)
                         }
                         .buttonStyle(PickerRowStyle())
                     }
@@ -215,6 +230,7 @@ private struct MoveRow: View {
     let moveID: UInt16
     let pkm: PKM
     let slotIndex: Int
+    let showsDataColumns: Bool
 
     var body: some View {
         HStack(spacing: 8) {
@@ -234,9 +250,11 @@ private struct MoveRow: View {
             .frame(width: 48, alignment: .leading)
 
             // PKHeX.Core doesn't ship category/power/accuracy data for moves.
-            MonoCell(text: "—", width: 36, color: Theme.ink300)
-            MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
-            MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
+            if showsDataColumns {
+                MonoCell(text: "—", width: 36, color: Theme.ink300)
+                MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
+                MonoCell(text: "—", width: 36, alignment: .trailing, color: Theme.ink300)
+            }
             MonoCell(text: ppText, width: 56, alignment: .trailing)
         }
     }
@@ -262,7 +280,8 @@ struct NaturePickerSheet: View {
     let pkm: PKM
     let onChoose: (UInt8) -> Void
 
-    private static let statCodes = ["ATK", "DEF", "SPA", "SPD", "SPE"]
+    /// Amp order used by nature IDs: Speed comes before the special stats (Timid = +SPE −ATK).
+    private static let statCodes = ["ATK", "DEF", "SPE", "SPA", "SPD"]
 
     var body: some View {
         PickerShell(
@@ -585,6 +604,10 @@ struct DatePickerPopover: View {
         .padding(12)
         .background(Theme.surface1)
         .overlay(Rectangle().strokeBorder(Theme.line100, lineWidth: 1))
+        // On iPhone the popover adapts into a sheet: the date cells sit low in the inspector,
+        // where an actual popover gets squeezed against the bottom edge.
+        .presentationDetents([.medium, .large])
+        .presentationBackground(Theme.surface1)
     }
 }
 

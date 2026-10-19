@@ -14,16 +14,20 @@ CONFIGURATION="Release"
 DEST_APP="/Applications/PKHeXMac.app"
 
 echo "Building $SCHEME ($CONFIGURATION)…"
+# arm64 only: PKHeX.Interop.dylib is published for osx-arm64 alone, so a universal
+# Release build fails to link its x86_64 slice.
 xcodebuild -project PKHeXMac.xcodeproj \
   -scheme "$SCHEME" \
   -configuration "$CONFIGURATION" \
-  -destination 'platform=macOS' \
+  -destination 'platform=macOS,arch=arm64' \
+  ARCHS=arm64 \
   build
 
 DERIVED_DATA_APP=$(xcodebuild -project PKHeXMac.xcodeproj \
   -scheme "$SCHEME" \
   -configuration "$CONFIGURATION" \
-  -destination 'platform=macOS' \
+  -destination 'platform=macOS,arch=arm64' \
+  ARCHS=arm64 \
   -showBuildSettings 2>/dev/null \
   | awk -F'= ' '/ BUILT_PRODUCTS_DIR /{print $2; exit}')/PKHeXMac.app
 
